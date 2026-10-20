@@ -198,31 +198,83 @@ def text_length_analysis(
 
 
 # ------------------------------------------------------------------ #
-#  e) Tokenized lengths                                                #
+#  e) Tokenized lengths (FIXED: true token positions via offsets)      #
 # ------------------------------------------------------------------ #
+
+# Word-boundary inflected profanity lexicon (avoids substring false-positives like "peacock")
+_PROFANITY_WB_PATTERNS = [
+    r"\bfuck\w*",
+    r"\bshit\w*",
+    r"\bbitch\w*",
+    r"\bass+hole\w*",
+    r"\bcunt\w*",
+    r"\bcock\w*\b",     # cock but not peacock
+    r"\bdick\w*\b",
+    r"\bnigger\w*",
+    r"\bnigga\w*",
+    r"\bfaggot\w*",
+    r"\bretard\w*",
+    r"\bbastard\w*",
+    r"\bwhore\w*",
+    r"\bslut\w*",
+]
+_PROFANITY_WB_RE = re.compile("|".join(_PROFANITY_WB_PATTERNS), re.IGNORECASE)
+
+
+def _find_profanity_token_position(text: str, encoding) -> int:
+    """
+    Return the token index of the first profanity match using offset mapping.
+    Returns -1 if no match found or no offset map.
+    """
+    if not hasattr(encoding, "offset_mapping") or encoding.offset_mapping is None:
+        return -1
+    offsets = encoding.offset_mapping  # list of (char_start, char_end)
+    m = _PROFANITY_WB_RE.search(text)
+    if m is None:
+        return -1
+    char_pos = m.start()
+    for tok_idx, (cs, ce) in enumerate(offsets):
+        if cs <= char_pos < ce:
+            return tok_idx
+    # char_pos after last token
+    return len(offsets)
+
 
 def tokenized_length_analysis(
     df: pd.DataFrame,
     labels: list[str],
     tokenizer,
     max_len_options: list[int],
-    profanity_terms: list[str],
+    profanity_terms: list[str],   # kept for signature compat; now use _PROFANITY_WB_RE
     out_dir: Path,
 ) -> dict:
     """
     Compute token length distribution and truncation fractions.
+    Uses return_offsets_mapping for true token-position profanity probe.
     tokenizer: a HuggingFace tokenizer (roberta-base).
     """
     from tqdm import tqdm
 
+    supports_offsets = getattr(tokenizer, "is_fast", False)
+
     texts = df["text_clean"].tolist()
     tok_lengths = []
-    batch_size = 512
+    # Store offset mappings only for fast tokenizers (needed for profanity probe)
+    offset_maps: list | None = [] if supports_offsets else None
+
+    batch_size = 256
     for i in tqdm(range(0, len(texts), batch_size), desc="Tokenizing"):
         batch = texts[i: i + batch_size]
-        enc = tokenizer(batch, truncation=False, padding=False,
-                        add_special_tokens=True)
-        tok_lengths.extend(len(ids) for ids in enc["input_ids"])
+        if supports_offsets:
+            enc = tokenizer(batch, truncation=False, padding=False,
+                            add_special_tokens=True,
+                            return_offsets_mapping=True)
+            tok_lengths.extend(len(ids) for ids in enc["input_ids"])
+            offset_maps.extend(enc["offset_mapping"])
+        else:
+            enc = tokenizer(batch, truncation=False, padding=False,
+                            add_special_tokens=True)
+            tok_lengths.extend(len(ids) for ids in enc["input_ids"])
 
     tok_lengths = np.array(tok_lengths)
     df = df.copy()
@@ -247,34 +299,54 @@ def tokenized_length_analysis(
                 )
 
     # Profanity position probe: toxic comments exceeding 128 tokens
-    profanity_re = re.compile(
-        "|".join(re.escape(t) for t in profanity_terms),
-        re.IGNORECASE,
-    )
-    long_toxic_mask = (tok_lengths > 128) & (df[labels].sum(axis=1) > 0)
-    long_toxic_df = df[long_toxic_mask].copy()
-    long_toxic_df["first_profanity_pos"] = long_toxic_df["text_clean"].apply(
-        lambda t: _first_profanity_char_pos(t, profanity_re)
-    )
+    long_toxic_mask = (tok_lengths > 128) & (df[labels].sum(axis=1) > 0).values
+    long_toxic_positions = np.where(long_toxic_mask)[0]
+    n_long_toxic = int(long_toxic_mask.sum())
+    n_all_toxic = int((df[labels].sum(axis=1) > 0).sum())
 
-    # Estimate position in tokens (approximate: chars * n_tokens / n_chars)
-    long_toxic_df["approx_token_pos"] = (
-        long_toxic_df["first_profanity_pos"]
-        / long_toxic_df["n_chars"].clip(lower=1)
-        * long_toxic_df["n_tokens"]
-    )
-    profanity_after_128 = (
-        (long_toxic_df["first_profanity_pos"] >= 0)
-        & (long_toxic_df["approx_token_pos"] > 128)
-    ).sum()
-    has_profanity = (long_toxic_df["first_profanity_pos"] >= 0).sum()
+    profanity_after_128 = 0
+    has_profanity_count = 0
+
+    if supports_offsets and offset_maps is not None:
+        for pos in long_toxic_positions:
+            text = texts[pos]
+            om_obj = offset_maps[pos]
+            # Build a simple object with offset_mapping attribute
+            class _EncWrapper:
+                offset_mapping = om_obj
+            tok_pos = _find_profanity_token_position(text, _EncWrapper())
+            if tok_pos >= 0:
+                has_profanity_count += 1
+                if tok_pos > 128:
+                    profanity_after_128 += 1
+    else:
+        # Fallback: character-ratio approximation with word-boundary regex
+        for pos in long_toxic_positions:
+            text = texts[pos]
+            m = _PROFANITY_WB_RE.search(text)
+            if m is not None:
+                has_profanity_count += 1
+                n_chars = len(text)
+                n_toks = int(tok_lengths[pos])
+                approx_tok_pos = m.start() / max(n_chars, 1) * n_toks
+                if approx_tok_pos > 128:
+                    profanity_after_128 += 1
+
+    # Rates: share of ALL toxic and share of LONG toxic
+    rate_of_all_toxic = profanity_after_128 / max(n_all_toxic, 1)
+    rate_of_long_toxic = profanity_after_128 / max(n_long_toxic, 1) if n_long_toxic > 0 else 0.0
+
     profanity_probe = {
-        "long_toxic_count": int(long_toxic_mask.sum()),
-        "has_profanity_count": int(has_profanity),
-        "profanity_after_128_tokens": int(profanity_after_128),
-        "profanity_after_128_fraction": float(
-            round(profanity_after_128 / max(has_profanity, 1), 4)
-        ),
+        "n_all_toxic": int(n_all_toxic),
+        "n_long_toxic_gt128": int(n_long_toxic),
+        "has_profanity_in_long_toxic": int(has_profanity_count),
+        "profanity_after_token_128": int(profanity_after_128),
+        "rate_of_all_toxic": float(round(rate_of_all_toxic, 6)),
+        "rate_of_long_toxic": float(round(rate_of_long_toxic, 6)),
+        "used_offset_mapping": bool(supports_offsets),
+        "lexicon": "word_boundary_inflected",
+        # Legacy field for backward compat
+        "profanity_after_128_fraction": float(round(rate_of_long_toxic, 6)),
     }
 
     # Histogram
@@ -304,17 +376,19 @@ def tokenized_length_analysis(
     }
 
 
-def _first_profanity_char_pos(text: str, pattern: re.Pattern) -> int:
-    m = pattern.search(text)
-    return m.start() if m else -1
-
-
 # ------------------------------------------------------------------ #
-#  f) Style / obfuscation features by label                           #
+#  f) Style / obfuscation features by label (FIXED)                   #
 # ------------------------------------------------------------------ #
 
-_LEET_RE = re.compile(r"[a-z0-9*@#$]{2,}", re.IGNORECASE)
-_OBFUSC_RE = re.compile(r"[a-z][*@#$][a-z]", re.IGNORECASE)
+# Exclude emails; match leet-speak including digit substitutions (sh1t, @ss)
+_EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b")
+_LEET_RE  = re.compile(r"[a-z][*@#$!][a-z]|[a-z][0-9][a-z]", re.IGNORECASE)  # digit leetspeak
+
+
+def _has_obfuscation(text: str) -> bool:
+    """True if text has leet-speak patterns after removing emails."""
+    clean = _EMAIL_RE.sub("", text)
+    return bool(_LEET_RE.search(clean))
 
 
 def style_features_by_label(
@@ -323,26 +397,29 @@ def style_features_by_label(
     out_dir: Path,
 ) -> dict:
     df = df.copy()
-    df["has_obfuscation"] = df["text_clean"].apply(
-        lambda t: bool(_OBFUSC_RE.search(t))
-    )
+    df["has_obfuscation"] = df["text_clean"].apply(_has_obfuscation)
 
     feature_cols = [
         "upper_ratio", "punct_ratio", "non_ascii_ratio",
         "max_repeated_char_run", "has_obfuscation",
     ]
     results = {}
+    directions = {}  # feature -> label -> "higher"/"lower"
 
     for feat in feature_cols:
         means = {}
+        feat_directions = {}
         for lbl in labels:
             pos_mask = df[lbl] == 1
             neg_mask = df[lbl] == 0
-            means[lbl] = {
-                "toxic_mean": float(round(df.loc[pos_mask, feat].mean(), 6)),
-                "clean_mean": float(round(df.loc[neg_mask, feat].mean(), 6)),
-            }
+            toxic_mean = float(round(df.loc[pos_mask, feat].mean(), 6))
+            clean_mean = float(round(df.loc[neg_mask, feat].mean(), 6))
+            means[lbl] = {"toxic_mean": toxic_mean, "clean_mean": clean_mean}
+            feat_directions[lbl] = "higher" if toxic_mean >= clean_mean else "lower"
         results[feat] = means
+        directions[feat] = feat_directions
+
+    results["_computed_directions"] = directions
 
     # Heatmap: mean of each feature for each label (toxic subset)
     heat_data = pd.DataFrame(
@@ -438,7 +515,7 @@ def lexical_analysis(
 
 
 # ------------------------------------------------------------------ #
-#  h) Identity term analysis                                           #
+#  h) Identity term analysis (FIXED: compare to overall any-toxic rate)#
 # ------------------------------------------------------------------ #
 
 def identity_term_analysis(
@@ -448,18 +525,23 @@ def identity_term_analysis(
     out_dir: Path,
     high_toxic_threshold: float = 0.3,
 ) -> dict:
+    overall_toxic_rate = float((df[labels].sum(axis=1) > 0).mean())
     rows = []
     for term in identity_terms:
         mask = df["text_clean"].str.contains(
             rf"\b{re.escape(term)}\b", case=False, na=False, regex=True
         )
         count = int(mask.sum())
-        toxic_mask = df[labels].sum(axis=1) > 0
         toxic_rate = float(round(df.loc[mask, labels].any(axis=1).mean(), 6)) if count > 0 else 0.0
+        # Compare per-term rate to overall baseline
+        direction = "above_baseline" if toxic_rate > overall_toxic_rate else "below_or_equal"
         rows.append({
             "term": term,
             "frequency": count,
             "toxic_rate": toxic_rate,
+            "overall_toxic_rate": round(overall_toxic_rate, 6),
+            "relative_to_baseline": round(toxic_rate - overall_toxic_rate, 6),
+            "direction": direction,
             "flagged": toxic_rate >= high_toxic_threshold and count > 10,
         })
 
@@ -470,12 +552,14 @@ def identity_term_analysis(
     colors = [PALETTE[3] if r else PALETTE[0] for r in table["flagged"]]
     ax.barh(table["term"], table["toxic_rate"], color=colors)
     ax.axvline(high_toxic_threshold, linestyle="--", color="red", label=f"threshold={high_toxic_threshold}")
+    ax.axvline(overall_toxic_rate, linestyle=":", color="blue", label=f"overall_baseline={overall_toxic_rate:.3f}")
     ax.set_title("Toxic rate for comments containing identity terms", fontsize=13)
     ax.set_xlabel("Toxic rate")
     ax.legend()
     savefig(fig, out_dir / "h_identity_terms.png")
 
     return {
+        "overall_toxic_rate": round(overall_toxic_rate, 6),
         "identity_term_stats": table.to_dict(orient="records"),
         "high_threshold": high_toxic_threshold,
         "flagged_terms": table.loc[table["flagged"], "term"].tolist(),
@@ -483,12 +567,13 @@ def identity_term_analysis(
 
 
 # ------------------------------------------------------------------ #
-#  i) Label noise probes                                               #
+#  i) Lexicon-coverage probe (renamed from label_noise_probes)        #
 # ------------------------------------------------------------------ #
 
+# Word-boundary inflected profanity regex (same as truncation probe)
 _PROFANITY_PROBE_RE = re.compile(
-    r"\b(fuck|shit|bitch|asshole|cunt|cock|dick|nigger|nigga|faggot|"
-    r"retard|bastard|whore|slut)\b",
+    r"\b(fuck\w*|shit\w*|bitch\w*|ass+hole\w*|cunt\w*|cock\b|dick\b|nigger\w*|nigga\w*|"
+    r"faggot\w*|retard\w*|bastard\w*|whore\w*|slut\w*)",
     re.IGNORECASE,
 )
 
@@ -500,19 +585,24 @@ def label_noise_probes(
     n_sample: int = 30,
     seed: int = 42,
 ) -> dict:
+    """
+    Lexicon-coverage probe (not a noise measurement).
+    Samples comments where lexicon presence/absence conflicts with labels —
+    requires manual review before any noise claim can be made.
+    """
     toxic_mask = df[labels].sum(axis=1) > 0
     has_profanity = df["text_clean"].apply(
         lambda t: bool(_PROFANITY_PROBE_RE.search(t))
     )
 
-    # Non-toxic with profanity
+    # Non-toxic with profanity (lexicon hit, label=0)
     false_neg_pool = df[~toxic_mask & has_profanity]
     false_neg = false_neg_pool.sample(
         n=min(n_sample, len(false_neg_pool)), random_state=seed
     )[["comment_text", "text_clean"] + labels]
     false_neg.to_csv(out_dir / "i_noise_probe_nontoxic_with_profanity.csv", index=False)
 
-    # Toxic without profanity
+    # Toxic without profanity (label=1, no lexicon hit)
     false_pos_pool = df[toxic_mask & ~has_profanity]
     false_pos = false_pos_pool.sample(
         n=min(n_sample, len(false_pos_pool)), random_state=seed
@@ -520,6 +610,11 @@ def label_noise_probes(
     false_pos.to_csv(out_dir / "i_noise_probe_toxic_no_profanity.csv", index=False)
 
     return {
+        "lexicon": "word_boundary_inflected",
+        "note": (
+            "This is a lexicon-coverage probe, NOT a noise measurement. "
+            "The 30+30 samples require manual review before any noise claim."
+        ),
         "nontoxic_with_profanity_pool": int(len(false_neg_pool)),
         "toxic_without_profanity_pool": int(len(false_pos_pool)),
         "sampled_each": n_sample,
@@ -592,7 +687,8 @@ def split_sanity(
 
 
 # ------------------------------------------------------------------ #
-#  l) Vocabulary stats                                                  #
+#  l) Vocabulary stats (FIXED: type-level and token-level OOV +       #
+#     coverage at 10k/20k/50k/80k)                                    #
 # ------------------------------------------------------------------ #
 
 def vocabulary_stats(
@@ -600,30 +696,52 @@ def vocabulary_stats(
     out_dir: Path,
 ) -> dict:
     """
-    Whitespace + punctuation tokenization (no lowercasing) to estimate
-    vocabulary size, hapax ratio.
+    Tokenize with \\w+|[^\\w\\s]; report type-level and token-level OOV
+    and token coverage at vocab sizes 10k, 20k, 50k, 80k.
     """
+    _TOK_RE = re.compile(r"\w+|[^\w\s]")
+
     token_counter: Counter = Counter()
+    total_tokens = 0
     for text in df["text_clean"]:
-        tokens = re.findall(r"\S+", text)
+        tokens = _TOK_RE.findall(text)
         token_counter.update(t.lower() for t in tokens)
+        total_tokens += len(tokens)
 
     vocab_size = len(token_counter)
     hapax = sum(1 for v in token_counter.values() if v == 1)
     hapax_ratio = hapax / max(vocab_size, 1)
 
-    # OOV: tokens appearing only once are likely OOV in a freq-filtered vocab
-    # We approximate OOV rate against a freq-threshold vocab (min_freq=5)
+    # Type-level OOV: types appearing only once
     min_freq = 5
-    in_vocab = sum(1 for v in token_counter.values() if v >= min_freq)
-    oov_rate = 1 - in_vocab / max(vocab_size, 1)
+    in_vocab_types = sum(1 for v in token_counter.values() if v >= min_freq)
+    oov_type_rate = 1 - in_vocab_types / max(vocab_size, 1)
+
+    # Token-level OOV: tokens belonging to out-of-vocab types
+    oov_token_count = sum(v for v in token_counter.values() if v < min_freq)
+    oov_token_rate = oov_token_count / max(total_tokens, 1)
+
+    # Coverage at different vocab sizes (sorted by frequency)
+    sorted_by_freq = sorted(token_counter.values(), reverse=True)
+    cumulative = np.cumsum(sorted_by_freq)
+    coverage_at: dict[str, float] = {}
+    for k in [10000, 20000, 50000, 80000]:
+        if k <= len(cumulative):
+            coverage_at[str(k)] = float(round(cumulative[k - 1] / max(total_tokens, 1), 6))
+        else:
+            coverage_at[str(k)] = float(round(cumulative[-1] / max(total_tokens, 1), 6))
 
     results = {
         "vocab_size": vocab_size,
+        "total_tokens": int(total_tokens),
         "hapax_count": hapax,
         "hapax_ratio": float(round(hapax_ratio, 6)),
-        "in_vocab_min_freq_5": in_vocab,
-        "oov_rate_vs_freq5_vocab": float(round(oov_rate, 6)),
+        "in_vocab_types_min_freq_5": in_vocab_types,
+        "oov_type_rate_vs_freq5_vocab": float(round(oov_type_rate, 6)),
+        "oov_token_rate_vs_freq5_vocab": float(round(oov_token_rate, 6)),
+        "token_coverage_at_vocab_sizes": coverage_at,
+        # Legacy alias
+        "oov_rate_vs_freq5_vocab": float(round(oov_type_rate, 6)),
     }
 
     # Save token frequency table (top 1000)

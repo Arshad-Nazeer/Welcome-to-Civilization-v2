@@ -1,6 +1,6 @@
 # EDA Report — Welcome to Civilization
 
-_Generated: 2026-10-21 00:45:40_  
+_Generated: 2026-10-21 03:01:01_  
 
 All statistics derived from `reports/eda/eda_findings.json`.
 
@@ -29,7 +29,7 @@ All statistics derived from `reports/eda/eda_findings.json`.
 
 - 11. [(h) Identity Term Analysis](#11-h-identity-term-analysis)
 
-- 12. [(i) Label Noise Probes](#12-i-label-noise-probes)
+- 12. [(i) Lexicon-Coverage Probe](#12-i-lexicon-coverage-probe)
 
 - 13. [(j) Rare-Label Viability](#13-j-rare-label-viability)
 
@@ -50,15 +50,15 @@ All statistics derived from `reports/eda/eda_findings.json`.
 | Field | Value |
 |---|---|
 | Dataset | Jigsaw Toxic Comment Classification Challenge |
-| Source | google/jigsaw_toxicity_pred (HuggingFace) / Kaggle |
+| Source | Kaggle CSV / google/jigsaw_toxicity_pred (HuggingFace) |
 | Task | Multi-label toxicity classification |
 | Labels | toxic, severe_toxic, obscene, threat, insult, identity_hate |
-| Train rows | 127,664 |
-| Val rows | 15,956 |
-| Test rows | 15,951 |
-| Vocabulary size | 402,135 |
-| Clean fraction | 89.83% |
-| Split strategy | MultilabelStratifiedShuffleSplit, seed=42 |
+| Train rows | 127,861 |
+| Val rows | 15,869 |
+| Test rows | 15,841 |
+| Vocabulary size | 166,654 |
+| Clean fraction | 89.86% |
+| Split strategy | MultilabelStratifiedShuffleSplit on dup_group_v2, seed=42 |
 
 
 ---
@@ -79,9 +79,9 @@ Labels are non-exclusive (multi-label). A comment may be simultaneously toxic, o
 
 **Cleaning (`text_clean`)**: Unicode NFKC normalization, removal of control/zero-width characters, HTML entity decoding, whitespace collapsing, leading/trailing strip. Original `comment_text` is always preserved.
 
-**Feature engineering**: Boolean flags (has_url, has_ip, has_mention); derived stats (n_chars, n_words, n_labels, is_clean, upper_ratio, non_ascii_ratio, punct_ratio, max_repeated_char_run); duplicate group tracking (dup_group).
+**Feature engineering**: Boolean flags (has_url, has_ip, has_mention); derived stats (n_chars, n_words, n_labels, is_clean, upper_ratio, non_ascii_ratio, punct_ratio, max_repeated_char_run); duplicate group tracking (dup_group = exact, dup_group_v2 = near-dup via MinHash-LSH).
 
-**QA**: Null check, empty-text drop (only empty rows are removed), exact-duplicate detection, conflicting-label duplicate detection. Duplicates are kept with a `dup_group` ID to prevent leakage.
+**QA**: Null check, empty-text drop (only empty rows are removed), exact-duplicate detection, conflicting-label duplicate detection. Duplicates are kept with a `dup_group_v2` ID to prevent leakage.
 
 Full data dictionary: `data/processed/DATA_DICTIONARY.md`.
 
@@ -89,24 +89,24 @@ Full data dictionary: `data/processed/DATA_DICTIONARY.md`.
 ## 3. Split Design
 
 
-The labeled training data (from `data/raw/train.parquet`) is split into train (80%) / val (10%) / test (10%) using `MultilabelStratifiedShuffleSplit` (iterstrat library), seed=42. Stratification operates on duplicate-group aggregates: rows with identical cleaned text are assigned to the same split, preventing leakage. The official Kaggle test set (label ≠ -1 rows) is saved separately to `data/raw/official_test.parquet` for optional later use.
+The labeled training data (from `data/raw/train.parquet`) is split into train (80%) / val (10%) / test (10%) using `MultilabelStratifiedShuffleSplit` (iterstrat library), seed=42. Stratification operates on near-duplicate-group aggregates (`dup_group_v2`, computed via MinHash-LSH at Jaccard≥0.8 on char-5grams): rows in the same near-dup cluster are assigned to the same split, preventing both exact and near-duplicate leakage. The previous exact-dup-only split is preserved in `data/splits/v1_exact_dup/`. The official Kaggle test set (label ≠ -1 rows) is saved separately to `data/raw/official_test.parquet` for optional later use.
 
 
 | Label | Train rate | Val rate | Test rate |
 
 |---|---|---|---|
 
-| toxic | 9.585% | 9.583% | 9.586% |
+| toxic | 9.559% | 9.635% | 9.741% |
 
-| severe_toxic | 1.000% | 1.003% | 0.997% |
+| severe_toxic | 0.992% | 1.027% | 1.029% |
 
-| obscene | 5.296% | 5.289% | 5.291% |
+| obscene | 5.271% | 5.375% | 5.410% |
 
-| threat | 0.300% | 0.295% | 0.301% |
+| threat | 0.298% | 0.296% | 0.316% |
 
-| insult | 4.936% | 4.932% | 4.940% |
+| insult | 4.919% | 5.010% | 5.000% |
 
-| identity_hate | 0.880% | 0.884% | 0.884% |
+| identity_hate | 0.877% | 0.889% | 0.896% |
 
 
 
@@ -117,17 +117,17 @@ The labeled training data (from `data/raw/train.parquet`) is split into train (8
 
 |---|---|---|---|
 
-| toxic | 12,236 | 9.585% | 9.4 |
+| toxic | 12,222 | 9.559% | 9.5 |
 
-| severe_toxic | 1,276 | 1.000% | 99.1 |
+| severe_toxic | 1,269 | 0.992% | 99.8 |
 
-| obscene | 6,761 | 5.296% | 17.9 |
+| obscene | 6,739 | 5.271% | 18.0 |
 
-| threat | 383 | 0.300% | 332.3 |
+| threat | 381 | 0.298% | 334.6 |
 
-| insult | 6,302 | 4.936% | 19.3 |
+| insult | 6,290 | 4.919% | 19.3 |
 
-| identity_hate | 1,123 | 0.880% | 112.7 |
+| identity_hate | 1,122 | 0.877% | 113.0 |
 
 
 
@@ -140,7 +140,7 @@ The labeled training data (from `data/raw/train.parquet`) is split into train (8
 ## 5. (b) Labels Per Comment
 
 
-- 89.83% of training comments have zero toxic labels.
+- 89.86% of training comments have zero toxic labels.
 - Most toxic comments have only one or two positive labels.
 
 
@@ -161,9 +161,9 @@ The conditional probability matrix P(B|A) reveals that `severe_toxic` is nearly 
 
 | Stat | n_chars | n_words |
 |---|---|---|
-| 50th pct | 203.0 | 36.0 |
-| 90th pct | 878.0 | 151.0 |
-| 99th pct | 3384.85 | 567.0 |
+| 50th pct | 204.0 | 36.0 |
+| 90th pct | 886.0 | 152.0 |
+| 99th pct | 3408.0 | 570.0 |
 
 
 ![Char length histogram](figures/d_n_chars_hist.png)
@@ -178,14 +178,17 @@ The conditional probability matrix P(B|A) reveals that `severe_toxic` is nearly 
 | max_len | Truncation rate (overall) |
 |---|---|
 
-| 64 | 40.04% |
+| 64 | 40.11% |
 
-| 128 | 18.30% |
+| 128 | 18.50% |
 
-| 256 | 6.46% |
+| 256 | 6.59% |
 
-| 512 | 2.06% |
+| 512 | 2.05% |
 
+
+
+**Profanity probe** (offset-mapping): 167 occurrences of profanity terms after token 128 in long toxic comments — 1.29% of ALL toxic comments, 10.46% of long (>128 tok) toxic comments.
 
 
 ![Token length histogram](figures/e_token_length_hist.png)
@@ -197,7 +200,16 @@ The conditional probability matrix P(B|A) reveals that `severe_toxic` is nearly 
 ## 9. (f) Style and Obfuscation Features
 
 
-Style features (uppercase ratio, punctuation ratio, max repeated char run, non-ASCII ratio, obfuscation patterns) are systematically elevated in toxic comments across all labels.
+- **upper_ratio**: higher in [toxic, severe_toxic, obscene, threat, insult, identity_hate], lower in [].
+
+- **punct_ratio**: higher in [toxic, severe_toxic, obscene, insult], lower in [threat, identity_hate].
+
+- **non_ascii_ratio**: higher in [threat], lower in [toxic, severe_toxic, obscene, insult, identity_hate].
+
+- **max_repeated_char_run**: higher in [toxic, severe_toxic, obscene, threat, insult, identity_hate], lower in [].
+
+- **has_obfuscation**: higher in [obscene, threat], lower in [toxic, severe_toxic, insult, identity_hate].
+
 
 
 ![Style features heatmap](figures/f_style_features_heatmap.png)
@@ -214,18 +226,48 @@ See `reports/eda/tables/g_*_logodds.csv` for full tables and `figures/g_*_logodd
 ## 11. (h) Identity Term Analysis
 
 
-Identity terms flagged as potential spurious correlates (toxic rate ≥ 30%): **gay, jew, lesbian**.
+Overall any-toxic baseline rate: **10.14%**.
+
+
+| Term | Count | Toxic rate | vs Baseline | Direction |
+
+|---|---|---|---|---|
+
+| gay | 692 | 58.67% | +48.53% | above_baseline |
+
+| lesbian | 47 | 40.43% | +30.28% | above_baseline |
+
+| jew | 247 | 33.20% | +23.06% | above_baseline |
+
+| transgender | 19 | 26.32% | +16.17% | above_baseline |
+
+| black | 911 | 15.70% | +5.55% | above_baseline |
+
+| woman | 386 | 15.54% | +5.40% | above_baseline |
+
+| white | 955 | 14.66% | +4.52% | above_baseline |
+
+| muslim | 404 | 14.11% | +3.97% | above_baseline |
+
+| asian | 211 | 13.74% | +3.60% | above_baseline |
+
+| women | 580 | 13.28% | +3.13% | above_baseline |
+
+
+
+Identity terms flagged as potential spurious correlates (toxic rate ≥ 30%, count > 10): **gay, lesbian, jew**.
 
 
 ![Identity terms](figures/h_identity_terms.png)
 
 
-## 12. (i) Label Noise Probes
+## 12. (i) Lexicon-Coverage Probe
 
 
-- Non-toxic comments containing profanity: 430
-- Toxic comments with no profanity: 8466
+- Non-toxic comments with profanity lexicon match: 682
+- Toxic comments with no profanity: 7322
 - 30 samples of each saved for manual review.
+- **Note**: This is a lexicon-coverage probe, NOT a noise measurement. The 30+30 samples require manual review before any noise claim.
 
 
 ## 13. (j) Rare-Label Viability
@@ -234,7 +276,7 @@ Identity terms flagged as potential spurious correlates (toxic rate ≥ 30%): **
 > ⚠️ WARNING: threat has only 47 positives in val split (threshold=100)
 
 
-> ⚠️ WARNING: threat has only 48 positives in test split (threshold=100)
+> ⚠️ WARNING: threat has only 50 positives in test split (threshold=100)
 
 
 ![Rare label viability](figures/j_rare_label_viability.png)
@@ -243,7 +285,7 @@ Identity terms flagged as potential spurious correlates (toxic rate ≥ 30%): **
 ## 14. (k) Split Sanity
 
 
-Label positive rates are consistent across train/val/test, confirming effective multilabel stratification.
+Max relative label-rate deviation across splits: **5.91%**.
 
 
 ![Split sanity](figures/k_split_sanity.png)
@@ -254,10 +296,25 @@ Label positive rates are consistent across train/val/test, confirming effective 
 
 | Metric | Value |
 |---|---|
-| Vocabulary size | 402,135 |
-| Hapax count | 261,989 |
-| Hapax ratio | 65.15% |
-| OOV rate (vs freq≥5 vocab) | 86.12% |
+| Vocabulary size | 166,654 |
+| Total tokens | 10,915,047 |
+| Hapax count | 87,345 |
+| Hapax ratio | 52.41% |
+| Type-level OOV (vs freq≥5 vocab) | 77.20% |
+| Token-level OOV (vs freq≥5 vocab) | 1.78% |
+
+
+| Vocab size | Token coverage |
+|---|---|
+
+| 10000 | 95.00% |
+
+| 20000 | 97.00% |
+
+| 50000 | 98.61% |
+
+| 80000 | 99.21% |
+
 
 
 ![Top 50 tokens](figures/l_vocab_top50.png)
@@ -272,9 +329,10 @@ See `reports/eda/eda_conclusions.md` for the full numbered findings list with mo
 ## 17. Reproducibility
 
 
-- **Seed**: 42 everywhere (Python, NumPy, iterstrat).
+- **Seed**: 42 everywhere (Python, NumPy, iterstrat, MinHash).
 - **Config**: All paths and hyperparameters in `configs/config.yaml`.
 - **Pinned versions**: `requirements.txt`.
 - **Run order**: `make all` (setup → download → preprocess → eda → report → test).
 - **Colab**: Set runtime CWD to project root. No absolute paths used.
 - **Data source**: `data/raw/raw_manifest.json` records source, date, and SHA-256 hashes.
+- **Split version**: v2_near_dup (see `data/splits/split_manifest.json`).

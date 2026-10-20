@@ -1,6 +1,6 @@
 # EDA Conclusions — Welcome to Civilization
 
-_Generated: 2026-10-21 00:45:40_
+_Generated: 2026-10-21 03:01:01_
 
 All numbers computed from `reports/eda/eda_findings.json`.
 
@@ -8,20 +8,20 @@ All numbers computed from `reports/eda/eda_findings.json`.
 
 ## 1. Severe class imbalance across all labels
 
-- 'toxic' is the most frequent label (12,236 positives, 9.58% of 127,664 training examples).
+- 'toxic' is the most frequent label (12,222 positives, 9.56% of 127,861 training examples).
 
-- 'threat' is the rarest (383 positives, 0.30%).
+- 'threat' is the rarest (381 positives, 0.30%).
 
-- Suggested `pos_weight` (neg/pos): toxic=9.4, severe_toxic=99.1, obscene=17.9, threat=332.3, insult=19.3, identity_hate=112.7.
+- Suggested `pos_weight` (neg/pos) from train split: toxic=9.5, severe_toxic=99.8, obscene=18.0, threat=334.6, insult=19.3, identity_hate=113.0.
 
 - **Evidence**: `reports/eda/tables/a_label_distribution.csv`, `figures/a_label_distribution.png`
 
-- **Implication**: Use Binary Cross-Entropy with `pos_weight` per label. Threshold tuning required (default 0.5 will underpredict rare labels). Monitor per-label AUC and F1, not macro accuracy.
+- **Implication**: Use Binary Cross-Entropy with `pos_weight` per label. Threshold tuning required (default 0.5 will underpredict rare labels). Monitor per-label PR-AUC, ROC-AUC, and F1 at thresholds tuned on validation only.
 
 
 ## 2. Multi-label overlap is common; majority of data is clean
 
-- 89.83% of training comments have no toxic label (clean class).
+- 89.86% of training comments have no toxic label (clean class).
 
 - **Evidence**: `reports/eda/tables/b_labels_per_comment.csv`, `figures/b_labels_per_comment.png`
 
@@ -32,7 +32,7 @@ All numbers computed from `reports/eda/eda_findings.json`.
 
 - P(toxic | severe_toxic) = 100.00% (100% of severe_toxic comments are also labeled toxic).
 
-- P(severe_toxic | toxic) = 10.43%.
+- P(severe_toxic | toxic) = 10.38%.
 
 - **Evidence**: `reports/eda/tables/c_cooccurrence_conditional.csv`, `figures/c_cooccurrence.png`
 
@@ -41,27 +41,43 @@ All numbers computed from `reports/eda/eda_findings.json`.
 
 ## 4. Text length varies widely
 
-- Median: 203.0 chars, 36.0 words. 99th percentile: 3384.85 chars, 567.0 words.
+- Median: 204.0 chars, 36.0 words. 99th percentile: 3408.0 chars, 570.0 words.
 
 - **Evidence**: `figures/d_n_chars_hist.png`, `figures/d_n_words_hist.png`
 
 - **Implication**: Long-tail distribution requires truncation strategy. Max-len choice is a key hyperparameter.
 
 
-## 5. Significant truncation at max_len=128
+## 5. Truncation impact depends on max_len setting
 
-- 18.30% of training comments exceed 128 tokens; 2.06% exceed 512 tokens (roberta-base tokenizer).
+- 18.50% of training comments exceed 128 tokens; 6.59% exceed 256; 2.05% exceed 512 (roberta-base tokenizer).
 
-- For toxic comments >128 tokens, 19.66% of profane terms appear after token 128, suggesting head+tail truncation may help.
+- Profanity terms appearing after token 128 in long (>128 tok) toxic comments: 167 occurrences — 1.29% of ALL toxic comments, 10.46% of long toxic comments (true token positions via offset mapping). Lexicon uses word-boundary inflected patterns.
 
 - **Evidence**: `figures/e_token_length_hist.png`, `figures/e_truncation_rate.png`
 
-- **Implication**: Use max_len=128 for TF-IDF (no truncation needed) and BiGRU. Use max_len=512 for RoBERTa/DistilRoBERTa if GPU allows; otherwise consider head+tail strategy.
+- **Implication**: Evaluate max_len 128 vs 256 empirically (head vs head+tail strategies). No single max_len setting can be recommended without model-in-the-loop validation.
 
 
-## 6. Toxic comments show elevated uppercase ratio and obfuscation
+## 6. Style features show label-dependent patterns
 
-- Style features (upper_ratio, punct_ratio, max_repeated_char_run) are higher in toxic vs clean comments across all labels.
+- **upper_ratio** is higher in: toxic, severe_toxic, obscene, threat, insult, identity_hate.
+
+- **punct_ratio** is higher in: toxic, severe_toxic, obscene, insult.
+
+- **punct_ratio** is lower in: threat, identity_hate.
+
+- **non_ascii_ratio** is higher in: threat.
+
+- **non_ascii_ratio** is lower in: toxic, severe_toxic, obscene, insult, identity_hate.
+
+- **max_repeated_char_run** is higher in: toxic, severe_toxic, obscene, threat, insult, identity_hate.
+
+- **has_obfuscation** is higher in: obscene, threat.
+
+- **has_obfuscation** is lower in: toxic, severe_toxic, insult, identity_hate.
+
+- Obfuscation detection excludes email addresses; includes digit leet-speak (e.g. sh1t).
 
 - **Evidence**: `figures/f_style_features_heatmap.png`, `tables/f_style_features_by_label.csv`
 
@@ -79,55 +95,63 @@ All numbers computed from `reports/eda/eda_findings.json`.
 
 ## 8. Several identity terms are spurious correlates of toxicity
 
-- Terms flagged (toxic rate ≥ 30%): gay, jew, lesbian.
+- Overall any-toxic baseline rate: 10.14%.
+
+- Terms with toxic rate above baseline (count > 10): gay, lesbian, jew, transgender, black, woman, white, muslim, asian, women, female, male, jewish, hispanic, islam.
+
+- Terms flagged (toxic rate ≥ 30% AND count > 10): gay, lesbian, jew.
 
 - **Evidence**: `tables/h_identity_terms.csv`, `figures/h_identity_terms.png`
 
 - **Implication**: Risk of spurious correlations and bias. Later bias analysis must examine false positive rates on identity-mention comments. Do not use identity terms as features directly.
 
 
-## 9. Label noise is present in both directions
+## 9. Lexicon-coverage probe (NOT a noise measurement)
 
-- 430 non-toxic comments contain profanity (potential false negatives).
+- 682 non-toxic comments contain profanity lexicon matches (potential label gaps — may be context-dependent non-toxicity).
 
-- 8466 toxic comments contain no common profanity (context-dependent toxicity).
+- 7322 toxic comments contain no common profanity (context-dependent or identity-based toxicity).
 
 - **Evidence**: `tables/i_noise_probe_nontoxic_with_profanity.csv`, `tables/i_noise_probe_toxic_no_profanity.csv`
 
-- **Implication**: Dataset has label noise. Models should not be penalized heavily for confident errors. Consider label smoothing. Calibration will be noisy.
+- **Implication**: The 30+30 samples require manual review before any label-noise claim. This probe measures lexicon coverage, not annotation quality.
 
 
 ## 10. Rare-label metric stability
 
 - ⚠️  WARNING: threat has only 47 positives in val split (threshold=100)
 
-- ⚠️  WARNING: threat has only 48 positives in test split (threshold=100)
+- ⚠️  WARNING: threat has only 50 positives in test split (threshold=100)
 
 - **Evidence**: `tables/j_rare_label_viability.csv`, `figures/j_rare_label_viability.png`
 
-- **Implication**: Use AUC-ROC as primary metric (robust to imbalance). Report confidence intervals for rare labels.
+- **Implication**: Recommended metrics — per-label PR-AUC (average precision), ROC-AUC, and F1 at thresholds tuned on validation only. Report bootstrap confidence intervals for rare labels (threat, identity_hate).
 
 
-## 11. Label rates are consistent across splits
+## 11. Label rates across splits
 
-- Multilabel-stratified splitting (iterstrat) successfully maintained similar label positive rates across train/val/test.
+- Max relative label-rate deviation across splits: 5.91% (within ±15% threshold).
 
 - **Evidence**: `tables/k_split_label_rates.csv`, `figures/k_split_sanity.png`
 
-- **Implication**: Validation metrics are reliable. No systematic label-rate drift between splits.
+- **Implication**: Validation metrics are reliable if drift is within bounds. Monitor for systematic drift in production.
 
 
-## 12. Large vocabulary with high hapax ratio
+## 12. Vocabulary size and OOV analysis
 
-- Vocabulary size (whitespace+punct tokenization): 402,135 unique tokens.
+- Vocabulary size (\w+|[^\w\s] tokenization): 166,654 unique types.
 
-- Hapax ratio: 65.15%.
+- Hapax ratio (type-level, freq=1): 52.41%.
 
-- OOV rate vs freq-filtered vocab (min_freq=5): 86.12%.
+- Type-level OOV rate vs freq≥5 vocab: 77.20%.
+
+- Token-level OOV rate vs freq≥5 vocab: 1.78%.
+
+- Token coverage by vocab size: 10000 types → 95.00%, 20000 types → 97.00%, 50000 types → 98.61%, 80000 types → 99.21%.
 
 - **Evidence**: `tables/l_vocab_top1000.csv`, `figures/l_vocab_top50.png`
 
-- **Implication**: For BiGRU, set vocab size ~50k–80k with min_freq=2–5. Pre-trained subword tokenizers (BPE) naturally handle OOV. High hapax ratio suggests significant noise/obfuscation in toxic comments.
+- **Implication**: For BiGRU, base vocab size on the coverage curve — aim for ≥95% token coverage (approximately 20k based on computed curve). Pre-trained subword tokenizers (BPE) naturally handle OOV.
 
 
 ---
@@ -135,14 +159,25 @@ All numbers computed from `reports/eda/eda_findings.json`.
 ## Recommended Modeling Decisions
 
 
+| Label | pos_weight (from train) |
+|---|---|
+| toxic | 9.46 |
+| severe_toxic | 99.76 |
+| obscene | 17.97 |
+| threat | 334.59 |
+| insult | 19.33 |
+| identity_hate | 112.96 |
+
+
 | Decision | Recommendation | Rationale |
 |---|---|---|
 | Loss function | BCE per label with `pos_weight` | Severe imbalance |
 | Output activation | Sigmoid (not softmax) | Multi-label |
-| Primary metric | AUC-ROC (mean across labels) | Robust to imbalance |
-| max_len (TF-IDF+BiGRU) | 128–256 tokens | Covers 90%+ of data |
-| max_len (RoBERTa) | 512 if GPU allows, else head+tail 256 | Rare toxic signals after token 128 |
-| BiGRU vocab size | 50k–80k, min_freq=2 | Balance coverage vs sparsity |
+| Primary metric | Per-label PR-AUC (average precision) | Most informative under imbalance |
+| Secondary metrics | ROC-AUC, F1 at val-tuned thresholds | Complementary views |
+| Rare-label CIs | Bootstrap confidence intervals | High variance for threat/identity_hate |
+| max_len (transformer) | Evaluate 128 vs 256; head vs head+tail | Computed rates; no single answer |
+| BiGRU vocab size | Based on 95% token-coverage threshold | See l_vocabulary |
 | Normalization | None in saved data; adapter-level | Preserve toxicity signals |
 | Threshold | Tune per label on val set | Avoid 0.5 default for rare labels |
 | Bias monitoring | Flag identity terms | Spurious correlate risk |
@@ -151,8 +186,8 @@ All numbers computed from `reports/eda/eda_findings.json`.
 ## Risks and Limitations
 
 
-- **Label noise**: Both false-positive and false-negative toxic labels are present. Metrics will be noisy ceilings.
-- **Spurious correlates**: Identity terms (e.g., 'gay', 'muslim') have elevated toxic rates. Models may learn to predict toxicity from identity mentions alone.
-- **Rare labels**: 'threat' and 'identity_hate' have very few positives. Metric estimates for these labels have high variance.
+- **Label noise**: Lexicon-coverage probes suggest some annotation inconsistency. Requires manual review before quantifying noise level.
+- **Spurious correlates**: Identity terms show varying toxic rates relative to baseline. Models may learn spurious identity-toxicity associations.
+- **Rare labels**: 'threat' and 'identity_hate' have very few positives. Metric estimates for these labels have high variance; bootstrap CIs recommended.
 - **Temporal distribution shift**: Dataset was collected at a specific time; language patterns and slang evolve.
 - **English only**: All comments are in English. Models will not generalize to other languages.

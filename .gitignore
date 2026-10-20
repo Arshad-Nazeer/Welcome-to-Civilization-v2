@@ -12,14 +12,26 @@ env/
 # Large Data files (raw, processed, splits, manual downloads)
 data/raw/*
 !data/raw/.gitkeep
+!data/raw/raw_manifest.json
 data/processed/*
 !data/processed/.gitkeep
+!data/processed/DATA_DICTIONARY.md
+!data/processed/qa_report.json
 data/splits/*
 !data/splits/.gitkeep
+!data/splits/*.json
+!data/splits/v1_exact_dup/
+!data/splits/v1_exact_dup/*.json
 data/raw/kaggle_manual/
 *.parquet
 *.csv.zip
 *.zip
+*.csv
+
+# Reports: keep dedup outputs, ignore large EDA files only
+reports/eda/figures/*.png
+reports/eda/tables/*.csv
+!reports/dedup/
 
 # Local backups from pipeline development
 backup_*/

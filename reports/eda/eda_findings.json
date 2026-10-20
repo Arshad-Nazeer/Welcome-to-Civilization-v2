@@ -1,427 +1,475 @@
 {
   "dataset_sizes": {
     "total_processed": 159571,
-    "train": 127664,
-    "val": 15956,
-    "test": 15951
+    "train": 127861,
+    "val": 15869,
+    "test": 15841
   },
   "a_label_distribution": {
     "counts": {
-      "toxic": 12236,
-      "severe_toxic": 1276,
-      "obscene": 6761,
-      "threat": 383,
-      "insult": 6302,
-      "identity_hate": 1123
+      "toxic": 12222,
+      "severe_toxic": 1269,
+      "obscene": 6739,
+      "threat": 381,
+      "insult": 6290,
+      "identity_hate": 1122
     },
     "rates": {
-      "toxic": 0.095845,
-      "severe_toxic": 0.009995,
-      "obscene": 0.052959,
-      "threat": 0.003,
-      "insult": 0.049364,
-      "identity_hate": 0.008797
+      "toxic": 0.095588,
+      "severe_toxic": 0.009925,
+      "obscene": 0.052706,
+      "threat": 0.00298,
+      "insult": 0.049194,
+      "identity_hate": 0.008775
     },
     "pos_weight": {
-      "toxic": 9.4335,
-      "severe_toxic": 99.0502,
-      "obscene": 17.8824,
-      "threat": 332.3264,
-      "insult": 19.2577,
-      "identity_hate": 112.6812
+      "toxic": 9.4615,
+      "severe_toxic": 99.7573,
+      "obscene": 17.9733,
+      "threat": 334.5932,
+      "insult": 19.3277,
+      "identity_hate": 112.9581
     },
     "imbalance_ratio": {
-      "toxic": 9.433474991827394,
-      "severe_toxic": 99.05015673981191,
-      "obscene": 17.8824138441059,
-      "threat": 332.32637075718014,
-      "insult": 19.257695969533483,
-      "identity_hate": 112.68121104185218
+      "toxic": 9.461544755359188,
+      "severe_toxic": 99.75728920409772,
+      "obscene": 17.97328980560914,
+      "threat": 334.59317585301835,
+      "insult": 19.327662957074722,
+      "identity_hate": 112.95811051693404
     },
-    "total": 127664
+    "total": 127861
   },
   "b_labels_per_comment": {
     "label_counts_distribution": {
-      "0": 114685,
-      "1": 5105,
-      "2": 2749,
-      "3": 3383,
-      "4": 1408,
-      "5": 307,
-      "6": 27
+      "0": 114893,
+      "1": 5080,
+      "2": 2803,
+      "3": 3354,
+      "4": 1404,
+      "5": 303,
+      "6": 24
     },
-    "fraction_clean": 0.898335
+    "fraction_clean": 0.898577
   },
   "c_label_cooccurrence": {
     "cooccurrence_counts": {
       "toxic": {
-        "toxic": 12236,
-        "severe_toxic": 1276,
-        "obscene": 6352,
-        "threat": 359,
-        "insult": 5881,
-        "identity_hate": 1041
+        "toxic": 12222,
+        "severe_toxic": 1269,
+        "obscene": 6323,
+        "threat": 358,
+        "insult": 5863,
+        "identity_hate": 1036
       },
       "severe_toxic": {
-        "toxic": 1276,
-        "severe_toxic": 1276,
-        "obscene": 1216,
-        "threat": 92,
-        "insult": 1102,
+        "toxic": 1269,
+        "severe_toxic": 1269,
+        "obscene": 1207,
+        "threat": 89,
+        "insult": 1105,
         "identity_hate": 249
       },
       "obscene": {
-        "toxic": 6352,
-        "severe_toxic": 1216,
-        "obscene": 6761,
-        "threat": 241,
-        "insult": 4926,
-        "identity_hate": 832
+        "toxic": 6323,
+        "severe_toxic": 1207,
+        "obscene": 6739,
+        "threat": 233,
+        "insult": 4904,
+        "identity_hate": 813
       },
       "threat": {
-        "toxic": 359,
-        "severe_toxic": 92,
-        "obscene": 241,
-        "threat": 383,
-        "insult": 246,
-        "identity_hate": 79
+        "toxic": 358,
+        "severe_toxic": 89,
+        "obscene": 233,
+        "threat": 381,
+        "insult": 237,
+        "identity_hate": 76
       },
       "insult": {
-        "toxic": 5881,
-        "severe_toxic": 1102,
-        "obscene": 4926,
-        "threat": 246,
-        "insult": 6302,
-        "identity_hate": 929
+        "toxic": 5863,
+        "severe_toxic": 1105,
+        "obscene": 4904,
+        "threat": 237,
+        "insult": 6290,
+        "identity_hate": 917
       },
       "identity_hate": {
-        "toxic": 1041,
+        "toxic": 1036,
         "severe_toxic": 249,
-        "obscene": 832,
-        "threat": 79,
-        "insult": 929,
-        "identity_hate": 1123
+        "obscene": 813,
+        "threat": 76,
+        "insult": 917,
+        "identity_hate": 1122
       }
     },
     "cooccurrence_conditional": {
       "toxic": {
         "toxic": 1.0,
         "severe_toxic": 1.0,
-        "obscene": 0.9395,
-        "threat": 0.9373,
-        "insult": 0.9332,
-        "identity_hate": 0.927
+        "obscene": 0.9383,
+        "threat": 0.9396,
+        "insult": 0.9321,
+        "identity_hate": 0.9234
       },
       "severe_toxic": {
-        "toxic": 0.1043,
+        "toxic": 0.1038,
         "severe_toxic": 1.0,
-        "obscene": 0.1799,
-        "threat": 0.2402,
-        "insult": 0.1749,
-        "identity_hate": 0.2217
+        "obscene": 0.1791,
+        "threat": 0.2336,
+        "insult": 0.1757,
+        "identity_hate": 0.2219
       },
       "obscene": {
-        "toxic": 0.5191,
-        "severe_toxic": 0.953,
+        "toxic": 0.5173,
+        "severe_toxic": 0.9511,
         "obscene": 1.0,
-        "threat": 0.6292,
-        "insult": 0.7817,
-        "identity_hate": 0.7409
+        "threat": 0.6115,
+        "insult": 0.7797,
+        "identity_hate": 0.7246
       },
       "threat": {
         "toxic": 0.0293,
-        "severe_toxic": 0.0721,
-        "obscene": 0.0356,
+        "severe_toxic": 0.0701,
+        "obscene": 0.0346,
         "threat": 1.0,
-        "insult": 0.039,
-        "identity_hate": 0.0703
+        "insult": 0.0377,
+        "identity_hate": 0.0677
       },
       "insult": {
-        "toxic": 0.4806,
-        "severe_toxic": 0.8636,
-        "obscene": 0.7286,
-        "threat": 0.6423,
+        "toxic": 0.4797,
+        "severe_toxic": 0.8708,
+        "obscene": 0.7277,
+        "threat": 0.622,
         "insult": 1.0,
-        "identity_hate": 0.8272
+        "identity_hate": 0.8173
       },
       "identity_hate": {
-        "toxic": 0.0851,
-        "severe_toxic": 0.1951,
-        "obscene": 0.1231,
-        "threat": 0.2063,
-        "insult": 0.1474,
+        "toxic": 0.0848,
+        "severe_toxic": 0.1962,
+        "obscene": 0.1206,
+        "threat": 0.1995,
+        "insult": 0.1458,
         "identity_hate": 1.0
       }
     }
   },
   "d_text_length": {
     "n_chars": {
-      "count": 127664.0,
-      "mean": 390.16,
-      "std": 585.6,
+      "count": 127861.0,
+      "mean": 391.77,
+      "std": 586.8,
       "min": 6.0,
-      "25%": 94.0,
-      "50%": 203.0,
-      "75%": 432.0,
-      "90%": 878.0,
-      "95%": 1339.0,
-      "99%": 3384.85,
+      "25%": 95.0,
+      "50%": 204.0,
+      "75%": 433.0,
+      "90%": 886.0,
+      "95%": 1354.0,
+      "99%": 3408.0,
       "max": 5000.0
     },
     "n_words": {
-      "count": 127664.0,
-      "mean": 67.16,
-      "std": 99.16,
+      "count": 127861.0,
+      "mean": 67.45,
+      "std": 99.45,
       "min": 1.0,
       "25%": 17.0,
       "50%": 36.0,
       "75%": 75.0,
-      "90%": 151.0,
-      "95%": 229.0,
-      "99%": 567.0,
+      "90%": 152.0,
+      "95%": 230.0,
+      "99%": 570.0,
       "max": 1411.0
     }
   },
   "e_tokenized_length": {
     "percentiles": {
-      "25": 25.0,
+      "25": 26.0,
       "50": 50.0,
       "75": 100.0,
-      "90": 198.0,
-      "95": 298.0,
-      "99": 782.0,
-      "100": 2689.0
+      "90": 200.0,
+      "95": 299.0,
+      "99": 782.3999999999942,
+      "100": 2514.0
     },
     "truncation": {
       "overall": {
-        "64": 0.400379,
-        "128": 0.183043,
-        "256": 0.06456,
-        "512": 0.020609
+        "64": 0.401053,
+        "128": 0.185029,
+        "256": 0.065853,
+        "512": 0.020468
       },
       "by_label": {
         "64": {
-          "toxic": 0.270023,
-          "severe_toxic": 0.231975,
-          "obscene": 0.249076,
-          "threat": 0.245431,
-          "insult": 0.244367,
-          "identity_hate": 0.267142
+          "toxic": 0.270987,
+          "severe_toxic": 0.231678,
+          "obscene": 0.250185,
+          "threat": 0.23622,
+          "insult": 0.247536,
+          "identity_hate": 0.275401
         },
         "128": {
-          "toxic": 0.114989,
-          "severe_toxic": 0.136364,
-          "obscene": 0.107676,
-          "threat": 0.10705,
-          "insult": 0.100127,
-          "identity_hate": 0.119323
+          "toxic": 0.115366,
+          "severe_toxic": 0.133176,
+          "obscene": 0.107434,
+          "threat": 0.099738,
+          "insult": 0.100636,
+          "identity_hate": 0.125668
         },
         "256": {
-          "toxic": 0.04544,
-          "severe_toxic": 0.097179,
-          "obscene": 0.046739,
-          "threat": 0.05483,
-          "insult": 0.041257,
-          "identity_hate": 0.053428
+          "toxic": 0.045246,
+          "severe_toxic": 0.092987,
+          "obscene": 0.046001,
+          "threat": 0.052493,
+          "insult": 0.039746,
+          "identity_hate": 0.053476
         },
         "512": {
-          "toxic": 0.022638,
-          "severe_toxic": 0.076803,
-          "obscene": 0.023961,
-          "threat": 0.036554,
-          "insult": 0.022374,
-          "identity_hate": 0.031167
+          "toxic": 0.022664,
+          "severe_toxic": 0.074862,
+          "obscene": 0.023149,
+          "threat": 0.031496,
+          "insult": 0.021463,
+          "identity_hate": 0.029412
         }
       }
     },
     "profanity_probe": {
-      "long_toxic_count": 1580,
-      "has_profanity_count": 829,
-      "profanity_after_128_tokens": 163,
-      "profanity_after_128_fraction": 0.1966
+      "n_all_toxic": 12968,
+      "n_long_toxic_gt128": 1596,
+      "has_profanity_in_long_toxic": 789,
+      "profanity_after_token_128": 167,
+      "rate_of_all_toxic": 0.012878,
+      "rate_of_long_toxic": 0.104637,
+      "used_offset_mapping": true,
+      "lexicon": "word_boundary_inflected",
+      "profanity_after_128_fraction": 0.104637
     }
   },
   "f_style_features": {
     "upper_ratio": {
       "toxic": {
-        "toxic_mean": 0.152604,
-        "clean_mean": 0.060504
+        "toxic_mean": 0.152779,
+        "clean_mean": 0.0605
       },
       "severe_toxic": {
-        "toxic_mean": 0.275894,
-        "clean_mean": 0.067246
+        "toxic_mean": 0.279011,
+        "clean_mean": 0.067219
       },
       "obscene": {
-        "toxic_mean": 0.162945,
-        "clean_mean": 0.064097
+        "toxic_mean": 0.16519,
+        "clean_mean": 0.063987
       },
       "threat": {
-        "toxic_mean": 0.201086,
-        "clean_mean": 0.068935
+        "toxic_mean": 0.204604,
+        "clean_mean": 0.068916
       },
       "insult": {
-        "toxic_mean": 0.161503,
-        "clean_mean": 0.064545
+        "toxic_mean": 0.161637,
+        "clean_mean": 0.064544
       },
       "identity_hate": {
-        "toxic_mean": 0.18672,
-        "clean_mean": 0.06829
+        "toxic_mean": 0.194224,
+        "clean_mean": 0.068215
       }
     },
     "punct_ratio": {
       "toxic": {
-        "toxic_mean": 0.048768,
-        "clean_mean": 0.046848
+        "toxic_mean": 0.049018,
+        "clean_mean": 0.046791
       },
       "severe_toxic": {
-        "toxic_mean": 0.051232,
-        "clean_mean": 0.04699
+        "toxic_mean": 0.051223,
+        "clean_mean": 0.046962
       },
       "obscene": {
-        "toxic_mean": 0.049439,
-        "clean_mean": 0.046898
+        "toxic_mean": 0.049612,
+        "clean_mean": 0.046859
       },
       "threat": {
-        "toxic_mean": 0.043491,
-        "clean_mean": 0.047043
+        "toxic_mean": 0.0448,
+        "clean_mean": 0.04701
       },
       "insult": {
-        "toxic_mean": 0.048047,
-        "clean_mean": 0.04698
+        "toxic_mean": 0.048333,
+        "clean_mean": 0.046935
       },
       "identity_hate": {
-        "toxic_mean": 0.042558,
-        "clean_mean": 0.047072
+        "toxic_mean": 0.043475,
+        "clean_mean": 0.047035
       }
     },
     "non_ascii_ratio": {
       "toxic": {
-        "toxic_mean": 0.000501,
-        "clean_mean": 0.001107
+        "toxic_mean": 0.000512,
+        "clean_mean": 0.001097
       },
       "severe_toxic": {
-        "toxic_mean": 0.000248,
-        "clean_mean": 0.001057
+        "toxic_mean": 0.000587,
+        "clean_mean": 0.001045
       },
       "obscene": {
-        "toxic_mean": 0.000574,
-        "clean_mean": 0.001075
+        "toxic_mean": 0.000569,
+        "clean_mean": 0.001067
       },
       "threat": {
-        "toxic_mean": 0.001746,
-        "clean_mean": 0.001047
+        "toxic_mean": 0.00157,
+        "clean_mean": 0.001039
       },
       "insult": {
-        "toxic_mean": 0.000557,
-        "clean_mean": 0.001074
+        "toxic_mean": 0.000544,
+        "clean_mean": 0.001066
       },
       "identity_hate": {
-        "toxic_mean": 0.000382,
-        "clean_mean": 0.001055
+        "toxic_mean": 0.000725,
+        "clean_mean": 0.001043
       }
     },
     "max_repeated_char_run": {
       "toxic": {
-        "toxic_mean": 4.76659,
-        "clean_mean": 2.299148
+        "toxic_mean": 4.312387,
+        "clean_mean": 2.340179
       },
       "severe_toxic": {
-        "toxic_mean": 7.460031,
-        "clean_mean": 2.485924
+        "toxic_mean": 7.453901,
+        "clean_mean": 2.479327
       },
       "obscene": {
-        "toxic_mean": 5.007691,
-        "clean_mean": 2.397401
+        "toxic_mean": 4.325419,
+        "clean_mean": 2.428733
       },
       "threat": {
-        "toxic_mean": 3.21671,
-        "clean_mean": 2.533591
+        "toxic_mean": 4.433071,
+        "clean_mean": 2.523008
       },
       "insult": {
-        "toxic_mean": 5.37623,
-        "clean_mean": 2.388136
+        "toxic_mean": 4.494436,
+        "clean_mean": 2.426993
       },
       "identity_hate": {
-        "toxic_mean": 7.242208,
-        "clean_mean": 2.493872
+        "toxic_mean": 7.420677,
+        "clean_mean": 2.485391
       }
     },
     "has_obfuscation": {
       "toxic": {
-        "toxic_mean": 0.011033,
-        "clean_mean": 0.015793
+        "toxic_mean": 0.022173,
+        "clean_mean": 0.024525
       },
       "severe_toxic": {
-        "toxic_mean": 0.012539,
-        "clean_mean": 0.015365
+        "toxic_mean": 0.022065,
+        "clean_mean": 0.024322
       },
       "obscene": {
-        "toxic_mean": 0.013016,
-        "clean_mean": 0.015467
+        "toxic_mean": 0.024336,
+        "clean_mean": 0.024298
       },
       "threat": {
-        "toxic_mean": 0.018277,
-        "clean_mean": 0.015328
+        "toxic_mean": 0.034121,
+        "clean_mean": 0.02427
       },
       "insult": {
-        "toxic_mean": 0.010949,
-        "clean_mean": 0.015565
+        "toxic_mean": 0.023211,
+        "clean_mean": 0.024356
       },
       "identity_hate": {
-        "toxic_mean": 0.010686,
-        "clean_mean": 0.015378
+        "toxic_mean": 0.020499,
+        "clean_mean": 0.024333
+      }
+    },
+    "_computed_directions": {
+      "upper_ratio": {
+        "toxic": "higher",
+        "severe_toxic": "higher",
+        "obscene": "higher",
+        "threat": "higher",
+        "insult": "higher",
+        "identity_hate": "higher"
+      },
+      "punct_ratio": {
+        "toxic": "higher",
+        "severe_toxic": "higher",
+        "obscene": "higher",
+        "threat": "lower",
+        "insult": "higher",
+        "identity_hate": "lower"
+      },
+      "non_ascii_ratio": {
+        "toxic": "lower",
+        "severe_toxic": "lower",
+        "obscene": "lower",
+        "threat": "higher",
+        "insult": "lower",
+        "identity_hate": "lower"
+      },
+      "max_repeated_char_run": {
+        "toxic": "higher",
+        "severe_toxic": "higher",
+        "obscene": "higher",
+        "threat": "higher",
+        "insult": "higher",
+        "identity_hate": "higher"
+      },
+      "has_obfuscation": {
+        "toxic": "lower",
+        "severe_toxic": "lower",
+        "obscene": "higher",
+        "threat": "higher",
+        "insult": "lower",
+        "identity_hate": "lower"
       }
     }
   },
   "g_lexical": {
     "toxic": [
-      "hi moron",
       "moron hi",
+      "hi moron",
       "pig pig",
       "jew fat",
       "fat jew",
+      "you fuck",
+      "shit shit",
       "bark bark",
       "wanker wanker",
+      "balls balls",
       "bullshit bullshit",
+      "nipple nipple",
       "faggot faggot",
-      "i ass",
-      "nigger nigger",
       "die die",
       "die fag",
-      "faggots faggots",
       "fag die",
+      "faggots faggots",
       "fucksex fucksex",
       "dickhead your",
-      "fuck yourselfgo",
-      "yourselfgo fuck",
-      "you fuck"
+      "fuck yourselfgo"
     ],
     "severe_toxic": [
+      "you fuck",
+      "shit shit",
       "faggot faggot",
-      "i ass",
       "die die",
       "fucksex fucksex",
-      "yourselfgo fuck",
       "fuck yourselfgo",
-      "you fuck",
+      "yourselfgo fuck",
+      "a mothjer",
       "mothjer fucker",
       "fucker cocksucker",
-      "a mothjer",
       "cocksucker you",
-      "fuck your",
       "ass in",
+      "fuck your",
+      "my cock",
       "huge faggot",
       "faggot huge",
-      "suck you",
+      "nigger you",
       "fuck u",
-      "offfuck offfuck",
-      "mexicans suck",
-      "suck mexicans"
+      "suck you",
+      "mexicans suck"
     ],
     "obscene": [
+      "you fuck",
+      "shit shit",
       "bullshit bullshit",
-      "i ass",
-      "nigger nigger",
+      "nipple nipple",
       "die die",
       "faggots faggots",
       "fucksex fucksex",
@@ -430,198 +478,251 @@
       "fuck yourselfgo",
       "jew fat",
       "fat jew",
-      "you fuck",
       "fuck your",
-      "fucker cocksucker",
-      "mothjer fucker",
+      "nigger nigger",
+      "buttsecks buttsecks",
       "a mothjer",
+      "mothjer fucker",
+      "fucker cocksucker",
       "cocksucker you",
-      "ass in",
-      "poop poop",
-      "huge faggot"
+      "twat twat"
     ],
     "threat": [
-      "i ass",
       "die die",
-      "ass i",
-      "die jim",
       "yourself kill",
       "rvv it",
-      "di edie",
       "edie die",
       "die di",
+      "di edie",
       "die wikipedia",
       "wikipedia die",
-      "the_real_stephen_hawkinghttp en",
-      "wiki the_real_stephen_hawkinghttp",
-      "will fuckin",
-      "supertr0ll you",
-      "the supertr0ll",
+      "you pathetic",
       "live forever",
+      "the supertr0ll",
+      "supertr0ll you",
+      "pathetic fool",
+      "supertr0ll will",
+      "fool supertr0ll",
+      "wiki the_real_stephen_hawkinghttp",
+      "the_real_stephen_hawkinghttp en",
       "fuckin kill",
-      "you rvv",
-      "dust filter"
+      "will fuckin",
+      "you rvv"
     ],
     "insult": [
-      "jew fat",
-      "fat jew",
       "moron hi",
       "hi moron",
+      "jew fat",
+      "fat jew",
       "faggot faggot",
-      "i ass",
+      "you fuck",
       "die die",
       "faggots faggots",
       "dickhead your",
-      "fuck yourselfgo",
       "yourselfgo fuck",
-      "nigger nigger",
-      "you fuck",
+      "fuck yourselfgo",
+      "a mothjer",
       "fucker cocksucker",
       "mothjer fucker",
-      "a mothjer",
       "fuck your",
       "cocksucker you",
-      "huge faggot",
-      "faggot huge"
+      "twat twat",
+      "my cock",
+      "nigger nigger",
+      "huge faggot"
     ],
     "identity_hate": [
       "jew fat",
       "fat jew",
-      "nigger nigger",
       "die die",
+      "nigger nigger",
       "huge faggot",
       "faggot huge",
+      "nigger you",
       "mexicans suck",
       "suck mexicans",
-      "i fuck",
-      "niggas i",
       "fuck niggas",
+      "niggas i",
       "bunksteve is",
       "gay bunksteve",
-      "cunt cunt",
+      "stupid nigger",
       "tommy2010 is",
       "nigger tommy2010",
+      "off jewish",
       "jewish ancestryfuck",
       "ancestryfuck off",
-      "off jewish",
-      "spanish centraliststupid"
+      "licker fan"
     ]
   },
   "h_identity_terms": {
+    "overall_toxic_rate": 0.101423,
     "identity_term_stats": [
       {
         "term": "gay",
-        "frequency": 694,
-        "toxic_rate": 0.596542,
-        "flagged": true
-      },
-      {
-        "term": "jew",
-        "frequency": 254,
-        "toxic_rate": 0.326772,
+        "frequency": 692,
+        "toxic_rate": 0.586705,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": 0.485282,
+        "direction": "above_baseline",
         "flagged": true
       },
       {
         "term": "lesbian",
-        "frequency": 56,
-        "toxic_rate": 0.321429,
+        "frequency": 47,
+        "toxic_rate": 0.404255,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": 0.302832,
+        "direction": "above_baseline",
         "flagged": true
       },
       {
-        "term": "woman",
-        "frequency": 388,
-        "toxic_rate": 0.159794,
-        "flagged": false
-      },
-      {
-        "term": "black",
-        "frequency": 882,
-        "toxic_rate": 0.15873,
-        "flagged": false
+        "term": "jew",
+        "frequency": 247,
+        "toxic_rate": 0.331984,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": 0.230561,
+        "direction": "above_baseline",
+        "flagged": true
       },
       {
         "term": "transgender",
         "frequency": 19,
-        "toxic_rate": 0.157895,
+        "toxic_rate": 0.263158,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": 0.161735,
+        "direction": "above_baseline",
         "flagged": false
       },
       {
-        "term": "asian",
-        "frequency": 213,
-        "toxic_rate": 0.14554,
+        "term": "black",
+        "frequency": 911,
+        "toxic_rate": 0.15697,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": 0.055547,
+        "direction": "above_baseline",
         "flagged": false
       },
       {
-        "term": "muslim",
-        "frequency": 400,
-        "toxic_rate": 0.14,
+        "term": "woman",
+        "frequency": 386,
+        "toxic_rate": 0.15544,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": 0.054017,
+        "direction": "above_baseline",
         "flagged": false
       },
       {
         "term": "white",
-        "frequency": 938,
-        "toxic_rate": 0.137527,
+        "frequency": 955,
+        "toxic_rate": 0.146597,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": 0.045174,
+        "direction": "above_baseline",
+        "flagged": false
+      },
+      {
+        "term": "muslim",
+        "frequency": 404,
+        "toxic_rate": 0.141089,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": 0.039666,
+        "direction": "above_baseline",
+        "flagged": false
+      },
+      {
+        "term": "asian",
+        "frequency": 211,
+        "toxic_rate": 0.137441,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": 0.036018,
+        "direction": "above_baseline",
         "flagged": false
       },
       {
         "term": "women",
-        "frequency": 573,
-        "toxic_rate": 0.122164,
-        "flagged": false
-      },
-      {
-        "term": "male",
-        "frequency": 275,
-        "toxic_rate": 0.12,
-        "flagged": false
-      },
-      {
-        "term": "hispanic",
-        "frequency": 59,
-        "toxic_rate": 0.118644,
+        "frequency": 580,
+        "toxic_rate": 0.132759,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": 0.031336,
+        "direction": "above_baseline",
         "flagged": false
       },
       {
         "term": "female",
-        "frequency": 263,
-        "toxic_rate": 0.106464,
+        "frequency": 271,
+        "toxic_rate": 0.121771,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": 0.020348,
+        "direction": "above_baseline",
+        "flagged": false
+      },
+      {
+        "term": "male",
+        "frequency": 281,
+        "toxic_rate": 0.120996,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": 0.019573,
+        "direction": "above_baseline",
         "flagged": false
       },
       {
         "term": "jewish",
         "frequency": 598,
-        "toxic_rate": 0.105351,
+        "toxic_rate": 0.11204,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": 0.010617,
+        "direction": "above_baseline",
+        "flagged": false
+      },
+      {
+        "term": "hispanic",
+        "frequency": 64,
+        "toxic_rate": 0.109375,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": 0.007952,
+        "direction": "above_baseline",
         "flagged": false
       },
       {
         "term": "islam",
-        "frequency": 353,
-        "toxic_rate": 0.084986,
+        "frequency": 335,
+        "toxic_rate": 0.101493,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": 7e-05,
+        "direction": "above_baseline",
         "flagged": false
       },
       {
         "term": "christian",
-        "frequency": 613,
-        "toxic_rate": 0.073409,
+        "frequency": 634,
+        "toxic_rate": 0.077287,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": -0.024136,
+        "direction": "below_or_equal",
         "flagged": false
       },
       {
         "term": "bisexual",
-        "frequency": 28,
-        "toxic_rate": 0.035714,
+        "frequency": 27,
+        "toxic_rate": 0.074074,
+        "overall_toxic_rate": 0.101423,
+        "relative_to_baseline": -0.027349,
+        "direction": "below_or_equal",
         "flagged": false
       }
     ],
     "high_threshold": 0.3,
     "flagged_terms": [
       "gay",
-      "jew",
-      "lesbian"
+      "lesbian",
+      "jew"
     ]
   },
   "i_noise_probes": {
-    "nontoxic_with_profanity_pool": 430,
-    "toxic_without_profanity_pool": 8466,
+    "lexicon": "word_boundary_inflected",
+    "note": "This is a lexicon-coverage probe, NOT a noise measurement. The 30+30 samples require manual review before any noise claim.",
+    "nontoxic_with_profanity_pool": 682,
+    "toxic_without_profanity_pool": 7322,
     "sampled_each": 30
   },
   "j_rare_label": {
@@ -629,32 +730,32 @@
       {
         "split": "train",
         "label": "toxic",
-        "positive_count": 12236
+        "positive_count": 12222
       },
       {
         "split": "train",
         "label": "severe_toxic",
-        "positive_count": 1276
+        "positive_count": 1269
       },
       {
         "split": "train",
         "label": "obscene",
-        "positive_count": 6761
+        "positive_count": 6739
       },
       {
         "split": "train",
         "label": "threat",
-        "positive_count": 383
+        "positive_count": 381
       },
       {
         "split": "train",
         "label": "insult",
-        "positive_count": 6302
+        "positive_count": 6290
       },
       {
         "split": "train",
         "label": "identity_hate",
-        "positive_count": 1123
+        "positive_count": 1122
       },
       {
         "split": "val",
@@ -664,12 +765,12 @@
       {
         "split": "val",
         "label": "severe_toxic",
-        "positive_count": 160
+        "positive_count": 163
       },
       {
         "split": "val",
         "label": "obscene",
-        "positive_count": 844
+        "positive_count": 853
       },
       {
         "split": "val",
@@ -679,7 +780,7 @@
       {
         "split": "val",
         "label": "insult",
-        "positive_count": 787
+        "positive_count": 795
       },
       {
         "split": "val",
@@ -689,72 +790,81 @@
       {
         "split": "test",
         "label": "toxic",
-        "positive_count": 1529
+        "positive_count": 1543
       },
       {
         "split": "test",
         "label": "severe_toxic",
-        "positive_count": 159
+        "positive_count": 163
       },
       {
         "split": "test",
         "label": "obscene",
-        "positive_count": 844
+        "positive_count": 857
       },
       {
         "split": "test",
         "label": "threat",
-        "positive_count": 48
+        "positive_count": 50
       },
       {
         "split": "test",
         "label": "insult",
-        "positive_count": 788
+        "positive_count": 792
       },
       {
         "split": "test",
         "label": "identity_hate",
-        "positive_count": 141
+        "positive_count": 142
       }
     ],
     "warnings": [
       "WARNING: threat has only 47 positives in val split (threshold=100)",
-      "WARNING: threat has only 48 positives in test split (threshold=100)"
+      "WARNING: threat has only 50 positives in test split (threshold=100)"
     ]
   },
   "k_split_sanity": {
     "split_label_rates": {
       "train": {
-        "toxic": 0.095845,
-        "severe_toxic": 0.009995,
-        "obscene": 0.052959,
-        "threat": 0.003,
-        "insult": 0.049364,
-        "identity_hate": 0.008797
+        "toxic": 0.095588,
+        "severe_toxic": 0.009925,
+        "obscene": 0.052706,
+        "threat": 0.00298,
+        "insult": 0.049194,
+        "identity_hate": 0.008775
       },
       "val": {
-        "toxic": 0.095826,
-        "severe_toxic": 0.010028,
-        "obscene": 0.052895,
-        "threat": 0.002946,
-        "insult": 0.049323,
-        "identity_hate": 0.008837
+        "toxic": 0.096351,
+        "severe_toxic": 0.010272,
+        "obscene": 0.053753,
+        "threat": 0.002962,
+        "insult": 0.050098,
+        "identity_hate": 0.008885
       },
       "test": {
-        "toxic": 0.095856,
-        "severe_toxic": 0.009968,
-        "obscene": 0.052912,
-        "threat": 0.003009,
-        "insult": 0.049401,
-        "identity_hate": 0.00884
+        "toxic": 0.097405,
+        "severe_toxic": 0.01029,
+        "obscene": 0.0541,
+        "threat": 0.003156,
+        "insult": 0.049997,
+        "identity_hate": 0.008964
       }
     }
   },
   "l_vocabulary": {
-    "vocab_size": 402135,
-    "hapax_count": 261989,
-    "hapax_ratio": 0.651495,
-    "in_vocab_min_freq_5": 55821,
-    "oov_rate_vs_freq5_vocab": 0.861188
+    "vocab_size": 166654,
+    "total_tokens": 10915047,
+    "hapax_count": 87345,
+    "hapax_ratio": 0.52411,
+    "in_vocab_types_min_freq_5": 38005,
+    "oov_type_rate_vs_freq5_vocab": 0.771953,
+    "oov_token_rate_vs_freq5_vocab": 0.017764,
+    "token_coverage_at_vocab_sizes": {
+      "10000": 0.949987,
+      "20000": 0.96995,
+      "50000": 0.986135,
+      "80000": 0.992061
+    },
+    "oov_rate_vs_freq5_vocab": 0.771953
   }
 }

@@ -56,17 +56,30 @@ python -m venv .venv
 
 ### 3. Obtain the data
 
-**Option A — Kaggle CLI (recommended)**:
+The download script (`scripts/01_download_data.py`) tries data sources in this order:
+
+**Option A — Local CSVs (fastest, tried first)**:
+1. Go to https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/data
+2. Accept the competition rules and download: `train.csv`, `test.csv`, `test_labels.csv`
+3. Place all three files here — **no renaming needed**:
+   ```
+   data/raw/kaggle_manual/train.csv
+   data/raw/kaggle_manual/test.csv
+   data/raw/kaggle_manual/test_labels.csv
+   ```
+4. Run: `make download` (or skip entirely if `data/raw/train.parquet` already exists)
+
+**Option B — Kaggle CLI (tried second)**:
 ```bash
-# Set up Kaggle credentials: place kaggle.json in ~/.kaggle/
+# Place kaggle.json in ~/.kaggle/ first
 make download
 ```
 
-**Option B — Manual download**:
-1. Go to https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/data
-2. Accept the rules and download `train.csv`, `test.csv`, `test_labels.csv`
-3. Place all three in `data/raw/kaggle_manual/`
-4. Run: `make download`
+**Option C — HuggingFace (tried last, may require authentication)**:
+The download script falls back to `load_dataset("google/jigsaw_toxicity_pred")`.
+
+> The active data source is recorded in `data/raw/raw_manifest.json` and referenced as `data_source: kaggle_csv` in `configs/config.yaml`.
+
 
 ### 4. Run the full pipeline
 ```bash

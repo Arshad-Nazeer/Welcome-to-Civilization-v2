@@ -1,0 +1,16 @@
+{
+  "total_clusters": 152527,
+  "clusters_ge2": 1699,
+  "rows_in_clusters_ge2": 8743,
+  "largest_cluster_size": 403,
+  "cross_split_clusters": 0,
+  "clusters_with_conflicting_labels": 286,
+  "near_dup_config": {
+    "method": "minhash_lsh",
+    "shingle": "char5",
+    "num_perm": 128,
+    "threshold": 0.8,
+    "min_chars": 20,
+    "seed": 42
+  }
+}

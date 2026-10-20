@@ -6,6 +6,7 @@
 # Scripts resolve them via src/wtc/config.py.
 
 seed: 42
+data_source: kaggle_csv
 
 # ---------- Column names ----------
 text_column: comment_text
@@ -45,6 +46,15 @@ hf_dataset_name: google/jigsaw_toxicity_pred
 
 # ---------- Kaggle competition ----------
 kaggle_competition: jigsaw-toxic-comment-classification-challenge
+
+# ---------- Near-duplicate detection (Phase 1) ----------
+near_dup:
+  method: minhash_lsh
+  shingle: char5
+  num_perm: 128
+  threshold: 0.8
+  min_chars: 20
+  seed: 42
 
 # ---------- Identity terms for bias probe ----------
 identity_terms:

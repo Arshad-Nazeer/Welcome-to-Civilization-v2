@@ -2,9 +2,22 @@
 # ============================================================
 #  Welcome to Civilization — Makefile
 # ============================================================
+# Cross-platform: detects .venv/bin (Linux/Mac) vs .venv/Scripts (Windows).
+# Override: make PYTHON=/path/to/python preprocess
 
-PYTHON := .venv/Scripts/python
-PIP    := .venv/Scripts/pip
+ifeq ($(OS),Windows_NT)
+  VENV_PYTHON := .venv/Scripts/python
+  VENV_PIP    := .venv/Scripts/pip
+  VENV_PYTEST := .venv/Scripts/pytest
+else
+  VENV_PYTHON := .venv/bin/python
+  VENV_PIP    := .venv/bin/pip
+  VENV_PYTEST := .venv/bin/pytest
+endif
+
+PYTHON ?= $(VENV_PYTHON)
+PIP    ?= $(VENV_PIP)
+PYTEST ?= $(VENV_PYTEST)
 
 .PHONY: all setup download preprocess eda report test clean
 
@@ -28,7 +41,7 @@ report:
 	$(PYTHON) scripts/04_build_report.py
 
 test:
-	.venv/Scripts/pytest tests/ -v
+	$(PYTEST) tests/ -v
 
 clean:
 	rm -rf data/processed/* data/splits/* reports/eda/figures/* \

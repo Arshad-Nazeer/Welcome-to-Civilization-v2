@@ -1,0 +1,40 @@
+{
+  "source": "kaggle_manual_csv",
+  "download_date_utc": "2026-10-20T18:56:32.665998+00:00",
+  "library_versions": {
+    "datasets": "3.1.0",
+    "pandas": "2.2.3",
+    "transformers": "4.45.2",
+    "python": "3.12.6"
+  },
+  "files": {
+    "train.parquet": {
+      "sha256": "11192d0c14cfec3e15fd8423315938779f7e7f9b8d70973b9c80552a96f9463f",
+      "size_bytes": 43018619
+    },
+    "test.parquet": {
+      "sha256": "754f8d2f4f2f1d364e9059f8fa7ea586c28a6b29baabcf46abb3fc824551862a",
+      "size_bytes": 38582717
+    },
+    "official_test.parquet": {
+      "sha256": "cb9fd2191ec2d68f12625eed5bf1a92063e077bdaae1cf5dfe1587f0b9ccb327",
+      "size_bytes": 16950507
+    }
+  },
+  "train_rows": 159571,
+  "train_columns": [
+    "id",
+    "comment_text",
+    "toxic",
+    "severe_toxic",
+    "obscene",
+    "threat",
+    "insult",
+    "identity_hate"
+  ],
+  "test_rows": 153164,
+  "official_test_rows": 63978,
+  "notes": {
+    "test_labels_minus1": "In the official test labels, -1 means the row was not used for scoring. These rows are kept in raw data but flagged."
+  }
+}

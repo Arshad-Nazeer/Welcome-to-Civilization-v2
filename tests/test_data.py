@@ -228,3 +228,34 @@ def test_is_clean_consistent(processed):
     expected_clean = (processed[LABELS].sum(axis=1) == 0).astype(int)
     assert (expected_clean == processed["is_clean"]).all(), \
         "is_clean is not consistent with label columns"
+
+
+# ------------------------------------------------------------------ #
+#  T11: No dup_group_v2 cluster crosses splits (near-dup leakage)     #
+# ------------------------------------------------------------------ #
+
+def test_no_near_dup_group_v2_leakage(train_df, val_df, test_df):
+    """Verify that no near-duplicate cluster (dup_group_v2) spans multiple splits."""
+    if "dup_group_v2" not in train_df.columns:
+        pytest.skip(
+            "dup_group_v2 column absent — run 02_preprocess.py with near-dup support first."
+        )
+
+    train_groups = set(train_df["dup_group_v2"].unique())
+    val_groups   = set(val_df["dup_group_v2"].unique())
+    test_groups  = set(test_df["dup_group_v2"].unique())
+
+    tv = train_groups & val_groups
+    tt = train_groups & test_groups
+    vt = val_groups   & test_groups
+
+    msgs = []
+    if tv:
+        msgs.append(f"dup_group_v2 leakage train/val: {len(tv)} shared clusters")
+    if tt:
+        msgs.append(f"dup_group_v2 leakage train/test: {len(tt)} shared clusters")
+    if vt:
+        msgs.append(f"dup_group_v2 leakage val/test: {len(vt)} shared clusters")
+
+    assert not msgs, "\n".join(msgs)
+

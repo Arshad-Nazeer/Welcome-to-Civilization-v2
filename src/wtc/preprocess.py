@@ -136,6 +136,103 @@ def assign_dup_groups(df: pd.DataFrame, text_col: str = "text_clean") -> pd.Seri
 
 
 # ------------------------------------------------------------------ #
+#  Near-duplicate detection (MinHash + LSH + Union-Find)              #
+# ------------------------------------------------------------------ #
+
+class _UnionFind:
+    def __init__(self, n: int) -> None:
+        self.parent = list(range(n))
+
+    def find(self, x: int) -> int:
+        while self.parent[x] != x:
+            self.parent[x] = self.parent[self.parent[x]]
+            x = self.parent[x]
+        return x
+
+    def union(self, x: int, y: int) -> None:
+        rx, ry = self.find(x), self.find(y)
+        if rx != ry:
+            # Always keep the smaller index as root
+            if rx < ry:
+                self.parent[ry] = rx
+            else:
+                self.parent[rx] = ry
+
+
+def assign_near_dup_groups(df: pd.DataFrame, cfg: dict, text_col: str = "text_clean") -> pd.Series:
+    """
+    Union-Find over:
+      (a) exact-duplicate dup_group pairs
+      (b) MinHash-LSH near-duplicate candidates with Jaccard >= threshold (char 5-grams).
+    Texts with len < min_chars are skipped for LSH (but merged via dup_group).
+    Returns dup_group_v2 Series (int; component id = smallest positional index).
+    cfg keys: num_perm, threshold, min_chars, seed  (from config.yaml near_dup block).
+    """
+    from datasketch import MinHash, MinHashLSH
+
+    num_perm = int(cfg.get("num_perm", 128))
+    threshold = float(cfg.get("threshold", 0.8))
+    min_chars = int(cfg.get("min_chars", 20))
+    seed = int(cfg.get("seed", 42))
+
+    n = len(df)
+    uf = _UnionFind(n)
+
+    # (a) Merge exact dup_group pairs
+    dup_group = assign_dup_groups(df, text_col=text_col)
+    pos_map = {orig: pos for pos, orig in enumerate(df.index)}
+    group_to_positions: dict = {}
+    for idx, grp in zip(df.index, dup_group):
+        group_to_positions.setdefault(int(grp), []).append(pos_map[idx])
+    for positions in group_to_positions.values():
+        root = positions[0]
+        for p in positions[1:]:
+            uf.union(root, p)
+
+    # (b) MinHash-LSH on lowercase text_clean
+    texts_lower = df[text_col].str.strip().str.lower().tolist()
+
+    def make_minhash(text: str) -> MinHash:
+        m = MinHash(num_perm=num_perm, seed=seed)
+        shingles = {text[i:i+5].encode("utf8") for i in range(len(text) - 4)}
+        for s in shingles:
+            m.update(s)
+        return m
+
+    lsh = MinHashLSH(threshold=threshold, num_perm=num_perm)
+    minhashes: dict[int, MinHash] = {}
+
+    for pos, text in enumerate(texts_lower):
+        if len(text) < min_chars:
+            continue
+        m = make_minhash(text)
+        minhashes[pos] = m
+        lsh.insert(str(pos), m)
+
+    # Query and verify Jaccard >= threshold, then union
+    for pos, m in minhashes.items():
+        candidates = lsh.query(m)
+        for c_str in candidates:
+            c = int(c_str)
+            if c == pos:
+                continue
+            j = m.jaccard(minhashes[c])
+            if j >= threshold:
+                uf.union(pos, c)
+
+    # Build output: component id = smallest positional index in component
+    raw_comp = [uf.find(i) for i in range(n)]
+    # Map root -> min position in component
+    comp_min: dict[int, int] = {}
+    for i, r in enumerate(raw_comp):
+        if r not in comp_min or i < comp_min[r]:
+            comp_min[r] = i
+    group_ids = [comp_min[raw_comp[i]] for i in range(n)]
+
+    return pd.Series(group_ids, index=df.index, name="dup_group_v2", dtype="int64")
+
+
+# ------------------------------------------------------------------ #
 #  Full feature-engineering pass                                       #
 # ------------------------------------------------------------------ #
 

@@ -4,11 +4,13 @@
 scripts/01_download_data.py
 ---------------------------
 Download the Jigsaw Toxicity dataset and save raw parquet files.
-Tries four strategies in order:
-  (a) HuggingFace load_dataset("google/jigsaw_toxicity_pred")
-  (b) load_dataset with data_dir pointing to data/raw/kaggle_manual/
-  (c) Kaggle CLI download
+Tries strategies in order:
+  (a) Local CSVs in data/raw/kaggle_manual/ (train.csv, test.csv, test_labels.csv)
+  (b) Kaggle CLI download
+  (c) HuggingFace load_dataset("google/jigsaw_toxicity_pred")
   (d) STOP and print manual instructions
+
+For manual CSV placement, see README.md section "Data Download".
 """
 
 from __future__ import annotations
@@ -290,7 +292,8 @@ def process_and_save(
 def main() -> None:
     log.info("=== 01_download_data.py START ===")
     with Timer() as t:
-        for strategy_fn in [try_hf_direct, try_hf_manual, try_kaggle_cli]:
+        # Order: local CSVs first, then Kaggle CLI, then HuggingFace
+        for strategy_fn in [try_hf_manual, try_kaggle_cli, try_hf_direct]:
             train_df, test_df, source = strategy_fn()
             if train_df is not None:
                 process_and_save(train_df, test_df, source)

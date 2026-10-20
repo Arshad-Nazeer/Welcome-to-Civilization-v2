@@ -1,0 +1,116 @@
+{
+  "qa_checks": {
+    "null_counts": {
+      "id": 0,
+      "comment_text": 0,
+      "toxic": 0,
+      "severe_toxic": 0,
+      "obscene": 0,
+      "threat": 0,
+      "insult": 0,
+      "identity_hate": 0,
+      "text_clean": 0,
+      "has_url": 0,
+      "has_ip": 0,
+      "has_mention": 0,
+      "n_chars": 0,
+      "n_words": 0,
+      "n_labels": 0,
+      "is_clean": 0,
+      "upper_ratio": 0,
+      "non_ascii_ratio": 0,
+      "punct_ratio": 0,
+      "max_repeated_char_run": 0,
+      "dup_group": 0
+    },
+    "empty_text_count": 0,
+    "exact_duplicate_count": 198,
+    "conflicting_label_duplicates": 41
+  },
+  "final_rows": 159571,
+  "split_manifest": {
+    "split_version": "v2_near_dup",
+    "created_utc": "2026-10-20T21:27:50.492554+00:00",
+    "seed": 42,
+    "near_dup_config": {
+      "method": "minhash_lsh",
+      "shingle": "char5",
+      "num_perm": 128,
+      "threshold": 0.8,
+      "min_chars": 20,
+      "seed": 42
+    },
+    "processed_parquet_sha256": "0cba21f71c42d634d3c3584379da31563375954b4eec089e433d7a715b880c7e",
+    "split_ratios": {
+      "train": 0.8,
+      "val": 0.1,
+      "test": 0.1
+    },
+    "library_versions": {
+      "python": "3.12.6",
+      "pandas": "2.2.3",
+      "numpy": "1.26.4",
+      "datasketch": "1.6.5",
+      "scikit_learn": "1.5.2"
+    },
+    "splits": {
+      "train": {
+        "n_rows": 127861,
+        "label_positive_counts": {
+          "toxic": 12222,
+          "severe_toxic": 1269,
+          "obscene": 6739,
+          "threat": 381,
+          "insult": 6290,
+          "identity_hate": 1122
+        },
+        "label_positive_rates": {
+          "toxic": 0.095588,
+          "severe_toxic": 0.009925,
+          "obscene": 0.052706,
+          "threat": 0.00298,
+          "insult": 0.049194,
+          "identity_hate": 0.008775
+        }
+      },
+      "val": {
+        "n_rows": 15869,
+        "label_positive_counts": {
+          "toxic": 1529,
+          "severe_toxic": 163,
+          "obscene": 853,
+          "threat": 47,
+          "insult": 795,
+          "identity_hate": 141
+        },
+        "label_positive_rates": {
+          "toxic": 0.096351,
+          "severe_toxic": 0.010272,
+          "obscene": 0.053753,
+          "threat": 0.002962,
+          "insult": 0.050098,
+          "identity_hate": 0.008885
+        }
+      },
+      "test": {
+        "n_rows": 15841,
+        "label_positive_counts": {
+          "toxic": 1543,
+          "severe_toxic": 163,
+          "obscene": 857,
+          "threat": 50,
+          "insult": 792,
+          "identity_hate": 142
+        },
+        "label_positive_rates": {
+          "toxic": 0.097405,
+          "severe_toxic": 0.01029,
+          "obscene": 0.0541,
+          "threat": 0.003156,
+          "insult": 0.049997,
+          "identity_hate": 0.008964
+        }
+      }
+    }
+  }
+}
