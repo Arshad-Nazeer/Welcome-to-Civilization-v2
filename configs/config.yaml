@@ -1,0 +1,84 @@
+
+# ============================================================
+#  Welcome to Civilization — Central Configuration
+# ============================================================
+# All paths are relative to the project root.
+# Scripts resolve them via src/wtc/config.py.
+
+seed: 42
+
+# ---------- Column names ----------
+text_column: comment_text
+id_column: id
+labels:
+  - toxic
+  - severe_toxic
+  - obscene
+  - threat
+  - insult
+  - identity_hate
+
+# ---------- Split ratios ----------
+splits:
+  train: 0.80
+  val:   0.10
+  test:  0.10
+
+# ---------- Paths ----------
+paths:
+  data_raw:         data/raw
+  data_raw_kaggle:  data/raw/kaggle_manual
+  data_processed:   data/processed
+  data_splits:      data/splits
+  logs:             logs
+  reports_eda:      reports/eda
+  figures:          reports/eda/figures
+  tables:           reports/eda/tables
+  runs:             runs
+
+# ---------- Tokenizer (for EDA step e) ----------
+tokenizer_name: roberta-base
+max_len_options: [64, 128, 256, 512]
+
+# ---------- Hugging Face dataset ----------
+hf_dataset_name: google/jigsaw_toxicity_pred
+
+# ---------- Kaggle competition ----------
+kaggle_competition: jigsaw-toxic-comment-classification-challenge
+
+# ---------- Identity terms for bias probe ----------
+identity_terms:
+  - gay
+  - lesbian
+  - bisexual
+  - transgender
+  - muslim
+  - islam
+  - jewish
+  - jew
+  - christian
+  - black
+  - white
+  - hispanic
+  - asian
+  - woman
+  - women
+  - female
+  - male
+
+# ---------- Profanity lexicon (simple, for truncation probe) ----------
+profanity_terms:
+  - fuck
+  - shit
+  - bitch
+  - asshole
+  - cunt
+  - cock
+  - dick
+  - nigger
+  - nigga
+  - faggot
+  - retard
+  - bastard
+  - whore
+  - slut

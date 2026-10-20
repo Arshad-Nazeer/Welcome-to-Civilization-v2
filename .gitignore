@@ -1,0 +1,56 @@
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Large Data files (raw, processed, splits, manual downloads)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/splits/*
+!data/splits/.gitkeep
+data/raw/kaggle_manual/
+*.parquet
+*.csv.zip
+*.zip
+
+# Local backups from pipeline development
+backup_*/
+
+# Logs & Training runs
+logs/*
+!logs/.gitkeep
+runs/*
+!runs/.gitkeep
+*.log
+
+# Testing & Caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Credentials & secrets
+kaggle.json
+*.key
+*.pem
+.env

@@ -1,0 +1,64 @@
+# Welcome to Civilization — Project Progress
+
+**Project**: Multi-label toxicity classification on Jigsaw Toxic Comment dataset  
+**Last Updated**: 2026-10-21 00:52 IST  
+**Global Seed**: 42  
+**Virtual Environment**: `.venv` (Python 3.12.6)
+
+---
+
+## Stage Tracking
+
+| Stage | Name | Status | Date Verified | Outputs / Deliverables | Open Issues |
+|---|---|---|---|---|---|
+| **1** | **Environment** | **DONE-VERIFIED** | 2026-10-21 | `.venv`, `requirements.txt` (18 pinned deps), `configs/config.yaml`, `src/wtc/config.py`, `src/wtc/utils.py`, `conftest.py`, `.gitignore` | None |
+| **2** | **Project Structure** | **DONE-VERIFIED** | 2026-10-21 | Folder structure, `src/wtc/` package, `scripts/01-04`, `notebooks/01_eda.ipynb`, `tests/test_data.py` | None |
+| **3** | **Data Import & Raw Save** | **DONE-VERIFIED** | 2026-10-21 | `data/raw/train.parquet` (159,571 rows), `data/raw/test.parquet` (153,164 rows), `data/raw/official_test.parquet` (63,978 rows), `data/raw/raw_manifest.json`, `logs/01_download_2026-10-21.log` | None |
+| **4** | **Preprocessing & Splits** | **DONE-VERIFIED** | 2026-10-21 | `data/processed/processed.{parquet,csv}` (159,571 rows, 21 cols), `data/splits/{train,val,test}_idx.json`, `split_manifest.json`, `DATA_DICTIONARY.md`, `qa_report.json`, pytest suite (12/12 passed) | None |
+| **5** | **EDA (Analyses a–l)** | **DONE-VERIFIED** | 2026-10-21 | `reports/eda/eda_findings.json`, 24 CSV tables in `reports/eda/tables/`, 27 PNG figures in `reports/eda/figures/` (200 dpi), `logs/03_eda_2026-10-21.log` | None |
+| **6** | **Report Building** | **DONE-VERIFIED** | 2026-10-21 | `reports/eda/eda_conclusions.md`, `reports/eda/eda_report.md`, `logs/04_build_report_2026-10-21.log` | None |
+| **7** | **Verification** | **DONE-VERIFIED** | 2026-10-21 | End-to-end execution verified (`run_all.ps1`, `run_all.sh`), pytest full suite (12/12 passed), `README.md` updated | None |
+
+---
+
+## Log of Actions
+
+### 2026-10-21
+- **Audit completed**: Full audit of existing disk contents; classified stages 1-7; identified Stage 3 as the earliest incomplete stage.
+- **Progress tracking initialized**: Created `PROGRESS.md`.
+- **Bug fix (`src/wtc/utils.py`)**: Fixed `Timer.__str__` attribute error when invoked within context manager block. (Backup saved to `backup_20261021_0025/`).
+- **Data download refinement (`scripts/01_download_data.py`)**: Hugging Face dataset script dropped the required `id` column and omitted the 89,186 unscored test rows. Added validation to trigger raw CSV fallback so `id` is retained and all 153,164 test rows are preserved with `label_available` flag per specification.
+- **Stage 3 executed & verified**:
+  - `data/raw/train.parquet`: 159,571 rows, 8 columns (`id`, `comment_text`, 6 labels).
+  - `data/raw/test.parquet`: 153,164 rows, 9 columns (with `label_available`).
+  - `data/raw/official_test.parquet`: 63,978 rows (scored subset).
+  - `data/raw/raw_manifest.json`: Verified SHA-256 hashes match files on disk.
+- **Stage 4 executed & verified**:
+  - `scripts/02_preprocess.py` ran in 77.2s.
+  - Features engineered: `text_clean`, `has_url`, `has_ip`, `has_mention`, `n_chars`, `n_words`, `n_labels`, `is_clean`, `upper_ratio`, `non_ascii_ratio`, `punct_ratio`, `max_repeated_char_run`, `dup_group`.
+  - QA checks: 0 nulls across all 21 columns, 0 empty comments dropped, 198 exact duplicate texts, 41 conflicting duplicate groups.
+  - Processed files saved: `data/processed/processed.parquet` (85.5 MB) and `processed.csv` (144.7 MB).
+  - Splitting: Multilabel-stratified 80/10/10 split on duplicate groups.
+    - Train: 127,664 rows (80.004%)
+    - Val: 15,956 rows (9.999%)
+    - Test: 15,951 rows (9.996%)
+    - Zero duplicate-group leakage across splits.
+  - Test suite: `pytest tests/test_data.py` executed: **12 passed in 4.92s**.
+- **Stage 5 executed & verified**:
+  - Fixed output routing in `scripts/03_eda.py` (`shutil.move`) so `reports/eda/tables/` contains strictly CSVs and `reports/eda/figures/` contains PNGs. (Backup saved to `backup_20261021_0032/`).
+  - Downloaded and cached `roberta-base` Fast Tokenizer.
+  - Ran `scripts/03_eda.py` (289.6s runtime).
+  - Generated all 12 EDA analyses (a–l):
+    - 24 CSV tables in `reports/eda/tables/`.
+    - 27 PNG figures in `reports/eda/figures/` (verified 200 DPI).
+    - `reports/eda/eda_findings.json` populated with all statistics.
+- **Stage 6 executed & verified**:
+  - Added explicit reporting of `P(toxic | severe_toxic) = 100%` alongside `P(severe_toxic | toxic) = 10.43%` in `scripts/04_build_report.py`. (Backup saved to `backup_20261021_0045/`).
+  - Ran `scripts/04_build_report.py`.
+  - Generated `reports/eda/eda_conclusions.md` (12 numbered findings, recommended decisions, risks/limitations, zero hardcoded numbers).
+  - Generated `reports/eda/eda_report.md` (comprehensive report, Data Card, TOC, markdown tables, verified image paths).
+- **Stage 7 executed & verified**:
+  - Created `run_all.ps1` for native Windows PowerShell execution alongside `run_all.sh` and `Makefile`.
+  - Fixed project root resolution in `notebooks/01_eda.ipynb` so kernel locates `src/` whether started from root or `notebooks/`. (Backup saved to `backup_20261021_0050/`).
+  - Updated `README.md` with accurate 12-test suite description and PowerShell run instructions.
+  - Full test suite passed: `12 passed in 4.81s`.
