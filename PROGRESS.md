@@ -19,6 +19,7 @@
 | **6** | **Report Building** | **DONE-VERIFIED** | 2026-10-21 | `reports/eda/eda_conclusions.md`, `reports/eda/eda_report.md`, `logs/04_build_report_2026-10-21.log` | None |
 | **7** | **Verification** | **DONE-VERIFIED** | 2026-10-21 | End-to-end execution verified (`run_all.ps1`, `run_all.sh`), pytest full suite (12/12 passed), `README.md` updated | None |
 | **8** | **Model 1 (TF-IDF + LR)** | **DONE-VERIFIED** | 2026-10-21 | `models/1_tfidf_lr/`, `predictions/1_tfidf_lr/`, `reports/1_tfidf_lr/`, `visualizations/1_tfidf_lr/`, `scripts/10,20,21`, `src/wtc/{evaluation,plotting,inference}.py` | None |
+| **9** | **Model 2 (BiGRU + Attn)** | **DONE-VERIFIED** | 2026-10-21 | `models/2_bigru_attn/`, `predictions/2_bigru_attn/`, `reports/2_bigru_attn/`, `visualizations/2_bigru_attn/`, `scripts/11_train_bigru.py`, `src/wtc/bigru_module.py`, `src/wtc/model_specific.py` | None |
 
 ---
 
@@ -72,3 +73,12 @@
   - Headline metrics (Test): Macro F1 = 0.6443, Micro F1 = 0.7585, Macro PR-AUC = 0.6750, Mean ROC-AUC = 0.9858.
   - CPU throughput: 1,631.9 comments/sec (0.61 ms/comment).
   - Generated full report: `reports/1_tfidf_lr/model_report.md`.
+- **Stage 9 executed & verified (Model 2: BiGRU + Additive Attention)**:
+  - Installed PyTorch CUDA 12.4 in `.venv`, pinned in `requirements-gpu.txt`. RTX 3060 Laptop GPU (6.00 GB VRAM) verified.
+  - Downloaded and cached 300-d fastText embeddings from `crawl-300d-2M.vec.zip` into `models/2_bigru_attn/embedding_cache.npy` (hit rate: 86.58% types, vocab 50,002).
+  - Implemented `src/wtc/bigru_module.py` and `scripts/11_train_bigru.py` with packed padded sequences, spatial dropout 0.25, float32 masked attention pooling, length-bucketed batching, AMP fp16, and resumable checkpoints.
+  - Full training completed in 144.92s (2.42 min, 6 epochs, mean epoch time 21.22s, peak VRAM 2,466 MB); best checkpoint at Epoch 5 (val macro PR-AUC: 0.7150).
+  - Evaluated with `scripts/20_evaluate.py`: val bootstrap threshold tuning, 1,000 test bootstrap resamples. Headline metrics (Test): Macro F1 = 0.6586, Micro F1 = 0.7773, Macro PR-AUC = 0.7048, Mean ROC-AUC = 0.9900.
+  - Inference speed: 10,789.0 comments/sec (0.093 ms/comment on GPU), 1,003.3 comments/sec on CPU (16 threads).
+  - Generated full report: `reports/2_bigru_attn/model_report.md` and regenerated Model 1 report with bug fixes.
+

@@ -213,3 +213,35 @@ Linear baseline using dual Word (50,000) and Char (100,000) TF-IDF representatio
 - **Throughput**: 1,631.9 comments/sec (0.61 ms/comment on CPU)
 - **Model Report**: [reports/1_tfidf_lr/model_report.md](reports/1_tfidf_lr/model_report.md)
 
+---
+
+## Model 2: BiGRU + Additive Attention (`2_bigru_attn`)
+
+Neural baseline using 300-d frozen fastText embeddings (`crawl-300d-2M.vec.zip`), 1-layer bidirectional GRU (128 units/direction = 256 output), spatial dropout (0.25), additive attention pooling (128-d tanh projection, masked over padded positions), and linear head with square-root class weighting and log-odds bias initialization. Trained with AdamW (lr 1e-3, weight_decay 0.01), grad clipping 1.0, and AMP fp16 on NVIDIA RTX 3060 Laptop GPU.
+
+### Commands
+
+```powershell
+# 1. Train Model 2 (tokenization, cached fastText matrix, GPU training up to 6 epochs)
+.venv\Scripts\python scripts\11_train_bigru.py
+
+# Optional quick smoke test:
+.venv\Scripts\python scripts\11_train_bigru.py --smoke
+
+# 2. Reusable evaluation (val bootstrap threshold tuning, test metrics, attention analysis, dual-device benchmark)
+.venv\Scripts\python scripts\20_evaluate.py --model-id 2_bigru_attn
+
+# 3. Build comprehensive model evaluation report
+.venv\Scripts\python scripts\21_build_model_report.py --model-id 2_bigru_attn
+```
+
+### Key Performance (Test Split)
+- **Macro F1**: 0.6586 (95% CI: [0.6336, 0.6834])
+- **Micro F1**: 0.7773 (95% CI: [0.7649, 0.7886])
+- **Macro PR-AUC**: 0.7048 (95% CI: [0.6751, 0.7363])
+- **Mean ROC-AUC**: 0.9900 (95% CI: [0.9887, 0.9912])
+- **Throughput (GPU)**: 10,789.0 comments/sec (0.093 ms/comment on RTX 3060)
+- **Throughput (CPU)**: 1,003.3 comments/sec (0.997 ms/comment, 16 threads)
+- **Model Report**: [reports/2_bigru_attn/model_report.md](reports/2_bigru_attn/model_report.md)
+
+

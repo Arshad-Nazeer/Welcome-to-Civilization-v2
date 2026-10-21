@@ -1,0 +1,9 @@
+{
+  "vocab_hash": "c98cbd22ac5ada920e02f35b65b027262b241e1966d7d517262c4f7a4ce8da59",
+  "fasttext_source": "crawl-300d-2M.vec.zip",
+  "total_vocab": 50002,
+  "found_words": 43292,
+  "missing_words": 6709,
+  "type_hit_rate_pct": 86.58,
+  "embedding_dim": 300
+}

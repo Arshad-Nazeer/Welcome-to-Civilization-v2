@@ -14,7 +14,9 @@ Produces:
 3. reports/<id>/tables/*.csv (test & val metrics, threshold comp, calibration)
 4. predictions/<id>/{val,test}_predictions.csv (id, probs, preds, hier, ground truth)
 5. visualizations/<id>/*.png (200 DPI figures with fixed model color)
-6. Model-specific: top 20 positive n-grams, inference latency & throughput, disk size.
+6. Model-specific routines dispatched via adapter_type:
+   - tfidf_lr: top 20 positive n-grams per label
+   - bigru_attn: training curves, attention weights, dual-device benchmark.
 """
 
 from __future__ import annotations
@@ -23,8 +25,10 @@ import argparse
 from datetime import datetime, timezone
 import json
 from pathlib import Path
+import shutil
 import sys
 import time
+import warnings
 
 # Ensure project root src is on sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
@@ -50,6 +54,7 @@ from wtc.config import (
 from wtc.data import load_split
 from wtc.evaluation import export_evaluation_tables, run_evaluation
 from wtc.inference import Moderator
+from wtc.model_specific import run_model_specific_bigru
 from wtc.plotting import generate_all_visualizations, get_model_color
 from wtc.utils import get_logger, set_seed
 
@@ -171,37 +176,127 @@ def run_model_specific_tfidf(
     }
 
 
+# Model-specific evaluation dispatch table
+MODEL_SPECIFIC_DISPATCH: dict[str, Any] = {
+    "tfidf_lr": lambda mid, sm, r_dir, v_dir, lbls, df_t, P_t, Y_t: run_model_specific_tfidf(mid, sm, r_dir, v_dir, lbls),
+    "1_tfidf_lr": lambda mid, sm, r_dir, v_dir, lbls, df_t, P_t, Y_t: run_model_specific_tfidf(mid, sm, r_dir, v_dir, lbls),
+    "bigru_attn": run_model_specific_bigru,
+    "2_bigru_attn": run_model_specific_bigru,
+}
+
+
 def measure_inference_speed(
     model_id: str,
     smoke: bool,
     test_texts: list[str],
+    meta: dict[str, Any],
 ) -> dict[str, Any]:
-    """Benchmark CPU inference latency and throughput per 1,000 comments."""
-    moderator = Moderator(model_id=model_id, smoke=smoke)
-
+    """
+    Adapter-aware inference benchmark:
+    - Warm-up first
+    - Median of 5 repeats
+    - Batch sizes 1 and 1000
+    - Measured on GPU and CPU (state threads used)
+    - Records same headline keys as Model 1 for batch size 1000.
+    """
     sample_size = min(1000, len(test_texts))
     test_sample = test_texts[:sample_size]
+    adapter_type = meta.get("adapter_type", model_id)
 
-    # Warm-up (200 comments or sample slice)
-    warmup_n = min(200, len(test_sample))
-    _ = moderator.predict_proba(test_sample[:warmup_n])
+    details = {}
+    headline_info = {}
 
-    # Benchmark
-    t0 = time.perf_counter()
-    _ = moderator.predict_proba(test_sample)
-    total_sec = time.perf_counter() - t0
+    def _benchmark_runner(mod_obj, batch_size: int, dev_name: str) -> dict[str, Any]:
+        warmup_n = min(50, len(test_sample))
+        if batch_size == 1:
+            for txt in test_sample[:warmup_n]:
+                _ = mod_obj.predict_proba(txt)
+        else:
+            _ = mod_obj.predict_proba(test_sample[:warmup_n])
 
-    latency_ms_per_comment = (total_sec / sample_size) * 1000.0
-    throughput_comments_per_sec = sample_size / total_sec
-    time_per_1000_comments_sec = total_sec * (1000.0 / sample_size)
+        repeats = []
+        for _ in range(5):
+            t0 = time.perf_counter()
+            if batch_size == 1:
+                for txt in test_sample:
+                    _ = mod_obj.predict_proba(txt)
+            else:
+                _ = mod_obj.predict_proba(test_sample)
+            repeats.append(time.perf_counter() - t0)
 
-    return {
+        med_sec = float(np.median(repeats))
+        latency_ms = (med_sec / sample_size) * 1000.0
+        throughput = sample_size / med_sec if med_sec > 0 else 0.0
+        time_1000 = med_sec * (1000.0 / sample_size)
+
+        return {
+            "device": dev_name,
+            "batch_size": batch_size,
+            "sample_size": sample_size,
+            "median_seconds": round(med_sec, 4),
+            "latency_ms_per_comment": round(latency_ms, 3),
+            "throughput_comments_per_sec": round(throughput, 1),
+            "time_per_1000_comments_sec": round(time_1000, 3),
+            "repeats_seconds": [round(r, 4) for r in repeats],
+        }
+
+    if "tfidf" in adapter_type:
+        mod = Moderator(model_id=model_id, smoke=smoke)
+        b1000 = _benchmark_runner(mod, 1000, "CPU")
+        b1 = _benchmark_runner(mod, 1, "CPU")
+        details["cpu_batch_1000"] = b1000
+        details["cpu_batch_1"] = b1
+        headline_info = b1000
+        headline_info["device"] = "CPU"
+        headline_info["batch_size"] = 1000
+    else:
+        # Neural model: GPU (if available) AND CPU
+        import torch
+        cpu_threads = torch.get_num_threads()
+        has_gpu = torch.cuda.is_available()
+
+        if has_gpu:
+            mod_gpu = Moderator(model_id=model_id, smoke=smoke)
+            gpu_b1000 = _benchmark_runner(mod_gpu, 1000, "GPU")
+            gpu_b1 = _benchmark_runner(mod_gpu, 1, "GPU")
+            details["gpu_batch_1000"] = gpu_b1000
+            details["gpu_batch_1"] = gpu_b1
+            headline_info = gpu_b1000
+            headline_info["device"] = "GPU"
+            headline_info["gpu_name"] = torch.cuda.get_device_name(0)
+
+        # CPU benchmark
+        mod_cpu = Moderator(model_id=model_id, smoke=smoke)
+        if hasattr(mod_cpu.adapter, "device"):
+            mod_cpu.adapter.device = torch.device("cpu")
+            if hasattr(mod_cpu.adapter, "model") and mod_cpu.adapter.model is not None:
+                mod_cpu.adapter.model.to("cpu")
+
+        cpu_b1000 = _benchmark_runner(mod_cpu, 1000, "CPU")
+        cpu_b1 = _benchmark_runner(mod_cpu, 1, "CPU")
+        details["cpu_batch_1000"] = cpu_b1000
+        details["cpu_batch_1"] = cpu_b1
+
+        if not has_gpu:
+            headline_info = cpu_b1000
+            headline_info["device"] = "CPU"
+        headline_info["cpu_threads"] = cpu_threads
+
+    res = {
         "benchmark_sample_size": sample_size,
-        "total_time_seconds": round(total_sec, 4),
-        "latency_ms_per_comment": round(latency_ms_per_comment, 3),
-        "throughput_comments_per_sec": round(throughput_comments_per_sec, 1),
-        "time_per_1000_comments_sec": round(time_per_1000_comments_sec, 3),
+        "total_time_seconds": headline_info["median_seconds"],
+        "latency_ms_per_comment": headline_info["latency_ms_per_comment"],
+        "throughput_comments_per_sec": headline_info["throughput_comments_per_sec"],
+        "time_per_1000_comments_sec": headline_info["time_per_1000_comments_sec"],
+        "device": headline_info.get("device", "CPU"),
+        "batch_size": headline_info.get("batch_size", 1000),
+        "details": details,
     }
+    if "cpu_threads" in headline_info:
+        res["cpu_threads"] = headline_info["cpu_threads"]
+    if "gpu_name" in headline_info:
+        res["gpu_name"] = headline_info["gpu_name"]
+    return res
 
 
 def compare_models() -> None:
@@ -280,6 +375,7 @@ def main() -> None:
             meta = json.load(fh)
 
     labels = meta.get("labels", LABELS)
+    adapter_type = meta.get("adapter_type", model_id)
 
     # 2. Load split ground truth
     df_val = load_split("val")
@@ -309,11 +405,17 @@ def main() -> None:
         seed=seed,
     )
 
-    # Save thresholds.json
+    # Save thresholds.json to predictions/ and copy to models/
     f_thresh = preds_dir / "thresholds.json"
     with open(f_thresh, "w", encoding="utf-8") as fh:
         json.dump(metrics["threshold_tuning"], fh, indent=2)
-    print(f"  Saved thresholds to {f_thresh.relative_to(PROJECT_ROOT)}")
+    shutil.copy2(f_thresh, model_dir / "thresholds.json")
+    print(f"  Saved thresholds to {f_thresh.relative_to(PROJECT_ROOT)} and {model_dir.relative_to(PROJECT_ROOT)}")
+
+    # Add bootstrap info enhancements (reproducibility)
+    metrics["bootstrap_info"]["n_test"] = len(Y_test)
+    metrics["bootstrap_info"]["n_val"] = len(Y_val)
+    metrics["bootstrap_info"]["rng"] = "np.random.default_rng(seed)"
 
     # 4. Generate prediction CSVs
     print("\n[Predictions] Generating val and test prediction CSV files...")
@@ -366,24 +468,44 @@ def main() -> None:
     for v_name, v_p in viz_paths.items():
         print(f"  Saved figure: {v_p.relative_to(PROJECT_ROOT)}")
 
-    # 7. Model-specific evaluation (top n-grams, inference speed, disk size)
-    print("\n[Model-Specific] Extracting top n-grams & running inference benchmark...")
-    ngrams_info = run_model_specific_tfidf(
-        model_id=model_id,
-        smoke=smoke,
-        reports_dir=reports_dir,
-        viz_dir=viz_dir,
-        labels=labels,
-    )
-    metrics["model_specific"] = ngrams_info
+    # 7. Model-specific evaluation (via dispatch)
+    print("\n[Model-Specific] Running adapter-specific evaluation routines...")
+    handler = None
+    for k in (adapter_type, model_id):
+        if k in MODEL_SPECIFIC_DISPATCH:
+            handler = MODEL_SPECIFIC_DISPATCH[k]
+            break
 
+    if handler is not None:
+        try:
+            model_spec_info = handler(
+                model_id=model_id,
+                smoke=smoke,
+                reports_dir=reports_dir,
+                viz_dir=viz_dir,
+                labels=labels,
+                df_test=df_test,
+                P_test=P_test,
+                Y_test=Y_test,
+            )
+            metrics["model_specific"] = model_spec_info
+        except Exception as e:
+            warnings.warn(f"Model-specific evaluation failed: {e}", UserWarning)
+            metrics["model_specific"] = {}
+    else:
+        warnings.warn(f"No model-specific routine registered for adapter '{adapter_type}'. Skipping.", UserWarning)
+        metrics["model_specific"] = {}
+
+    # Measure inference benchmark (adapter-aware)
+    print("\n[Benchmark] Measuring inference latency and throughput...")
     bench_info = measure_inference_speed(
         model_id=model_id,
         smoke=smoke,
         test_texts=df_test[CFG.get("text_column", "comment_text")].fillna("").tolist(),
+        meta=meta,
     )
     metrics["inference_benchmark"] = bench_info
-    print(f"  Inference Benchmark: {bench_info['throughput_comments_per_sec']} comments/sec ({bench_info['latency_ms_per_comment']} ms/comment)")
+    print(f"  Inference Benchmark: {bench_info['throughput_comments_per_sec']} comments/sec ({bench_info['latency_ms_per_comment']} ms/comment) on {bench_info.get('device', 'CPU')}")
 
     # Model disk size
     if "model_size_mb" in meta:

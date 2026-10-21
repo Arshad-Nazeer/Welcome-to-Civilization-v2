@@ -1,0 +1,87 @@
+ROLE
+You are a senior ML engineer. Build, RUN and evaluate MODEL 2 (BiGRU + additive attention, frozen fastText) for "Welcome to Civilization" (multi-label toxicity: toxic, severe_toxic, obscene, threat, insult, identity_hate). Data foundation and Model 1 are DONE: do NOT modify anything under data/, do NOT rerun scripts 01-04, do NOT retrain Model 1. Reuse existing code (wtc.data.load_split, wtc.config LABELS/CFG, utils, logging, the shared evaluation/plotting/inference/report code from Model 1). Minimal changes to existing files. Do NOT duplicate shared code: model-specific parts plug into the existing adapter_type dispatch (inspect how 20_evaluate.py, inference.py and 21_build_model_report.py handle tfidf_lr and add a bigru_attn adapter the same way).
+
+QUOTA RULES
+My Antigravity quota is limited (about 57% left, Model 3 still to come). ONE continuous pass, no questions, no confirmations. Read only what you need: src/wtc/{config,data,utils,inference}.py, scripts/10_train_tfidf.py (template for stages/status/logging), scripts/20_evaluate.py and 21_build_model_report.py (dispatch only), configs/*.yaml, requirements.txt, .gitignore, PROGRESS.md. Write files in a few large writes. Minimal narration. Do not commit or push. No absolute paths. Seed 42. Do NOT build the --compare mode yet.
+
+ENVIRONMENT (Windows, PowerShell, existing .venv, Ryzen 7 5800H, RTX 3060 6GB)
+- Install the CUDA build of PyTorch into .venv (check the driver with nvidia-smi and pick a compatible wheel index, e.g. https://download.pytorch.org/whl/cu124 or cu121; Python 3.12). Pin the installed versions in requirements.txt with a comment giving the index URL. Print torch version, CUDA version, GPU name and VRAM. If torch.cuda.is_available() is False, ABORT with a clear message (no silent CPU fallback).
+- Do not use torch.compile. UTF-8 console, no emoji in logs.
+
+DATA (verify at runtime; abort on mismatch)
+Same as Model 1: load_split("train"|"val"|"test") with id, text_clean and 6 label columns; sizes 127,861 / 15,869 / 15,841; sha256 of data/processed/processed.parquet equals processed_parquet_sha256 in data/splits/split_manifest.json; split_version == "v2_near_dup". Never read processed.csv.
+
+FASTTEXT
+- Use crawl-300d-2M.vec.zip (https://dl.fbaipublicfiles.com/fasttext/vectors-english/crawl-300d-2M.vec.zip, about 1.5 GB). Store under external/fasttext/ (repo root, NOT data/); add external/ to .gitignore. If the file already exists anywhere under external/, reuse it; otherwise download with a progress bar. If the download fails, ABORT and print the URL. Never substitute random embeddings silently.
+- Stream the .vec straight from the zip (no full extraction), keep only vocab tokens. Build the embedding matrix ONCE and cache it as models/2_bigru_attn/embedding_cache.npy keyed by a hash of the vocab, reused by smoke and full runs (do not delete the cache during smoke cleanup).
+
+OUTPUT DIRECTORIES (<id> = 2_bigru_attn)
+models/<id>/ predictions/<id>/ reports/<id>/ visualizations/<id>/ logs/<id>/. model_ids already exists in configs; do not duplicate it.
+
+MODEL 2 SPEC (FIXED; put it in configs/models.yaml under bigru_attn, read everything from it)
+- Input: text_clean. Tokenizer: regex \w+|[^\w\s] applied to the LOWERCASED text. Vocab: top 50k TRAIN tokens (min_freq=2, built from the full train split even in --smoke) plus <pad>=0 and <unk>=1; log token coverage (token-weighted) and warn, do not abort, if it differs from ~98.6%. max_len=256, keep the FIRST 256 tokens (truncate the tail). Log the % of val and test comments truncated.
+- Embedding: fastText 300-d, FROZEN. <pad> = zeros. Words missing from fastText (and <unk>) get random vectors drawn from a normal with the per-dimension mean and std of the found vectors. Log the fastText hit rate (vocab types and token-weighted). Spatial dropout 0.25 (drop whole embedding channels across time).
+- Encoder: 1-layer bidirectional GRU, 128 hidden per direction (256 out), dropout 0.3 on the GRU output. Use pack_padded_sequence (enforce_sorted=False) so padding never enters either direction.
+- Attention: additive attention pooling (tanh projection, attention dim 128, learned context vector), masked over padded positions, softmax computed in float32. forward(..., return_attn=True) must be supported.
+- Head: Linear 256 -> 6 producing logits; sigmoid at inference. Log trainable vs frozen parameter counts (expect about 0.4M trainable).
+- Imbalance: weighted BCEWithLogits with pos_weight_l = (neg/pos)^0.5 per label from TRAIN (same recipe as Model 1, log the values), plus head bias initialised to log(pos_rate/(1-pos_rate)) per label.
+- Training: AdamW (lr 1e-3, weight_decay 0.01 on trainable params only), batch size 128, grad clipping 1.0, up to 6 epochs, no LR scheduler. Early stopping on val macro PR-AUC (average precision), patience 2; restore the best checkpoint before predicting. Seed everything (cuDNN GRU is not bit-deterministic; note it in limitations).
+
+GPU EFFICIENCY (required)
+- Pre-tokenize once; keep the full padded id tensors and labels ON the GPU. No DataLoader, no per-batch host-to-device copies. Keep a CPU (numpy) copy of lengths for batching and for pack_padded_sequence so there is no per-step GPU->CPU sync.
+- Length-bucketed batches: shuffle each epoch, sort inside large chunks (e.g. 50 batches) by length, build batches, shuffle batch order; trim each batch to its max length rounded up to a multiple of 8. Validation/test inference: batch size 1024 sorted by length, results restored to original row order.
+- AMP (fp16 autocast + GradScaler; the loss computed in fp32), TF32 enabled, cudnn.benchmark False (variable shapes). Accumulate the running loss on the GPU and sync only once per epoch or every 100 steps. Frozen embedding stays out of the optimizer.
+- Log per epoch: train loss, val loss, val macro PR-AUC, val mean ROC-AUC, epoch time, samples/s, peak GPU memory (torch.cuda.max_memory_allocated), GPU utilisation via nvidia-smi (try/except), patience counter, ETA. If a NaN/inf loss appears under AMP, log it and fall back to fp32 for the rest of the run.
+
+TRAINING SCRIPT: scripts/11_train_bigru.py (supports --smoke and --resume)
+- Stages with live progress: [1/6] load+verify, [2/6] tokenize+vocab, [3/6] fastText matrix (cached), [4/6] move data to GPU and build the model, [5/6] training epochs (tqdm plus one summary line per epoch), [6/6] load best, predict val/test, save. Update models/<id>/status.json at each stage and epoch (state, stage, epoch, best metric, elapsed, ETA, updated_at). Log to logs/<id>/train_<date>.log. End with a DONE banner (total time, outputs) and a beep (winsound, try/except).
+- Resumable: after every epoch write models/<id>/last.pt (model, optimizer, scaler, epoch, best metric, patience, history, RNG state) and keep best.pt. --resume continues from last.pt. Delete last.pt after a successful finish.
+- --smoke: 2,000 train rows, 500 val/test rows, 2 epochs, outputs to *_smoke directories. Must not crash when a label has zero positives (NaN metric, skipped in macro).
+- Save: models/<id>/{model.pt (state dict INCLUDING the embedding matrix, so the backend does not need fastText), vocab.json, history.json (per-epoch metrics), meta.json}; predictions/<id>/{probs_val.npy, probs_test.npy} (float32 [n,6], LABELS order, split row order, sigmoid probabilities).
+- meta.json must follow Model 1's schema (model_id, model_name, adapter_type="bigru_attn", labels, input_column, seed, class_weights, config, versions, train_time_seconds, stage_timings_seconds, model_size_bytes/mb, artifacts) plus: tokenizer regex, lowercase, max_len, truncation="head", vocab size, pad/unk ids, architecture hyperparameters, trainable/frozen parameter counts, best_epoch, epochs_run, fastText source and hit rates, truncation percentages, torch/CUDA versions, GPU name, mean epoch time.
+
+SHARED CODE CHANGES (small, apply to Model 1 as well, no Model 1 retraining)
+
+1. `scripts/20_evaluate.py`: Keep `run_model_specific_tfidf` as-is but call it only when `meta["adapter_type"]=="tfidf_lr"`. Add a `MODEL_SPECIFIC` dispatch dict keyed by `adapter_type` (`tfidf_lr` → existing function, `bigru_attn` → new function in `src/wtc/model_specific.py`). Unknown `adapter_type`: skip with a warning, never crash. Replace `measure_inference_speed` with an adapter-aware version (warm-up, median of 5, batch sizes 1 and 1000, device reported; CPU for `tfidf_lr`, GPU and CPU for `bigru_attn`), writing the same keys Model 1 had (`benchmark_sample_size`, `total_time_seconds`, `latency_ms_per_comment`, `throughput_comments_per_sec`, `time_per_1000_comments_sec`) for the headline setting (batch 1000), with extra keys for the rest. Copy `thresholds.json` into `models/<id>/`. Add `n_test`, `n_val` and `rng="np.random.default_rng(seed)"` to `metrics["bootstrap_info"]`. Confirm the test bootstrap resample indices are saved or exactly regenerable (store seed, `n_test`, `n_resamples` in `metrics.json` `bootstrap_info`); do not change any computed metric.
+
+2. `src/wtc/inference.py`: Add a `BiGruAttnAdapter` (lazy torch import); same tokenizer and vocab as training, device = cuda if available else cpu, length-sorted batching, original order restored. `Moderator` loads thresholds from `models/<id>/` first, fallback to `predictions/<id>/`. Unknown `model_id` raises a clear error listing registered IDs. TF-IDF adapter warns if installed scikit-learn differs from `meta.json`. Make hierarchical `severe_toxic` enforcement default match the CSV `pred_` columns (default `False`, parameter kept).
+
+3. `scripts/21_build_model_report.py`: Remove ALL Model-1-specific literals (title architecture line, overview paragraph, stage-name map, `"predictions/1_tfidf_lr/"` path, `"8-core"`, throughput sentence, conclusion paragraph, `"47 validation and 50 test"`). Take them from `meta.json`/`metrics.json` (architecture from `meta["config"]["description"]`, stage names from `meta["stage_timings_seconds"]`, positives from metrics, device/threads from the benchmark dict). Keep a `MODEL_SECTIONS` dict keyed by `adapter_type` for the overview text and model-specific section (`tfidf_lr`: existing n-gram section; `bigru_attn`: training curves, attention table, fastText/vocab stats).
+
+   Fix these generation bugs (all text must be computed from `metrics.json`/`meta.json`, no invented claims):
+
+   a. Best/worst label sentences must use each metric's own argmax/argmin and quote that label's own number (currently a PR-AUC value from a different label is quoted).
+
+   b. Threshold-tuning section: compute the mean F1 delta (tuned minus 0.5), state “improved / no meaningful change / worse” from its sign and magnitude (`|delta| < 0.005` = no meaningful change), and list labels where tuned F1 is worse than 0.5-threshold F1. Also quote the bootstrap threshold std per label.
+
+   c. Calibration: only quote Brier, ECE, and the label with highest ECE. Make an over/under-confidence statement only if computed from the reliability bins (mean predicted vs observed rate); otherwise omit.
+
+   d. Hierarchical `severe_toxic`: count rows with `pred_severe_toxic=1` and `pred_toxic=0`; if zero, say the two rules are identical by construction instead of showing duplicate rows as a finding.
+
+   e. Remove the filler “Zero claims without numbers” limitation. State the cores/batch size actually used in the latency benchmark; never say “8-core” unless measured.
+
+   f. Add a `bigru_attn` model-specific section: per-epoch table and training-curve figure (train loss, val loss, val macro PR-AUC), best epoch, epoch time, samples/s, peak GPU memory, parameter counts, fastText and vocab coverage, truncation percentages.
+
+   Apply the bug fixes using the real line numbers 335, 336 and 362. After the fix, regenerate the Model 1 report (21 only).
+
+4. `.gitignore`: Remove the stray `+` line; add `external/` and `models/**/*.npy`; keep everything else.
+
+5. Requirements: Leave `requirements.txt` untouched. Create `requirements-gpu.txt` (torch CUDA wheel, index URL in a comment). Do not add torch to `requirements.txt`.
+
+MODEL-SPECIFIC EVALUATION (wired via the adapter dispatch, results into metrics.json "model_specific" and "inference_benchmark" like Model 1)
+- Inference latency and throughput per 1,000 comments INCLUDING cleaning and tokenization, warm-up first, median of 5 repeats, batch sizes 1 and 1000, measured on GPU AND on CPU (state threads used). Model size on disk.
+- Attention analysis: top 20 tokens by mean attention weight among test comments with true toxic=1 (tokens with count >= 30), as a table plus a bar chart.
+Everything else (thresholds, metrics, bootstrap CIs, figures, prediction CSVs) comes from the unchanged shared evaluation with --model-id 2_bigru_attn; fixed colour for this model id.
+
+REPORT additions: the same sections as Model 1 plus the model-specific section above. Static limitations (always include): single run and cuDNN non-determinism; fixed untuned hyperparameters; validation reused for early stopping, checkpoint selection and threshold tuning; only 47 val / 50 test threat positives so threat estimates are noisy; near-duplicate threshold is Jaccard 0.8 on char 5-grams; lowercasing discards the casing signal found in the EDA, and the BiGRU is the only model of the three that discards it; frozen embeddings (no fine-tuning); truncation at 256 tokens with the % of comments affected quoted as a number.
+
+EXECUTION (visible terminal, in order)
+1. Install/verify torch + GPU. python -m compileall -q src scripts.
+2. Ensure fastText is present (download if needed).
+3. --smoke runs: 11_train_bigru.py, 20_evaluate.py, 21_build_model_report.py (smoke outputs only); fix failures; delete the *_smoke outputs (keep embedding_cache.npy).
+4. FULL training in the foreground: .venv\Scripts\python scripts\11_train_bigru.py. Do not poll in a loop; wait for it to finish.
+5. scripts/20_evaluate.py --model-id 2_bigru_attn, then 21_build_model_report.py --model-id 2_bigru_attn; regenerate the Model 1 report.
+6. .gitignore: external/, models/ weights, *_smoke; keep predictions/, reports/, visualizations/ tracked. README: short "Model 2" section with commands. PROGRESS.md: short entry.
+
+FINAL OUTPUT (short)
+Total training time, epochs run, best epoch, mean epoch time, peak GPU memory; headline TEST metrics (macro-F1, micro-F1, macro PR-AUC, mean ROC-AUC) and per-label F1 / PR-AUC with tuned thresholds; fastText hit rate and vocab coverage; saved files; deviations. Do not claim anything you did not run.

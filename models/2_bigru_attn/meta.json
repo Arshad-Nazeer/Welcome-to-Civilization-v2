@@ -1,0 +1,241 @@
+{
+  "model_id": "2_bigru_attn",
+  "model_name": "bigru_attn",
+  "adapter_type": "bigru_attn",
+  "smoke": false,
+  "framework": "PyTorch 2.6.0+cu124",
+  "created_utc": "2026-10-21T16:06:22.716867+00:00",
+  "seed": 42,
+  "labels": [
+    "toxic",
+    "severe_toxic",
+    "obscene",
+    "threat",
+    "insult",
+    "identity_hate"
+  ],
+  "input_column": "text_clean",
+  "class_weights": {
+    "toxic": {
+      "0": 1.0,
+      "1": 3.076
+    },
+    "severe_toxic": {
+      "0": 1.0,
+      "1": 9.9879
+    },
+    "obscene": {
+      "0": 1.0,
+      "1": 4.2395
+    },
+    "threat": {
+      "0": 1.0,
+      "1": 18.2919
+    },
+    "insult": {
+      "0": 1.0,
+      "1": 4.3963
+    },
+    "identity_hate": {
+      "0": 1.0,
+      "1": 10.6282
+    }
+  },
+  "config": {
+    "model_id": "2_bigru_attn",
+    "description": "BiGRU with Additive Attention and Frozen fastText",
+    "input_col": "text_clean",
+    "seed": 42,
+    "tokenizer": {
+      "regex": "\\w+|[^\\w\\s]",
+      "lowercase": true,
+      "max_len": 256,
+      "truncation": "head"
+    },
+    "vocab": {
+      "max_vocab": 50000,
+      "min_freq": 2,
+      "pad_token": "<pad>",
+      "unk_token": "<unk>",
+      "pad_idx": 0,
+      "unk_idx": 1
+    },
+    "embedding": {
+      "source": "crawl-300d-2M.vec.zip",
+      "url": "https://dl.fbaipublicfiles.com/fasttext/vectors-english/crawl-300d-2M.vec.zip",
+      "dim": 300,
+      "frozen": true,
+      "spatial_dropout": 0.25
+    },
+    "encoder": {
+      "type": "gru",
+      "bidirectional": true,
+      "num_layers": 1,
+      "hidden_dim": 128,
+      "output_dropout": 0.3
+    },
+    "attention": {
+      "type": "additive",
+      "dim": 128
+    },
+    "head": {
+      "num_classes": 6
+    },
+    "imbalance": {
+      "method": "sqrt_neg_pos_ratio",
+      "bias_init": "log_odds"
+    },
+    "training": {
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "batch_size": 128,
+      "eval_batch_size": 1024,
+      "grad_clip": 1.0,
+      "epochs": 6,
+      "patience": 2,
+      "monitor_metric": "val_macro_pr_auc",
+      "mixed_precision": true
+    }
+  },
+  "parameters": {
+    "trainable": 364806,
+    "frozen": 15000600,
+    "total": 15365406
+  },
+  "tokenizer_info": {
+    "total_unique_tokens": 166648,
+    "total_token_occurrences": 10915094,
+    "vocab_size": 50002,
+    "token_coverage_pct": 98.61,
+    "pad_idx": 0,
+    "unk_idx": 1,
+    "val_truncated_pct": 5.92,
+    "test_truncated_pct": 5.62
+  },
+  "fasttext_info": {
+    "vocab_hash": "c98cbd22ac5ada920e02f35b65b027262b241e1966d7d517262c4f7a4ce8da59",
+    "fasttext_source": "crawl-300d-2M.vec.zip",
+    "total_vocab": 50002,
+    "found_words": 43292,
+    "missing_words": 6709,
+    "type_hit_rate_pct": 86.58,
+    "embedding_dim": 300,
+    "token_weighted_hit_rate_pct": 98.7
+  },
+  "training_history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.1449,
+      "val_loss": 0.1052,
+      "val_macro_pr_auc": 0.6605,
+      "val_mean_roc_auc": 0.9891,
+      "epoch_time_seconds": 21.95,
+      "samples_per_sec": 5826.2,
+      "peak_memory_mb": 2395.2,
+      "gpu_util_pct": 1,
+      "patience": 0,
+      "is_best": true
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.1136,
+      "val_loss": 0.0967,
+      "val_macro_pr_auc": 0.6899,
+      "val_mean_roc_auc": 0.9905,
+      "epoch_time_seconds": 20.39,
+      "samples_per_sec": 6270.3,
+      "peak_memory_mb": 2395.2,
+      "gpu_util_pct": 89,
+      "patience": 0,
+      "is_best": true
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.1056,
+      "val_loss": 0.095,
+      "val_macro_pr_auc": 0.6923,
+      "val_mean_roc_auc": 0.9909,
+      "epoch_time_seconds": 20.72,
+      "samples_per_sec": 6171.0,
+      "peak_memory_mb": 2395.2,
+      "gpu_util_pct": 30,
+      "patience": 0,
+      "is_best": true
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.0992,
+      "val_loss": 0.0938,
+      "val_macro_pr_auc": 0.7059,
+      "val_mean_roc_auc": 0.9909,
+      "epoch_time_seconds": 20.69,
+      "samples_per_sec": 6180.9,
+      "peak_memory_mb": 2395.2,
+      "gpu_util_pct": 67,
+      "patience": 0,
+      "is_best": true
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.0949,
+      "val_loss": 0.0911,
+      "val_macro_pr_auc": 0.715,
+      "val_mean_roc_auc": 0.9914,
+      "epoch_time_seconds": 21.41,
+      "samples_per_sec": 5973.4,
+      "peak_memory_mb": 2395.2,
+      "gpu_util_pct": 100,
+      "patience": 0,
+      "is_best": true
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.0901,
+      "val_loss": 0.0934,
+      "val_macro_pr_auc": 0.7136,
+      "val_mean_roc_auc": 0.9911,
+      "epoch_time_seconds": 22.15,
+      "samples_per_sec": 5773.3,
+      "peak_memory_mb": 2395.2,
+      "gpu_util_pct": 50,
+      "patience": 1,
+      "is_best": false
+    }
+  ],
+  "best_epoch": 5,
+  "epochs_run": 6,
+  "best_val_macro_pr_auc": 0.715,
+  "mean_epoch_time_seconds": 21.22,
+  "train_time_seconds": 144.92,
+  "stage_timings_seconds": {
+    "1_load_verify": 1.26,
+    "2_tokenize_vocab": 8.29,
+    "3_fasttext_matrix": 1.96,
+    "4_build_model_gpu": 2.11,
+    "5_training_epochs": 128.66,
+    "6_predict_and_save": 2.64
+  },
+  "model_size_bytes": 61464878,
+  "model_size_mb": 58.62,
+  "device_info": {
+    "gpu_name": "NVIDIA GeForce RTX 3060 Laptop GPU",
+    "vram_gb": 6.0,
+    "cuda_version": "12.4",
+    "peak_vram_mb": 2466.5
+  },
+  "artifacts": {
+    "model_pt": "models/2_bigru_attn/model.pt",
+    "vocab_json": "models/2_bigru_attn/vocab.json",
+    "history_json": "models/2_bigru_attn/history.json",
+    "probs_val": "predictions/2_bigru_attn/probs_val.npy",
+    "probs_test": "predictions/2_bigru_attn/probs_test.npy"
+  },
+  "versions": {
+    "python": "3.12.6",
+    "torch": "2.6.0+cu124",
+    "cuda": "12.4",
+    "pandas": "2.2.3",
+    "numpy": "1.26.4"
+  }
+}

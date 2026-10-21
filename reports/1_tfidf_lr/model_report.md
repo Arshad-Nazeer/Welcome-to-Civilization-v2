@@ -1,10 +1,10 @@
 # Model Evaluation Report: 1_tfidf_lr
 
-**Architecture**: Word + Char TF-IDF with Per-Label Logistic Regression  
-**Generated UTC**: 2026-10-21 13:18:12 UTC  
+**Architecture**: Word + Char TF-IDF with Logistic Regression per label  
+**Generated UTC**: 2026-10-21 16:10:51 UTC  
 **Mode**: Full Production Run  
 **Seed**: 42  
-**Python**: 3.12.6 | **Scikit-Learn**: 1.5.2 | **Pandas**: 2.2.3
+**Python**: 3.12.6 | **Framework**: PyTorch / Scikit-Learn | **Platform**: CPU / CUDA
 
 ---
 
@@ -35,7 +35,7 @@ Because severe class imbalance characterizes toxicity labels (ranging from 9.56%
 
 $$w_l = \sqrt{\frac{N_{neg}}{N_{pos}}}$$
 
-Negative samples receive a fixed weight of 1.0, while positive samples are up-weighted by the square root of the imbalance ratio. This avoids over-penalizing majority true negatives while providing sufficient gradient signal on rare positive categories.
+Negative samples receive a fixed weight of 1.0, while positive samples are up-weighted by the square root of the imbalance ratio. This provides balanced gradient flow across rare positive categories without resampling or data duplication.
 
 | Label | Train Positives | Train Negatives | Positive Rate (%) | Imbalance Ratio | Weight ($w_1$) |
 |---|---|---|---|---|---|
@@ -55,19 +55,20 @@ Negative samples receive a fixed weight of 1.0, while positive samples are up-we
 ### Stage Timings
 | Stage | Description | Duration (s) | % of Total |
 |---|---|---|---|
-| `1_load_and_verify` | [1/5] Load & Verify Parquet / Manifest | 1.26s | 0.7% |
-| `2_word_tfidf` | [2/5] Word TF-IDF Fit & Transform | 21.57s | 12.4% |
-| `3_char_tfidf` | [3/5] Char TF-IDF Fit & Transform | 94.61s | 54.5% |
-| `4_lr_fits` | [4/5] 6x Logistic Regression Fits (Parallel) | 51.95s | 29.9% |
-| `5_predict_and_save` | [5/5] Predict Val/Test & Save Joblib/NPY | 3.43s | 2.0% |
+| `1_load_and_verify` | [1] Load & Verify Parquet / Manifest | 1.26s | 0.7% |
+| `2_word_tfidf` | [2] Word TF-IDF Fit & Transform | 21.57s | 12.4% |
+| `3_char_tfidf` | [3] Char TF-IDF Fit & Transform | 94.61s | 54.5% |
+| `4_lr_fits` | [4] 6x Logistic Regression Fits (Parallel) | 51.95s | 29.9% |
+| `5_predict_and_save` | [5] Predict Val/Test & Save Artifacts | 3.43s | 2.0% |
 
 ## 5. Inference & Prediction Summary
 
-### CPU Benchmark
-- **Sample Size**: 1,000 comments from Test set
-- **Total Latency per 1,000 Comments (including preprocessing and vectorization)**: **0.61 s**
+### Benchmark Measurements
+- **Benchmark Sample**: 1,000 comments from Test set
+- **Primary Device**: CPU
+- **Latency per 1,000 Comments (end-to-end, batch size 1000)**: **0.61 s**
 - **Per-Comment Latency**: **0.61 ms**
-- **Throughput**: **1631.9 comments/second** on 8-core CPU
+- **Throughput**: **1631.9 comments/second**
 
 ### Decision Threshold Optimization
 Decision thresholds were tuned strictly on the **Validation split** via 200 bootstrap resamples. For each resample, thresholds were searched over a grid of $0.01$ to $0.99$ (step $0.01$) to maximize F1 score, and the median bootstrap threshold was selected. This prevents overfitting the threshold to test data.
@@ -111,14 +112,14 @@ Predictions were saved to `predictions/1_tfidf_lr/{val,test}_predictions.csv` co
 
 ### Threshold Tuning Impact: Tuned vs Default 0.5
 
-| Label | Tuned Thresh | F1 (Tuned) | Precision (Tuned) | Recall (Tuned) | F1 (at 0.5) | Precision (at 0.5) | Recall (at 0.5) | F1 $\Delta$ (Tuned - 0.5) |
-|---|---|---|---|---|---|---|---|---|
-| `toxic` | 0.49 | **0.8078** | 0.8279 | 0.7887 | 0.8079 | 0.8323 | 0.7848 | **-0.0000** |
-| `severe_toxic` | 0.51 | **0.5419** | 0.4974 | 0.5951 | 0.5414 | 0.4925 | 0.6012 | **+0.0005** |
-| `obscene` | 0.46 | **0.8284** | 0.8557 | 0.8028 | 0.8290 | 0.8664 | 0.7946 | **-0.0006** |
-| `threat` | 0.42 | **0.4948** | 0.5106 | 0.4800 | 0.4889 | 0.5500 | 0.4400 | **+0.0060** |
-| `insult` | 0.58 | **0.7000** | 0.7529 | 0.6540 | 0.7128 | 0.7240 | 0.7020 | **-0.0128** |
-| `identity_hate` | 0.49 | **0.4930** | 0.4930 | 0.4930 | 0.4947 | 0.4965 | 0.4930 | **-0.0017** |
+| Label | Tuned Thresh | Bootstrap Std | F1 (Tuned) | Precision (Tuned) | Recall (Tuned) | F1 (at 0.5) | Precision (at 0.5) | Recall (at 0.5) | F1 $\Delta$ (Tuned - 0.5) |
+|---|---|---|---|---|---|---|---|---|---|
+| `toxic` | 0.49 | 0.0536 | **0.8078** | 0.8279 | 0.7887 | 0.8079 | 0.8323 | 0.7848 | **-0.0000** |
+| `severe_toxic` | 0.51 | 0.0776 | **0.5419** | 0.4974 | 0.5951 | 0.5414 | 0.4925 | 0.6012 | **+0.0005** |
+| `obscene` | 0.46 | 0.0630 | **0.8284** | 0.8557 | 0.8028 | 0.8290 | 0.8664 | 0.7946 | **-0.0006** |
+| `threat` | 0.42 | 0.1450 | **0.4948** | 0.5106 | 0.4800 | 0.4889 | 0.5500 | 0.4400 | **+0.0060** |
+| `insult` | 0.58 | 0.0857 | **0.7000** | 0.7529 | 0.6540 | 0.7128 | 0.7240 | 0.7020 | **-0.0128** |
+| `identity_hate` | 0.49 | 0.0725 | **0.4930** | 0.4930 | 0.4930 | 0.4947 | 0.4965 | 0.4930 | **-0.0017** |
 
 ### Hierarchical severe_toxic Rule Comparison
 By definition, severe toxicity is a semantic subset of toxicity. The table below compares independent prediction against the hierarchical constraint `pred_severe_toxic & pred_toxic`:
@@ -127,6 +128,8 @@ By definition, severe toxicity is a semantic subset of toxicity. The table below
 |---|---|---|---|---|---|
 | Standard Independent | 0.4974 | 0.5951 | 0.5419 | 0.9196 | 0.7585 |
 | Hierarchical (`& toxic`) | 0.4974 | 0.5951 | 0.5419 | 0.9196 | 0.7585 |
+
+> **Note**: Zero comments in the test set were predicted as `severe_toxic=1` without also having `toxic=1`. Hence, standard independent thresholding and the hierarchical rule are identical by construction on this dataset.
 
 ## 7. Visualizations
 
@@ -182,23 +185,22 @@ Logistic regression coefficients provide direct interpretability. High positive 
 
 ## 9. Interpretation & Key Takeaways
 
-1. **Dominant Categories**: `obscene` achieved the highest F1 score (0.8284) and PR-AUC (0.9003). This reflects high lexical consistency in overt toxicity.
-2. **Challenging Categories**: `identity_hate` presented the lowest F1 score (0.4930) and PR-AUC (0.4816). Extreme class imbalance and nuanced phrasing make linear n-gram matching alone insufficient for rare edge-cases.
-3. **Threshold Tuning Impact**: Compared to the default $0.5$ cutoff, tuning thresholds on validation improved or optimized recall on heavily imbalanced categories, notably yielding an average absolute F1 improvement.
-4. **Calibration**: The mean Brier score was 0.0134 and mean 15-bin ECE was 0.0095. Probabilities are moderately well-calibrated, though slight overconfidence is visible in the low-prevalence tail.
-5. **High Throughput**: Generating predictions for 1,000 comments in 0.61s (1631.9 comments/sec) demonstrates that TF-IDF + LR serves as an exceptionally lightweight, high-speed first-pass filter.
+1. **Dominant Categories**: `obscene` achieved the highest F1 score (0.8284), while `obscene` achieved the highest PR-AUC (0.9003). This reflects high representation and overt lexical signals.
+2. **Challenging Categories**: `identity_hate` presented the lowest F1 score (0.4930), while `severe_toxic` presented the lowest PR-AUC (0.4816). Extreme class imbalance and context sensitivity make these rare categories particularly difficult.
+3. **Threshold Tuning Impact**: Optimizing thresholds via validation bootstrap resulted in no meaningful overall change compared to 0.5 (mean F1 delta: -0.0015), with lower F1 on toxic, obscene, insult, identity_hate.
+4. **Calibration**: The mean Brier score was 0.0134 and mean 15-bin ECE was 0.0095, with the highest calibration error observed in `toxic` (ECE: 0.0173).
+5. **Inference Speed**: Generating predictions for 1,000 comments in 0.61s (1631.9 comments/sec) demonstrates operational throughput suitable for production pipeline integration.
 
 ## 10. Conclusions
 
-With a Macro F1 of **0.6443** and Mean ROC-AUC of **0.9858**, Model 1 satisfies the requirements of a high-speed linear baseline. Because character n-grams capture obfuscated profanity and casing variations without morphological parsers, the dual word/char representation performs reliably on overt harassment. However, sequential context and semantic subtlety (such as indirect threats or disguised hate speech) will require the deep contextual representations planned for Model 2 (BiGRU + Attention) and Model 3 (DistilRoBERTa).
+With a Macro F1 of **0.6443** and Mean ROC-AUC of **0.9858**, Model 1 (`1_tfidf_lr`) satisfies the requirements of a high-speed linear baseline. Because character n-grams capture obfuscated profanity and casing variations without morphological parsers, the dual word/char representation performs reliably on overt harassment. However, sequential context and semantic subtlety (such as indirect threats or disguised hate speech) will require the deep contextual representations provided by Model 2 (BiGRU + Attention) and Model 3 (DistilRoBERTa).
 
 ## 11. Limitations
 
 The following limitations apply strictly to this model evaluation:
 1. **Single run**: Results represent a single deterministic seed run (`seed=42`) without multi-seed averaging.
-2. **Fixed untuned hyperparameters**: Word/char n-gram dimensions (50k/100k) and regularization penalty ($C=2.0$) were evaluated with fixed settings.
-3. **Validation reused**: The validation split was utilized for threshold tuning and any hyperparameter selection.
+2. **Fixed untuned hyperparameters**: Model hyperparameters were evaluated with fixed settings without extensive grid search.
+3. **Validation reused**: The validation split was utilized for early stopping, checkpoint selection and threshold tuning.
 4. **Noisy threat estimates**: There are only 47 validation and 50 test positive instances for `threat`, causing wider confidence intervals and higher sampling variance on threat metrics.
 5. **Near-duplicate threshold**: Duplicate grouping used MinHash LSH Jaccard similarity threshold of 0.8 on character 5-grams.
-6. **Zero claims without numbers**: All performance assessments herein are strictly grounded in computed empirical metrics.
 

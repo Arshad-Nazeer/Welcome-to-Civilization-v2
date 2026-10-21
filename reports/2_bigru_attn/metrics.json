@@ -1,0 +1,1088 @@
+{
+  "model_id": "2_bigru_attn",
+  "meta": {
+    "model_id": "2_bigru_attn",
+    "model_name": "bigru_attn",
+    "adapter_type": "bigru_attn",
+    "smoke": false,
+    "framework": "PyTorch 2.6.0+cu124",
+    "created_utc": "2026-10-21T16:06:22.716867+00:00",
+    "seed": 42,
+    "labels": [
+      "toxic",
+      "severe_toxic",
+      "obscene",
+      "threat",
+      "insult",
+      "identity_hate"
+    ],
+    "input_column": "text_clean",
+    "class_weights": {
+      "toxic": {
+        "0": 1.0,
+        "1": 3.076
+      },
+      "severe_toxic": {
+        "0": 1.0,
+        "1": 9.9879
+      },
+      "obscene": {
+        "0": 1.0,
+        "1": 4.2395
+      },
+      "threat": {
+        "0": 1.0,
+        "1": 18.2919
+      },
+      "insult": {
+        "0": 1.0,
+        "1": 4.3963
+      },
+      "identity_hate": {
+        "0": 1.0,
+        "1": 10.6282
+      }
+    },
+    "config": {
+      "model_id": "2_bigru_attn",
+      "description": "BiGRU with Additive Attention and Frozen fastText",
+      "input_col": "text_clean",
+      "seed": 42,
+      "tokenizer": {
+        "regex": "\\w+|[^\\w\\s]",
+        "lowercase": true,
+        "max_len": 256,
+        "truncation": "head"
+      },
+      "vocab": {
+        "max_vocab": 50000,
+        "min_freq": 2,
+        "pad_token": "<pad>",
+        "unk_token": "<unk>",
+        "pad_idx": 0,
+        "unk_idx": 1
+      },
+      "embedding": {
+        "source": "crawl-300d-2M.vec.zip",
+        "url": "https://dl.fbaipublicfiles.com/fasttext/vectors-english/crawl-300d-2M.vec.zip",
+        "dim": 300,
+        "frozen": true,
+        "spatial_dropout": 0.25
+      },
+      "encoder": {
+        "type": "gru",
+        "bidirectional": true,
+        "num_layers": 1,
+        "hidden_dim": 128,
+        "output_dropout": 0.3
+      },
+      "attention": {
+        "type": "additive",
+        "dim": 128
+      },
+      "head": {
+        "num_classes": 6
+      },
+      "imbalance": {
+        "method": "sqrt_neg_pos_ratio",
+        "bias_init": "log_odds"
+      },
+      "training": {
+        "optimizer": "adamw",
+        "lr": 0.001,
+        "weight_decay": 0.01,
+        "batch_size": 128,
+        "eval_batch_size": 1024,
+        "grad_clip": 1.0,
+        "epochs": 6,
+        "patience": 2,
+        "monitor_metric": "val_macro_pr_auc",
+        "mixed_precision": true
+      }
+    },
+    "parameters": {
+      "trainable": 364806,
+      "frozen": 15000600,
+      "total": 15365406
+    },
+    "tokenizer_info": {
+      "total_unique_tokens": 166648,
+      "total_token_occurrences": 10915094,
+      "vocab_size": 50002,
+      "token_coverage_pct": 98.61,
+      "pad_idx": 0,
+      "unk_idx": 1,
+      "val_truncated_pct": 5.92,
+      "test_truncated_pct": 5.62
+    },
+    "fasttext_info": {
+      "vocab_hash": "c98cbd22ac5ada920e02f35b65b027262b241e1966d7d517262c4f7a4ce8da59",
+      "fasttext_source": "crawl-300d-2M.vec.zip",
+      "total_vocab": 50002,
+      "found_words": 43292,
+      "missing_words": 6709,
+      "type_hit_rate_pct": 86.58,
+      "embedding_dim": 300,
+      "token_weighted_hit_rate_pct": 98.7
+    },
+    "training_history": [
+      {
+        "epoch": 1,
+        "train_loss": 0.1449,
+        "val_loss": 0.1052,
+        "val_macro_pr_auc": 0.6605,
+        "val_mean_roc_auc": 0.9891,
+        "epoch_time_seconds": 21.95,
+        "samples_per_sec": 5826.2,
+        "peak_memory_mb": 2395.2,
+        "gpu_util_pct": 1,
+        "patience": 0,
+        "is_best": true
+      },
+      {
+        "epoch": 2,
+        "train_loss": 0.1136,
+        "val_loss": 0.0967,
+        "val_macro_pr_auc": 0.6899,
+        "val_mean_roc_auc": 0.9905,
+        "epoch_time_seconds": 20.39,
+        "samples_per_sec": 6270.3,
+        "peak_memory_mb": 2395.2,
+        "gpu_util_pct": 89,
+        "patience": 0,
+        "is_best": true
+      },
+      {
+        "epoch": 3,
+        "train_loss": 0.1056,
+        "val_loss": 0.095,
+        "val_macro_pr_auc": 0.6923,
+        "val_mean_roc_auc": 0.9909,
+        "epoch_time_seconds": 20.72,
+        "samples_per_sec": 6171.0,
+        "peak_memory_mb": 2395.2,
+        "gpu_util_pct": 30,
+        "patience": 0,
+        "is_best": true
+      },
+      {
+        "epoch": 4,
+        "train_loss": 0.0992,
+        "val_loss": 0.0938,
+        "val_macro_pr_auc": 0.7059,
+        "val_mean_roc_auc": 0.9909,
+        "epoch_time_seconds": 20.69,
+        "samples_per_sec": 6180.9,
+        "peak_memory_mb": 2395.2,
+        "gpu_util_pct": 67,
+        "patience": 0,
+        "is_best": true
+      },
+      {
+        "epoch": 5,
+        "train_loss": 0.0949,
+        "val_loss": 0.0911,
+        "val_macro_pr_auc": 0.715,
+        "val_mean_roc_auc": 0.9914,
+        "epoch_time_seconds": 21.41,
+        "samples_per_sec": 5973.4,
+        "peak_memory_mb": 2395.2,
+        "gpu_util_pct": 100,
+        "patience": 0,
+        "is_best": true
+      },
+      {
+        "epoch": 6,
+        "train_loss": 0.0901,
+        "val_loss": 0.0934,
+        "val_macro_pr_auc": 0.7136,
+        "val_mean_roc_auc": 0.9911,
+        "epoch_time_seconds": 22.15,
+        "samples_per_sec": 5773.3,
+        "peak_memory_mb": 2395.2,
+        "gpu_util_pct": 50,
+        "patience": 1,
+        "is_best": false
+      }
+    ],
+    "best_epoch": 5,
+    "epochs_run": 6,
+    "best_val_macro_pr_auc": 0.715,
+    "mean_epoch_time_seconds": 21.22,
+    "train_time_seconds": 144.92,
+    "stage_timings_seconds": {
+      "1_load_verify": 1.26,
+      "2_tokenize_vocab": 8.29,
+      "3_fasttext_matrix": 1.96,
+      "4_build_model_gpu": 2.11,
+      "5_training_epochs": 128.66,
+      "6_predict_and_save": 2.64
+    },
+    "model_size_bytes": 61464878,
+    "model_size_mb": 58.62,
+    "device_info": {
+      "gpu_name": "NVIDIA GeForce RTX 3060 Laptop GPU",
+      "vram_gb": 6.0,
+      "cuda_version": "12.4",
+      "peak_vram_mb": 2466.5
+    },
+    "artifacts": {
+      "model_pt": "models/2_bigru_attn/model.pt",
+      "vocab_json": "models/2_bigru_attn/vocab.json",
+      "history_json": "models/2_bigru_attn/history.json",
+      "probs_val": "predictions/2_bigru_attn/probs_val.npy",
+      "probs_test": "predictions/2_bigru_attn/probs_test.npy"
+    },
+    "versions": {
+      "python": "3.12.6",
+      "torch": "2.6.0+cu124",
+      "cuda": "12.4",
+      "pandas": "2.2.3",
+      "numpy": "1.26.4"
+    }
+  },
+  "labels": [
+    "toxic",
+    "severe_toxic",
+    "obscene",
+    "threat",
+    "insult",
+    "identity_hate"
+  ],
+  "threshold_tuning": {
+    "method": "bootstrap_median_f1",
+    "n_bootstrap": 200,
+    "seed": 42,
+    "grid_range": [
+      0.01,
+      0.99,
+      0.01
+    ],
+    "thresholds": {
+      "toxic": 0.63,
+      "severe_toxic": 0.88,
+      "obscene": 0.72,
+      "threat": 0.83,
+      "insult": 0.83,
+      "identity_hate": 0.82
+    },
+    "val_optimal_single_run": {
+      "toxic": 0.63,
+      "severe_toxic": 0.89,
+      "obscene": 0.72,
+      "threat": 0.83,
+      "insult": 0.83,
+      "identity_hate": 0.83
+    },
+    "bootstrap_details": {
+      "toxic": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.63,
+        "single_run_threshold": 0.63,
+        "mean": 0.6349,
+        "std": 0.0254,
+        "q25": 0.62,
+        "q75": 0.64
+      },
+      "severe_toxic": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.88,
+        "single_run_threshold": 0.89,
+        "mean": 0.8565,
+        "std": 0.0416,
+        "q25": 0.82,
+        "q75": 0.89
+      },
+      "obscene": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.72,
+        "single_run_threshold": 0.72,
+        "mean": 0.7083,
+        "std": 0.0274,
+        "q25": 0.71,
+        "q75": 0.72
+      },
+      "threat": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.83,
+        "single_run_threshold": 0.83,
+        "mean": 0.8372,
+        "std": 0.0449,
+        "q25": 0.8,
+        "q75": 0.84
+      },
+      "insult": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.83,
+        "single_run_threshold": 0.83,
+        "mean": 0.8108,
+        "std": 0.0293,
+        "q25": 0.81,
+        "q75": 0.83
+      },
+      "identity_hate": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.82,
+        "single_run_threshold": 0.83,
+        "mean": 0.8028,
+        "std": 0.0417,
+        "q25": 0.78,
+        "q75": 0.83
+      }
+    }
+  },
+  "test": {
+    "overall": {
+      "macro_f1": 0.6585798647935087,
+      "micro_f1": 0.7772765717507754,
+      "macro_pr_auc": 0.7048273223089918,
+      "mean_roc_auc": 0.9900181110314373,
+      "macro_precision": 0.6445906461618267,
+      "macro_recall": 0.6811918420466702,
+      "hamming_loss": 0.016623529659322855,
+      "exact_match_accuracy": 0.9232371693706205,
+      "mean_brier": 0.016926064474061565,
+      "mean_ece": 0.02164745730807961,
+      "macro_f1_ci": [
+        0.6336,
+        0.6834
+      ],
+      "micro_f1_ci": [
+        0.7649,
+        0.7886
+      ],
+      "macro_pr_auc_ci": [
+        0.6751,
+        0.7363
+      ],
+      "mean_roc_auc_ci": [
+        0.9887,
+        0.9912
+      ],
+      "macro_precision_ci": [
+        0.6171,
+        0.6735
+      ],
+      "macro_recall_ci": [
+        0.6513,
+        0.7144
+      ],
+      "exact_match_accuracy_ci": [
+        0.9194,
+        0.9274
+      ],
+      "hamming_loss_ci": [
+        0.0156,
+        0.0176
+      ]
+    },
+    "per_label": {
+      "toxic": {
+        "threshold": 0.63,
+        "support": 1543,
+        "prevalence": 0.09740546682658922,
+        "tp": 1287,
+        "fp": 283,
+        "fn": 256,
+        "tn": 14015,
+        "precision": 0.8197452229299363,
+        "recall": 0.8340894361633182,
+        "f1": 0.8268551236749117,
+        "mcc": 0.8080274708272953,
+        "roc_auc": 0.9843143224759305,
+        "pr_auc": 0.9091506718696712,
+        "brier": 0.029200622593206632,
+        "ece": 0.030893184973052257,
+        "f1_ci": [
+          0.8122,
+          0.8411
+        ],
+        "precision_ci": [
+          0.8005,
+          0.8372
+        ],
+        "recall_ci": [
+          0.8151,
+          0.8527
+        ],
+        "pr_auc_ci": [
+          0.8979,
+          0.9196
+        ],
+        "roc_auc_ci": [
+          0.9818,
+          0.9864
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.816969696969697,
+        "precision_at_05": 0.7672168468981218,
+        "recall_at_05": 0.8736228127025275
+      },
+      "severe_toxic": {
+        "threshold": 0.88,
+        "support": 163,
+        "prevalence": 0.01028975443469478,
+        "tp": 92,
+        "fp": 96,
+        "fn": 71,
+        "tn": 15582,
+        "precision": 0.48936170212765956,
+        "recall": 0.5644171779141104,
+        "f1": 0.5242165242165242,
+        "mcc": 0.5202646700558827,
+        "roc_auc": 0.9916012982124145,
+        "pr_auc": 0.5399138792627,
+        "brier": 0.01552179351571403,
+        "ece": 0.02217694843051314,
+        "f1_ci": [
+          0.4593,
+          0.5836
+        ],
+        "precision_ci": [
+          0.4136,
+          0.5618
+        ],
+        "recall_ci": [
+          0.4857,
+          0.6364
+        ],
+        "pr_auc_ci": [
+          0.4595,
+          0.6198
+        ],
+        "roc_auc_ci": [
+          0.9899,
+          0.9932
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.4591194968553459,
+        "precision_at_05": 0.3086680761099366,
+        "recall_at_05": 0.8957055214723927
+      },
+      "obscene": {
+        "threshold": 0.72,
+        "support": 857,
+        "prevalence": 0.05410011994192286,
+        "tp": 716,
+        "fp": 129,
+        "fn": 141,
+        "tn": 14855,
+        "precision": 0.8473372781065088,
+        "recall": 0.8354725787631272,
+        "f1": 0.8413631022326674,
+        "mcc": 0.832380676061182,
+        "roc_auc": 0.9939279455456493,
+        "pr_auc": 0.9133216144663452,
+        "brier": 0.015478256351909322,
+        "ece": 0.015930745252615088,
+        "f1_ci": [
+          0.8222,
+          0.859
+        ],
+        "precision_ci": [
+          0.8216,
+          0.8708
+        ],
+        "recall_ci": [
+          0.8108,
+          0.8616
+        ],
+        "pr_auc_ci": [
+          0.8962,
+          0.9281
+        ],
+        "roc_auc_ci": [
+          0.9927,
+          0.995
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.8188134687332977,
+        "precision_at_05": 0.7554240631163708,
+        "recall_at_05": 0.8938156359393232
+      },
+      "threat": {
+        "threshold": 0.83,
+        "support": 50,
+        "prevalence": 0.0031563663910106686,
+        "tp": 29,
+        "fp": 48,
+        "fn": 21,
+        "tn": 15743,
+        "precision": 0.37662337662337664,
+        "recall": 0.58,
+        "f1": 0.4566929133858268,
+        "mcc": 0.4653258394380261,
+        "roc_auc": 0.9961965676651257,
+        "pr_auc": 0.5091790669014148,
+        "brier": 0.006078056024471764,
+        "ece": 0.013018528894875477,
+        "f1_ci": [
+          0.3529,
+          0.5625
+        ],
+        "precision_ci": [
+          0.275,
+          0.4928
+        ],
+        "recall_ci": [
+          0.4444,
+          0.7175
+        ],
+        "pr_auc_ci": [
+          0.3813,
+          0.6416
+        ],
+        "roc_auc_ci": [
+          0.9943,
+          0.9978
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.3961352657004831,
+        "precision_at_05": 0.2611464968152866,
+        "recall_at_05": 0.82
+      },
+      "insult": {
+        "threshold": 0.83,
+        "support": 792,
+        "prevalence": 0.04999684363360899,
+        "tp": 551,
+        "fp": 173,
+        "fn": 241,
+        "tn": 14876,
+        "precision": 0.761049723756906,
+        "recall": 0.6957070707070707,
+        "f1": 0.7269129287598944,
+        "mcc": 0.7140104344002569,
+        "roc_auc": 0.9867933941045112,
+        "pr_auc": 0.7773121164971434,
+        "brier": 0.02472528359661162,
+        "ece": 0.028767987821933648,
+        "f1_ci": [
+          0.7006,
+          0.751
+        ],
+        "precision_ci": [
+          0.73,
+          0.7918
+        ],
+        "recall_ci": [
+          0.6636,
+          0.7269
+        ],
+        "pr_auc_ci": [
+          0.745,
+          0.8086
+        ],
+        "roc_auc_ci": [
+          0.9847,
+          0.9884
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.7228289131565263,
+        "precision_at_05": 0.614500442086649,
+        "recall_at_05": 0.8775252525252525
+      },
+      "identity_hate": {
+        "threshold": 0.82,
+        "support": 142,
+        "prevalence": 0.008964080550470299,
+        "tp": 82,
+        "fp": 61,
+        "fn": 60,
+        "tn": 15638,
+        "precision": 0.5734265734265734,
+        "recall": 0.5774647887323944,
+        "f1": 0.5754385964912281,
+        "mcc": 0.5715883557074302,
+        "roc_auc": 0.9872751381849925,
+        "pr_auc": 0.5800865848566767,
+        "brier": 0.010552374762456022,
+        "ece": 0.019097348475488038,
+        "f1_ci": [
+          0.5,
+          0.6411
+        ],
+        "precision_ci": [
+          0.4921,
+          0.6529
+        ],
+        "recall_ci": [
+          0.4998,
+          0.6544
+        ],
+        "pr_auc_ci": [
+          0.4996,
+          0.6732
+        ],
+        "roc_auc_ci": [
+          0.9816,
+          0.992
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.5065502183406113,
+        "precision_at_05": 0.3670886075949367,
+        "recall_at_05": 0.8169014084507042
+      }
+    },
+    "hierarchical": {
+      "severe_toxic_standard_f1": 0.5242165242165242,
+      "severe_toxic_standard_precision": 0.48936170212765956,
+      "severe_toxic_standard_recall": 0.5644171779141104,
+      "severe_toxic_hierarchical_f1": 0.5242165242165242,
+      "severe_toxic_hierarchical_precision": 0.48936170212765956,
+      "severe_toxic_hierarchical_recall": 0.5644171779141104,
+      "hierarchical_micro_f1": 0.7772765717507754,
+      "hierarchical_exact_match": 0.9232371693706205
+    },
+    "overall_fixed_05": {
+      "macro_f1": 0.6200695099593269,
+      "micro_f1": 0.7413936867182847,
+      "macro_pr_auc": 0.7048273223089918,
+      "mean_roc_auc": 0.9900181110314373,
+      "macro_precision": 0.5123407554368836,
+      "macro_recall": 0.8629284385150333,
+      "hamming_loss": 0.022841571449613872,
+      "exact_match_accuracy": 0.9040464617132756,
+      "mean_brier": 0.016926064474061565,
+      "mean_ece": 0.02164745730807961
+    },
+    "per_label_fixed_05": {
+      "toxic": {
+        "threshold": 0.5,
+        "support": 1543,
+        "prevalence": 0.09740546682658922,
+        "tp": 1348,
+        "fp": 409,
+        "fn": 195,
+        "tn": 13889,
+        "precision": 0.7672168468981218,
+        "recall": 0.8736228127025275,
+        "f1": 0.816969696969697,
+        "mcc": 0.7978796326293761,
+        "roc_auc": 0.9843143224759305,
+        "pr_auc": 0.9091506718696712,
+        "brier": 0.029200622593206632,
+        "ece": 0.030893184973052257
+      },
+      "severe_toxic": {
+        "threshold": 0.5,
+        "support": 163,
+        "prevalence": 0.01028975443469478,
+        "tp": 146,
+        "fp": 327,
+        "fn": 17,
+        "tn": 15351,
+        "precision": 0.3086680761099366,
+        "recall": 0.8957055214723927,
+        "f1": 0.4591194968553459,
+        "mcc": 0.5187195578094154,
+        "roc_auc": 0.9916012982124145,
+        "pr_auc": 0.5399138792627,
+        "brier": 0.01552179351571403,
+        "ece": 0.02217694843051314
+      },
+      "obscene": {
+        "threshold": 0.5,
+        "support": 857,
+        "prevalence": 0.05410011994192286,
+        "tp": 766,
+        "fp": 248,
+        "fn": 91,
+        "tn": 14736,
+        "precision": 0.7554240631163708,
+        "recall": 0.8938156359393232,
+        "f1": 0.8188134687332977,
+        "mcc": 0.8107543742489743,
+        "roc_auc": 0.9939279455456493,
+        "pr_auc": 0.9133216144663452,
+        "brier": 0.015478256351909322,
+        "ece": 0.015930745252615088
+      },
+      "threat": {
+        "threshold": 0.5,
+        "support": 50,
+        "prevalence": 0.0031563663910106686,
+        "tp": 41,
+        "fp": 116,
+        "fn": 9,
+        "tn": 15675,
+        "precision": 0.2611464968152866,
+        "recall": 0.82,
+        "f1": 0.3961352657004831,
+        "mcc": 0.4601689132186257,
+        "roc_auc": 0.9961965676651257,
+        "pr_auc": 0.5091790669014148,
+        "brier": 0.006078056024471764,
+        "ece": 0.013018528894875477
+      },
+      "insult": {
+        "threshold": 0.5,
+        "support": 792,
+        "prevalence": 0.04999684363360899,
+        "tp": 695,
+        "fp": 436,
+        "fn": 97,
+        "tn": 14613,
+        "precision": 0.614500442086649,
+        "recall": 0.8775252525252525,
+        "f1": 0.7228289131565263,
+        "mcc": 0.7182206090523522,
+        "roc_auc": 0.9867933941045112,
+        "pr_auc": 0.7773121164971434,
+        "brier": 0.02472528359661162,
+        "ece": 0.028767987821933648
+      },
+      "identity_hate": {
+        "threshold": 0.5,
+        "support": 142,
+        "prevalence": 0.008964080550470299,
+        "tp": 116,
+        "fp": 200,
+        "fn": 26,
+        "tn": 15499,
+        "precision": 0.3670886075949367,
+        "recall": 0.8169014084507042,
+        "f1": 0.5065502183406113,
+        "mcc": 0.5420810551930585,
+        "roc_auc": 0.9872751381849925,
+        "pr_auc": 0.5800865848566767,
+        "brier": 0.010552374762456022,
+        "ece": 0.019097348475488038
+      }
+    }
+  },
+  "val_reference": {
+    "overall": {
+      "macro_f1": 0.7001701493548617,
+      "micro_f1": 0.7979361316413331,
+      "macro_pr_auc": 0.7150137600941099,
+      "mean_roc_auc": 0.9914198072928099,
+      "macro_precision": 0.6745802558226169,
+      "macro_recall": 0.7451363098591556,
+      "hamming_loss": 0.015218350242611381,
+      "exact_match_accuracy": 0.9274686495683407,
+      "mean_brier": 0.016634015337177403,
+      "mean_ece": 0.02274993980747037
+    },
+    "per_label": {
+      "toxic": {
+        "threshold": 0.63,
+        "support": 1529,
+        "prevalence": 0.09635137689835528,
+        "tp": 1289,
+        "fp": 290,
+        "fn": 240,
+        "tn": 14050,
+        "precision": 0.8163394553514883,
+        "recall": 0.843034663178548,
+        "f1": 0.8294723294723295,
+        "mcc": 0.8110945772307245,
+        "roc_auc": 0.9865311782525292,
+        "pr_auc": 0.9134454896681338,
+        "brier": 0.029004430114054593,
+        "ece": 0.032799183846027036
+      },
+      "severe_toxic": {
+        "threshold": 0.88,
+        "support": 163,
+        "prevalence": 0.010271598714474762,
+        "tp": 102,
+        "fp": 99,
+        "fn": 61,
+        "tn": 15607,
+        "precision": 0.5074626865671642,
+        "recall": 0.6257668711656442,
+        "f1": 0.5604395604395604,
+        "mcc": 0.5585184755540522,
+        "roc_auc": 0.9922750400573733,
+        "pr_auc": 0.5311071490022288,
+        "brier": 0.01610579533356653,
+        "ece": 0.023190498406706374
+      },
+      "obscene": {
+        "threshold": 0.72,
+        "support": 853,
+        "prevalence": 0.053752599407650134,
+        "tp": 744,
+        "fp": 145,
+        "fn": 109,
+        "tn": 14871,
+        "precision": 0.8368953880764904,
+        "recall": 0.8722157092614302,
+        "f1": 0.8541905855338691,
+        "mcc": 0.8459288600353028,
+        "roc_auc": 0.9940476153298927,
+        "pr_auc": 0.9216608810267781,
+        "brier": 0.01518847247154358,
+        "ece": 0.01793598896293735
+      },
+      "threat": {
+        "threshold": 0.83,
+        "support": 47,
+        "prevalence": 0.0029617493225786123,
+        "tp": 36,
+        "fp": 49,
+        "fn": 11,
+        "tn": 15773,
+        "precision": 0.4235294117647059,
+        "recall": 0.7659574468085106,
+        "f1": 0.5454545454545454,
+        "mcc": 0.5679456066942139,
+        "roc_auc": 0.9948119639500077,
+        "pr_auc": 0.4203340486690898,
+        "brier": 0.00649118058744764,
+        "ece": 0.013993785631242282
+      },
+      "insult": {
+        "threshold": 0.83,
+        "support": 795,
+        "prevalence": 0.05009767471170206,
+        "tp": 605,
+        "fp": 157,
+        "fn": 190,
+        "tn": 14917,
+        "precision": 0.7939632545931758,
+        "recall": 0.7610062893081762,
+        "f1": 0.7771355170199101,
+        "mcc": 0.7658338792588001,
+        "roc_auc": 0.9901182676990578,
+        "pr_auc": 0.8450926446744489,
+        "brier": 0.023725351809807727,
+        "ece": 0.03061853981622961
+      },
+      "identity_hate": {
+        "threshold": 0.82,
+        "support": 141,
+        "prevalence": 0.008885247967735837,
+        "tp": 85,
+        "fp": 42,
+        "fn": 56,
+        "tn": 15686,
+        "precision": 0.6692913385826772,
+        "recall": 0.6028368794326241,
+        "f1": 0.6343283582089553,
+        "mcc": 0.6321006398110379,
+        "roc_auc": 0.9907347784679985,
+        "pr_auc": 0.6584423475239807,
+        "brier": 0.009288861706644334,
+        "ece": 0.017961642181679557
+      }
+    }
+  },
+  "bootstrap_info": {
+    "seed": 42,
+    "n_resamples": 1000,
+    "ci_level": 0.95,
+    "n_test": 15841,
+    "n_val": 15869,
+    "rng": "np.random.default_rng(seed)"
+  },
+  "model_specific": {
+    "training_history_table": "reports/2_bigru_attn/tables/training_history.csv",
+    "training_curves_figure": "visualizations/2_bigru_attn/training_curves.png",
+    "attention_table": "reports/2_bigru_attn/tables/top_attention_tokens.csv",
+    "top_attention_tokens": [
+      {
+        "rank": 1,
+        "token": "bullshit",
+        "mean_attention": 0.318915,
+        "count": 36
+      },
+      {
+        "rank": 2,
+        "token": "crap",
+        "mean_attention": 0.285016,
+        "count": 39
+      },
+      {
+        "rank": 3,
+        "token": "hell",
+        "mean_attention": 0.264934,
+        "count": 61
+      },
+      {
+        "rank": 4,
+        "token": "dick",
+        "mean_attention": 0.240299,
+        "count": 62
+      },
+      {
+        "rank": 5,
+        "token": "stupid",
+        "mean_attention": 0.239239,
+        "count": 107
+      },
+      {
+        "rank": 6,
+        "token": "idiot",
+        "mean_attention": 0.230282,
+        "count": 104
+      },
+      {
+        "rank": 7,
+        "token": "die",
+        "mean_attention": 0.221425,
+        "count": 59
+      },
+      {
+        "rank": 8,
+        "token": "faggot",
+        "mean_attention": 0.209015,
+        "count": 91
+      },
+      {
+        "rank": 9,
+        "token": "shut",
+        "mean_attention": 0.201036,
+        "count": 43
+      },
+      {
+        "rank": 10,
+        "token": "fuck",
+        "mean_attention": 0.183934,
+        "count": 471
+      },
+      {
+        "rank": 11,
+        "token": "gay",
+        "mean_attention": 0.182143,
+        "count": 127
+      },
+      {
+        "rank": 12,
+        "token": "asshole",
+        "mean_attention": 0.16084,
+        "count": 113
+      },
+      {
+        "rank": 13,
+        "token": "suck",
+        "mean_attention": 0.154793,
+        "count": 113
+      },
+      {
+        "rank": 14,
+        "token": "dumb",
+        "mean_attention": 0.147999,
+        "count": 34
+      },
+      {
+        "rank": 15,
+        "token": "racist",
+        "mean_attention": 0.14362,
+        "count": 42
+      },
+      {
+        "rank": 16,
+        "token": "damn",
+        "mean_attention": 0.137375,
+        "count": 46
+      },
+      {
+        "rank": 17,
+        "token": "fuckin",
+        "mean_attention": 0.134148,
+        "count": 38
+      },
+      {
+        "rank": 18,
+        "token": "bitch",
+        "mean_attention": 0.132034,
+        "count": 133
+      },
+      {
+        "rank": 19,
+        "token": "penis",
+        "mean_attention": 0.129285,
+        "count": 40
+      },
+      {
+        "rank": 20,
+        "token": "fucking",
+        "mean_attention": 0.128778,
+        "count": 360
+      }
+    ],
+    "attention_figure": "visualizations/2_bigru_attn/top_attention_tokens.png"
+  },
+  "inference_benchmark": {
+    "benchmark_sample_size": 1000,
+    "total_time_seconds": 0.0927,
+    "latency_ms_per_comment": 0.093,
+    "throughput_comments_per_sec": 10789.0,
+    "time_per_1000_comments_sec": 0.093,
+    "device": "GPU",
+    "batch_size": 1000,
+    "details": {
+      "gpu_batch_1000": {
+        "device": "GPU",
+        "batch_size": 1000,
+        "sample_size": 1000,
+        "median_seconds": 0.0927,
+        "latency_ms_per_comment": 0.093,
+        "throughput_comments_per_sec": 10789.0,
+        "time_per_1000_comments_sec": 0.093,
+        "repeats_seconds": [
+          0.1802,
+          0.0927,
+          0.0932,
+          0.0878,
+          0.0906
+        ],
+        "gpu_name": "NVIDIA GeForce RTX 3060 Laptop GPU",
+        "cpu_threads": 8
+      },
+      "gpu_batch_1": {
+        "device": "GPU",
+        "batch_size": 1,
+        "sample_size": 1000,
+        "median_seconds": 4.8614,
+        "latency_ms_per_comment": 4.861,
+        "throughput_comments_per_sec": 205.7,
+        "time_per_1000_comments_sec": 4.861,
+        "repeats_seconds": [
+          5.0094,
+          4.8614,
+          5.5642,
+          4.6793,
+          4.7092
+        ]
+      },
+      "cpu_batch_1000": {
+        "device": "CPU",
+        "batch_size": 1000,
+        "sample_size": 1000,
+        "median_seconds": 0.6643,
+        "latency_ms_per_comment": 0.664,
+        "throughput_comments_per_sec": 1505.4,
+        "time_per_1000_comments_sec": 0.664,
+        "repeats_seconds": [
+          0.6643,
+          0.607,
+          0.6051,
+          0.7241,
+          0.7232
+        ]
+      },
+      "cpu_batch_1": {
+        "device": "CPU",
+        "batch_size": 1,
+        "sample_size": 1000,
+        "median_seconds": 7.9482,
+        "latency_ms_per_comment": 7.948,
+        "throughput_comments_per_sec": 125.8,
+        "time_per_1000_comments_sec": 7.948,
+        "repeats_seconds": [
+          7.0105,
+          7.6433,
+          8.198,
+          8.2835,
+          7.9482
+        ]
+      }
+    },
+    "cpu_threads": 8,
+    "gpu_name": "NVIDIA GeForce RTX 3060 Laptop GPU"
+  },
+  "model_size_mb": 58.62
+}

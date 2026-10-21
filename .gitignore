@@ -17,7 +17,7 @@ data/processed/*
 !data/processed/.gitkeep
 !data/processed/DATA_DICTIONARY.md
 !data/processed/qa_report.json
-+data/splits/*
+data/splits/*
 !data/splits/.gitkeep
 !data/splits/*.json
 !data/splits/v1_exact_dup/
@@ -27,6 +27,10 @@ data/raw/kaggle_manual/
 *.csv.zip
 *.zip
 *.csv
+
+# External assets (e.g. fastText pretrained embeddings)
+external/
+external/**
 
 # Reports: keep dedup outputs, ignore large EDA files only
 reports/eda/figures/*.png
@@ -38,12 +42,13 @@ reports/eda/tables/*.csv
 !reports/**
 !visualizations/**
 
-# Model weights (ignore large binaries, allow metadata and status)
+# Model weights & caches (ignore large binaries, allow metadata and status)
 models/**/*.joblib
 models/**/*.bin
 models/**/*.pt
 models/**/*.pth
 models/**/*.onnx
+models/**/*.npy
 
 # Smoke test outputs
 *_smoke/

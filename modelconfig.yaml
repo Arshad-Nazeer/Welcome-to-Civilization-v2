@@ -1,0 +1,33 @@
+model: BiGRU + Attention (fastText)
+
+Tokens: Regex `\w+|[^\w\s]`, lowercased. Vocabulary is the top 50k train tokens (min_freq 2) plus `<pad>` and `<unk>`, covering about 98.6% of tokens. `max_len` 256, head truncation.
+
+Embedding: fastText 300-d, frozen. Missing words get small random vectors with the same mean and spread as the found ones. Spatial dropout 0.25.
+
+Encoder: 1-layer bidirectional GRU, 128 hidden per direction (256 out), dropout 0.3. Then additive attention pooling over the non-padded positions. About 0.4M trainable parameters.
+
+Head: Linear 256→6
+
+Training: AdamW, lr 1e-3, batch 128, gradient clip 1.0, up to 6 epochs, early stopping (patience 2) on val macro PR-AUC.
+
+Imbalance: Weighted BCE plus bias init
+
+Hardware / time: Colab GPU, roughly 1–2 minutes per epoch.
+
+Limitations: Lowercasing loses the casing signal that your EDA found in toxic comments. The BiGRU is the only model that discards it, so mention that in the limitations.
+
+model: DistilRoBERTa-base
+
+Tokens: RoBERTa byte-level BPE (vocab 50,265), case preserved. `max_len` 128, head truncation, dynamic padding with length-sorted batches.
+
+Embedding: Learned token embeddings (768-d) plus learned position embeddings, fine-tuned.
+
+Encoder: 6 transformer layers, 12 heads, hidden 768, FFN 3072. About 82M parameters.
+
+Head: HF classification head on the `<s>` token (768→768, tanh, dropout 0.1, then 768→6). I use my own loss and ignore the built-in one.
+
+Training: AdamW, lr 3e-5, weight decay 0.01, 10% warmup then linear decay, batch 32, fp16, gradient clip 1.0, 3 epochs. Keep the best epoch by val macro PR-AUC.
+
+Imbalance: Weighted BCE plus bias init
+
+Hardware / time: Colab T4, roughly 20–45 minutes.

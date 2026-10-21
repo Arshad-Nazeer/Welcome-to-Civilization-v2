@@ -1,0 +1,9 @@
+{
+  "state": "COMPLETED",
+  "stage": "done",
+  "updated_at": "2026-10-21T16:06:22.720644+00:00",
+  "total_train_seconds": 144.92,
+  "best_epoch": 5,
+  "best_val_macro_pr_auc": 0.715,
+  "model_size_mb": 58.62
+}
