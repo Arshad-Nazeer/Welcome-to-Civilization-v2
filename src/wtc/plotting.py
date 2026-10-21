@@ -31,6 +31,7 @@ from .config import LABELS
 MODEL_COLORS: dict[str, str] = {
     "1_tfidf_lr": "#1f77b4",        # Muted blue
     "2_bigru_attn": "#2ca02c",      # Muted green
+    "2b_bigru_attn_v2": "#00897b",  # Rich teal
     "3_distilroberta": "#d62728",   # Crimson red
 }
 

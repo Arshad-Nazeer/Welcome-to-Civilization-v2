@@ -1,0 +1,1152 @@
+{
+  "model_id": "2b_bigru_attn_v2",
+  "meta": {
+    "model_id": "2b_bigru_attn_v2",
+    "model_name": "bigru_attn_v2",
+    "adapter_type": "bigru_attn_v2",
+    "smoke": false,
+    "framework": "PyTorch 2.6.0+cu124",
+    "created_utc": "2026-10-21T18:25:02.827248+00:00",
+    "seed": 42,
+    "labels": [
+      "toxic",
+      "severe_toxic",
+      "obscene",
+      "threat",
+      "insult",
+      "identity_hate"
+    ],
+    "input_column": "text_clean",
+    "class_weights": {
+      "toxic": {
+        "0": 1.0,
+        "1": 2.7491
+      },
+      "severe_toxic": {
+        "0": 1.0,
+        "1": 7.9346
+      },
+      "obscene": {
+        "0": 1.0,
+        "1": 3.6693
+      },
+      "threat": {
+        "0": 1.0,
+        "1": 13.6783
+      },
+      "insult": {
+        "0": 1.0,
+        "1": 3.7912
+      },
+      "identity_hate": {
+        "0": 1.0,
+        "1": 8.391
+      }
+    },
+    "config": {
+      "model_id": "2b_bigru_attn_v2",
+      "description": "BiGRU + Additive Attention, fine-tuned fastText (no lowercasing, unfrozen embeddings)",
+      "input_col": "text_clean",
+      "seed": 42,
+      "tokenizer": {
+        "regex": "\\w+|[^\\w\\s]",
+        "lowercase": false,
+        "max_len": 256,
+        "truncation": "head"
+      },
+      "vocab": {
+        "max_vocab": 50000,
+        "min_freq": 2,
+        "pad_token": "<pad>",
+        "unk_token": "<unk>",
+        "pad_idx": 0,
+        "unk_idx": 1
+      },
+      "embedding": {
+        "source": "crawl-300d-2M.vec.zip",
+        "url": "https://dl.fbaipublicfiles.com/fasttext/vectors-english/crawl-300d-2M.vec.zip",
+        "dim": 300,
+        "frozen": false,
+        "spatial_dropout": 0.35,
+        "embedding_lr_scale": 0.1
+      },
+      "encoder": {
+        "type": "gru",
+        "bidirectional": true,
+        "num_layers": 1,
+        "hidden_dim": 128,
+        "output_dropout": 0.3
+      },
+      "attention": {
+        "type": "additive",
+        "dim": 128
+      },
+      "head": {
+        "num_classes": 6
+      },
+      "imbalance": {
+        "method": "sqrt_neg_pos_ratio",
+        "power": 0.45,
+        "max_weight": 14.0,
+        "bias_init": "log_odds"
+      },
+      "training": {
+        "optimizer": "adamw",
+        "lr": 0.001,
+        "weight_decay": 0.01,
+        "batch_size": 128,
+        "eval_batch_size": 1024,
+        "grad_clip": 1.0,
+        "epochs": 8,
+        "patience": 3,
+        "monitor_metric": "val_macro_pr_auc",
+        "mixed_precision": true,
+        "scheduler": "cosine",
+        "warmup_epochs": 1
+      }
+    },
+    "parameters": {
+      "trainable": 15365406,
+      "frozen": 0,
+      "total": 15365406
+    },
+    "tokenizer_info": {
+      "total_unique_tokens": 206219,
+      "total_token_occurrences": 10915047,
+      "vocab_size": 50002,
+      "token_coverage_pct": 97.94,
+      "lowercase": false,
+      "pad_idx": 0,
+      "unk_idx": 1,
+      "val_truncated_pct": 5.92,
+      "test_truncated_pct": 5.62
+    },
+    "fasttext_info": {
+      "vocab_hash": "ecd0f507920e339086056138214efed0bbaaa37291dce99fc90dafcd29471fab",
+      "fasttext_source": "crawl-300d-2M.vec.zip",
+      "total_vocab": 50002,
+      "found_words": 47229,
+      "missing_words": 2772,
+      "type_hit_rate_pct": 94.46,
+      "embedding_dim": 300,
+      "token_weighted_hit_rate_pct": 98.01
+    },
+    "training_history": [
+      {
+        "epoch": 1,
+        "train_loss": 0.1325,
+        "val_loss": 0.0949,
+        "val_macro_pr_auc": 0.6518,
+        "val_mean_roc_auc": 0.989,
+        "epoch_time_seconds": 28.52,
+        "samples_per_sec": 4483.4,
+        "peak_memory_mb": 2569.2,
+        "gpu_util_pct": 93,
+        "learning_rates": [
+          0.0001,
+          0.001
+        ],
+        "patience": 0,
+        "is_best": true
+      },
+      {
+        "epoch": 2,
+        "train_loss": 0.1038,
+        "val_loss": 0.089,
+        "val_macro_pr_auc": 0.681,
+        "val_mean_roc_auc": 0.9905,
+        "epoch_time_seconds": 28.34,
+        "samples_per_sec": 4511.5,
+        "peak_memory_mb": 2569.2,
+        "gpu_util_pct": 99,
+        "learning_rates": [
+          0.0001,
+          0.001
+        ],
+        "patience": 0,
+        "is_best": true
+      },
+      {
+        "epoch": 3,
+        "train_loss": 0.0947,
+        "val_loss": 0.0861,
+        "val_macro_pr_auc": 0.6865,
+        "val_mean_roc_auc": 0.9908,
+        "epoch_time_seconds": 27.06,
+        "samples_per_sec": 4725.2,
+        "peak_memory_mb": 2569.2,
+        "gpu_util_pct": 100,
+        "learning_rates": [
+          9.5e-05,
+          0.00095
+        ],
+        "patience": 0,
+        "is_best": true
+      },
+      {
+        "epoch": 4,
+        "train_loss": 0.0873,
+        "val_loss": 0.0855,
+        "val_macro_pr_auc": 0.6989,
+        "val_mean_roc_auc": 0.991,
+        "epoch_time_seconds": 26.34,
+        "samples_per_sec": 4854.5,
+        "peak_memory_mb": 2569.2,
+        "gpu_util_pct": 86,
+        "learning_rates": [
+          8.1e-05,
+          0.000812
+        ],
+        "patience": 0,
+        "is_best": true
+      },
+      {
+        "epoch": 5,
+        "train_loss": 0.0825,
+        "val_loss": 0.0836,
+        "val_macro_pr_auc": 0.7081,
+        "val_mean_roc_auc": 0.9914,
+        "epoch_time_seconds": 27.37,
+        "samples_per_sec": 4672.4,
+        "peak_memory_mb": 2569.2,
+        "gpu_util_pct": 100,
+        "learning_rates": [
+          6.1e-05,
+          0.000611
+        ],
+        "patience": 0,
+        "is_best": true
+      },
+      {
+        "epoch": 6,
+        "train_loss": 0.0777,
+        "val_loss": 0.084,
+        "val_macro_pr_auc": 0.7122,
+        "val_mean_roc_auc": 0.9916,
+        "epoch_time_seconds": 26.89,
+        "samples_per_sec": 4755.7,
+        "peak_memory_mb": 2569.2,
+        "gpu_util_pct": 87,
+        "learning_rates": [
+          3.9e-05,
+          0.000389
+        ],
+        "patience": 0,
+        "is_best": true
+      },
+      {
+        "epoch": 7,
+        "train_loss": 0.0749,
+        "val_loss": 0.0833,
+        "val_macro_pr_auc": 0.7126,
+        "val_mean_roc_auc": 0.9914,
+        "epoch_time_seconds": 29.41,
+        "samples_per_sec": 4347.8,
+        "peak_memory_mb": 2569.2,
+        "gpu_util_pct": 99,
+        "learning_rates": [
+          1.9e-05,
+          0.000188
+        ],
+        "patience": 0,
+        "is_best": true
+      },
+      {
+        "epoch": 8,
+        "train_loss": 0.0726,
+        "val_loss": 0.0832,
+        "val_macro_pr_auc": 0.7146,
+        "val_mean_roc_auc": 0.9914,
+        "epoch_time_seconds": 28.14,
+        "samples_per_sec": 4544.2,
+        "peak_memory_mb": 2569.2,
+        "gpu_util_pct": 100,
+        "learning_rates": [
+          5e-06,
+          5e-05
+        ],
+        "patience": 0,
+        "is_best": true
+      }
+    ],
+    "best_epoch": 8,
+    "epochs_run": 8,
+    "best_val_macro_pr_auc": 0.7146,
+    "mean_epoch_time_seconds": 27.76,
+    "train_time_seconds": 275.43,
+    "stage_timings_seconds": {
+      "1_load_verify": 1.19,
+      "2_tokenize_vocab": 7.84,
+      "3_fasttext_matrix": 37.06,
+      "4_build_model_gpu": 2.09,
+      "5_training_epochs": 225.14,
+      "6_predict_and_save": 2.12
+    },
+    "model_size_bytes": 61464878,
+    "model_size_mb": 58.62,
+    "device_info": {
+      "gpu_name": "NVIDIA GeForce RTX 3060 Laptop GPU",
+      "vram_gb": 6.0,
+      "cuda_version": "12.4",
+      "peak_vram_mb": 2641.3
+    },
+    "artifacts": {
+      "model_pt": "models/2b_bigru_attn_v2/model.pt",
+      "vocab_json": "models/2b_bigru_attn_v2/vocab.json",
+      "history_json": "models/2b_bigru_attn_v2/history.json",
+      "probs_val": "predictions/2b_bigru_attn_v2/probs_val.npy",
+      "probs_test": "predictions/2b_bigru_attn_v2/probs_test.npy"
+    },
+    "versions": {
+      "python": "3.12.6",
+      "torch": "2.6.0+cu124",
+      "cuda": "12.4",
+      "pandas": "2.2.3",
+      "numpy": "1.26.4"
+    }
+  },
+  "labels": [
+    "toxic",
+    "severe_toxic",
+    "obscene",
+    "threat",
+    "insult",
+    "identity_hate"
+  ],
+  "threshold_tuning": {
+    "method": "bootstrap_median_f1",
+    "n_bootstrap": 200,
+    "seed": 42,
+    "grid_range": [
+      0.01,
+      0.99,
+      0.01
+    ],
+    "thresholds": {
+      "toxic": 0.71,
+      "severe_toxic": 0.76,
+      "obscene": 0.73,
+      "threat": 0.9,
+      "insult": 0.79,
+      "identity_hate": 0.77
+    },
+    "val_optimal_single_run": {
+      "toxic": 0.71,
+      "severe_toxic": 0.77,
+      "obscene": 0.72,
+      "threat": 0.9,
+      "insult": 0.79,
+      "identity_hate": 0.77
+    },
+    "bootstrap_details": {
+      "toxic": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.71,
+        "single_run_threshold": 0.71,
+        "mean": 0.7148,
+        "std": 0.0156,
+        "q25": 0.71,
+        "q75": 0.72
+      },
+      "severe_toxic": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.76,
+        "single_run_threshold": 0.77,
+        "mean": 0.7408,
+        "std": 0.0662,
+        "q25": 0.6775,
+        "q75": 0.78
+      },
+      "obscene": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.73,
+        "single_run_threshold": 0.72,
+        "mean": 0.7422,
+        "std": 0.0479,
+        "q25": 0.72,
+        "q75": 0.78
+      },
+      "threat": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.9,
+        "single_run_threshold": 0.9,
+        "mean": 0.8163,
+        "std": 0.1504,
+        "q25": 0.8,
+        "q75": 0.9
+      },
+      "insult": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.79,
+        "single_run_threshold": 0.79,
+        "mean": 0.7879,
+        "std": 0.0184,
+        "q25": 0.79,
+        "q75": 0.79
+      },
+      "identity_hate": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.77,
+        "single_run_threshold": 0.77,
+        "mean": 0.7682,
+        "std": 0.0583,
+        "q25": 0.74,
+        "q75": 0.81
+      }
+    }
+  },
+  "test": {
+    "overall": {
+      "macro_f1": 0.6726720275383312,
+      "micro_f1": 0.7753416856492027,
+      "macro_pr_auc": 0.7071023965087404,
+      "mean_roc_auc": 0.9894529381809932,
+      "macro_precision": 0.6700438130204526,
+      "macro_recall": 0.6837457410731272,
+      "hamming_loss": 0.016602487216716116,
+      "exact_match_accuracy": 0.9238684426488227,
+      "mean_brier": 0.015445400099165769,
+      "mean_ece": 0.0151988012601192,
+      "macro_f1_ci": [
+        0.6427,
+        0.697
+      ],
+      "micro_f1_ci": [
+        0.763,
+        0.7863
+      ],
+      "macro_pr_auc_ci": [
+        0.6762,
+        0.7417
+      ],
+      "mean_roc_auc_ci": [
+        0.988,
+        0.9907
+      ],
+      "macro_precision_ci": [
+        0.6343,
+        0.7021
+      ],
+      "macro_recall_ci": [
+        0.6515,
+        0.7168
+      ],
+      "exact_match_accuracy_ci": [
+        0.9197,
+        0.928
+      ],
+      "hamming_loss_ci": [
+        0.0156,
+        0.0176
+      ]
+    },
+    "per_label": {
+      "toxic": {
+        "threshold": 0.71,
+        "support": 1543,
+        "prevalence": 0.09740546682658922,
+        "tp": 1230,
+        "fp": 203,
+        "fn": 313,
+        "tn": 14095,
+        "precision": 0.8583391486392185,
+        "recall": 0.7971484121840571,
+        "f1": 0.8266129032258065,
+        "mcc": 0.8093381976647412,
+        "roc_auc": 0.983642709525155,
+        "pr_auc": 0.9070359165901248,
+        "brier": 0.028824693433621665,
+        "ece": 0.02020917850716978,
+        "f1_ci": [
+          0.8112,
+          0.8403
+        ],
+        "precision_ci": [
+          0.8399,
+          0.8753
+        ],
+        "recall_ci": [
+          0.778,
+          0.8168
+        ],
+        "pr_auc_ci": [
+          0.8963,
+          0.9173
+        ],
+        "roc_auc_ci": [
+          0.981,
+          0.9858
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.8089406001224739,
+        "precision_at_05": 0.7666860127684272,
+        "recall_at_05": 0.8561244329228775
+      },
+      "severe_toxic": {
+        "threshold": 0.76,
+        "support": 163,
+        "prevalence": 0.01028975443469478,
+        "tp": 100,
+        "fp": 123,
+        "fn": 63,
+        "tn": 15555,
+        "precision": 0.4484304932735426,
+        "recall": 0.6134969325153374,
+        "f1": 0.5181347150259067,
+        "mcc": 0.5187962404781695,
+        "roc_auc": 0.9916498207405634,
+        "pr_auc": 0.5326806488119034,
+        "brier": 0.011696530200831034,
+        "ece": 0.015389578948439727,
+        "f1_ci": [
+          0.4594,
+          0.5769
+        ],
+        "precision_ci": [
+          0.3846,
+          0.5144
+        ],
+        "recall_ci": [
+          0.5353,
+          0.6893
+        ],
+        "pr_auc_ci": [
+          0.4539,
+          0.6162
+        ],
+        "roc_auc_ci": [
+          0.9897,
+          0.9933
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.5103189493433395,
+        "precision_at_05": 0.3675675675675676,
+        "recall_at_05": 0.8343558282208589
+      },
+      "obscene": {
+        "threshold": 0.73,
+        "support": 857,
+        "prevalence": 0.05410011994192286,
+        "tp": 716,
+        "fp": 139,
+        "fn": 141,
+        "tn": 14845,
+        "precision": 0.8374269005847953,
+        "recall": 0.8354725787631272,
+        "f1": 0.8364485981308412,
+        "mcc": 0.8271065663189869,
+        "roc_auc": 0.9922760863240511,
+        "pr_auc": 0.909537059185283,
+        "brier": 0.01581243641669875,
+        "ece": 0.014485469767012881,
+        "f1_ci": [
+          0.8168,
+          0.8543
+        ],
+        "precision_ci": [
+          0.811,
+          0.8605
+        ],
+        "recall_ci": [
+          0.8114,
+          0.8596
+        ],
+        "pr_auc_ci": [
+          0.8925,
+          0.9248
+        ],
+        "roc_auc_ci": [
+          0.9905,
+          0.9938
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.8244111349036403,
+        "precision_at_05": 0.76162215628091,
+        "recall_at_05": 0.8984830805134189
+      },
+      "threat": {
+        "threshold": 0.9,
+        "support": 50,
+        "prevalence": 0.0031563663910106686,
+        "tp": 26,
+        "fp": 16,
+        "fn": 24,
+        "tn": 15775,
+        "precision": 0.6190476190476191,
+        "recall": 0.52,
+        "f1": 0.5652173913043478,
+        "mcc": 0.5661175997326199,
+        "roc_auc": 0.9975884997783546,
+        "pr_auc": 0.5543497789336749,
+        "brier": 0.0034765290278523904,
+        "ece": 0.005555586782496511,
+        "f1_ci": [
+          0.4301,
+          0.6735
+        ],
+        "precision_ci": [
+          0.4615,
+          0.7715
+        ],
+        "recall_ci": [
+          0.3799,
+          0.6604
+        ],
+        "pr_auc_ci": [
+          0.4238,
+          0.6954
+        ],
+        "roc_auc_ci": [
+          0.9964,
+          0.9986
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.5419354838709678,
+        "precision_at_05": 0.4,
+        "recall_at_05": 0.84
+      },
+      "insult": {
+        "threshold": 0.79,
+        "support": 792,
+        "prevalence": 0.04999684363360899,
+        "tp": 562,
+        "fp": 186,
+        "fn": 230,
+        "tn": 14863,
+        "precision": 0.7513368983957219,
+        "recall": 0.7095959595959596,
+        "f1": 0.7298701298701299,
+        "mcc": 0.7164037292579144,
+        "roc_auc": 0.9859424281354311,
+        "pr_auc": 0.784130938202108,
+        "brier": 0.02295330089750509,
+        "ece": 0.020811148941008828,
+        "f1_ci": [
+          0.7031,
+          0.7524
+        ],
+        "precision_ci": [
+          0.7211,
+          0.7804
+        ],
+        "recall_ci": [
+          0.6781,
+          0.7397
+        ],
+        "pr_auc_ci": [
+          0.7536,
+          0.8149
+        ],
+        "roc_auc_ci": [
+          0.9834,
+          0.988
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.7341227125941873,
+        "precision_at_05": 0.6397748592870544,
+        "recall_at_05": 0.8611111111111112
+      },
+      "identity_hate": {
+        "threshold": 0.77,
+        "support": 142,
+        "prevalence": 0.008964080550470299,
+        "tp": 89,
+        "fp": 87,
+        "fn": 53,
+        "tn": 15612,
+        "precision": 0.5056818181818182,
+        "recall": 0.6267605633802817,
+        "f1": 0.559748427672956,
+        "mcc": 0.5586029567410808,
+        "roc_auc": 0.9856180845824036,
+        "pr_auc": 0.554880037329348,
+        "brier": 0.009908910618485676,
+        "ece": 0.01474184461458747,
+        "f1_ci": [
+          0.4839,
+          0.6243
+        ],
+        "precision_ci": [
+          0.4263,
+          0.5796
+        ],
+        "recall_ci": [
+          0.5395,
+          0.7083
+        ],
+        "pr_auc_ci": [
+          0.4663,
+          0.6535
+        ],
+        "roc_auc_ci": [
+          0.9797,
+          0.9907
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.5437352245862884,
+        "precision_at_05": 0.4092526690391459,
+        "recall_at_05": 0.8098591549295775
+      }
+    },
+    "hierarchical": {
+      "severe_toxic_standard_f1": 0.5181347150259067,
+      "severe_toxic_standard_precision": 0.4484304932735426,
+      "severe_toxic_standard_recall": 0.6134969325153374,
+      "severe_toxic_hierarchical_f1": 0.5181347150259067,
+      "severe_toxic_hierarchical_precision": 0.4484304932735426,
+      "severe_toxic_hierarchical_recall": 0.6134969325153374,
+      "hierarchical_micro_f1": 0.7753416856492027,
+      "hierarchical_exact_match": 0.9238684426488227
+    },
+    "overall_fixed_05": {
+      "macro_f1": 0.6605773509034829,
+      "micro_f1": 0.7567567567567568,
+      "macro_pr_auc": 0.7071023965087404,
+      "mean_roc_auc": 0.9894529381809932,
+      "macro_precision": 0.5574838774905175,
+      "macro_recall": 0.8499889346163073,
+      "hamming_loss": 0.020737327188940093,
+      "exact_match_accuracy": 0.9092860299223534,
+      "mean_brier": 0.015445400099165769,
+      "mean_ece": 0.0151988012601192
+    },
+    "per_label_fixed_05": {
+      "toxic": {
+        "threshold": 0.5,
+        "support": 1543,
+        "prevalence": 0.09740546682658922,
+        "tp": 1321,
+        "fp": 402,
+        "fn": 222,
+        "tn": 13896,
+        "precision": 0.7666860127684272,
+        "recall": 0.8561244329228775,
+        "f1": 0.8089406001224739,
+        "mcc": 0.7885445527984252,
+        "roc_auc": 0.983642709525155,
+        "pr_auc": 0.9070359165901248,
+        "brier": 0.028824693433621665,
+        "ece": 0.02020917850716978
+      },
+      "severe_toxic": {
+        "threshold": 0.5,
+        "support": 163,
+        "prevalence": 0.01028975443469478,
+        "tp": 136,
+        "fp": 234,
+        "fn": 27,
+        "tn": 15444,
+        "precision": 0.3675675675675676,
+        "recall": 0.8343558282208589,
+        "f1": 0.5103189493433395,
+        "mcc": 0.5475088935941549,
+        "roc_auc": 0.9916498207405634,
+        "pr_auc": 0.5326806488119034,
+        "brier": 0.011696530200831034,
+        "ece": 0.015389578948439727
+      },
+      "obscene": {
+        "threshold": 0.5,
+        "support": 857,
+        "prevalence": 0.05410011994192286,
+        "tp": 770,
+        "fp": 241,
+        "fn": 87,
+        "tn": 14743,
+        "precision": 0.76162215628091,
+        "recall": 0.8984830805134189,
+        "f1": 0.8244111349036403,
+        "mcc": 0.8166261334048804,
+        "roc_auc": 0.9922760863240511,
+        "pr_auc": 0.909537059185283,
+        "brier": 0.01581243641669875,
+        "ece": 0.014485469767012881
+      },
+      "threat": {
+        "threshold": 0.5,
+        "support": 50,
+        "prevalence": 0.0031563663910106686,
+        "tp": 42,
+        "fp": 63,
+        "fn": 8,
+        "tn": 15728,
+        "precision": 0.4,
+        "recall": 0.84,
+        "f1": 0.5419354838709678,
+        "mcc": 0.5779092803160604,
+        "roc_auc": 0.9975884997783546,
+        "pr_auc": 0.5543497789336749,
+        "brier": 0.0034765290278523904,
+        "ece": 0.005555586782496511
+      },
+      "insult": {
+        "threshold": 0.5,
+        "support": 792,
+        "prevalence": 0.04999684363360899,
+        "tp": 682,
+        "fp": 384,
+        "fn": 110,
+        "tn": 14665,
+        "precision": 0.6397748592870544,
+        "recall": 0.8611111111111112,
+        "f1": 0.7341227125941873,
+        "mcc": 0.7268915487973384,
+        "roc_auc": 0.9859424281354311,
+        "pr_auc": 0.784130938202108,
+        "brier": 0.02295330089750509,
+        "ece": 0.020811148941008828
+      },
+      "identity_hate": {
+        "threshold": 0.5,
+        "support": 142,
+        "prevalence": 0.008964080550470299,
+        "tp": 115,
+        "fp": 166,
+        "fn": 27,
+        "tn": 15533,
+        "precision": 0.4092526690391459,
+        "recall": 0.8098591549295775,
+        "f1": 0.5437352245862884,
+        "mcc": 0.5707211932355618,
+        "roc_auc": 0.9856180845824036,
+        "pr_auc": 0.554880037329348,
+        "brier": 0.009908910618485676,
+        "ece": 0.01474184461458747
+      }
+    }
+  },
+  "val_reference": {
+    "overall": {
+      "macro_f1": 0.6998609189900393,
+      "micro_f1": 0.7949509116409537,
+      "macro_pr_auc": 0.7146198286313924,
+      "mean_roc_auc": 0.9914297934830412,
+      "macro_precision": 0.6771189193242354,
+      "macro_recall": 0.7323037244865754,
+      "hamming_loss": 0.015354884785850821,
+      "exact_match_accuracy": 0.9271535698531729,
+      "mean_brier": 0.01521267800683279,
+      "mean_ece": 0.01698405936042238
+    },
+    "per_label": {
+      "toxic": {
+        "threshold": 0.71,
+        "support": 1529,
+        "prevalence": 0.09635137689835528,
+        "tp": 1239,
+        "fp": 222,
+        "fn": 290,
+        "tn": 14118,
+        "precision": 0.8480492813141683,
+        "recall": 0.8103335513407456,
+        "f1": 0.82876254180602,
+        "mcc": 0.8112184870679213,
+        "roc_auc": 0.9870770177315737,
+        "pr_auc": 0.9151379527604198,
+        "brier": 0.02825935605774369,
+        "ece": 0.02321923276906654
+      },
+      "severe_toxic": {
+        "threshold": 0.76,
+        "support": 163,
+        "prevalence": 0.010271598714474762,
+        "tp": 112,
+        "fp": 140,
+        "fn": 51,
+        "tn": 15566,
+        "precision": 0.4444444444444444,
+        "recall": 0.6871165644171779,
+        "f1": 0.5397590361445783,
+        "mcc": 0.5469996956753244,
+        "roc_auc": 0.9913904966958038,
+        "pr_auc": 0.5032091540756991,
+        "brier": 0.012954770341505282,
+        "ece": 0.017283172582600797
+      },
+      "obscene": {
+        "threshold": 0.73,
+        "support": 853,
+        "prevalence": 0.053752599407650134,
+        "tp": 746,
+        "fp": 151,
+        "fn": 107,
+        "tn": 14865,
+        "precision": 0.8316610925306578,
+        "recall": 0.8745603751465416,
+        "f1": 0.8525714285714285,
+        "mcc": 0.8442726879215575,
+        "roc_auc": 0.9923568826311724,
+        "pr_auc": 0.9202146538068328,
+        "brier": 0.015566004486092475,
+        "ece": 0.017539071035780472
+      },
+      "threat": {
+        "threshold": 0.9,
+        "support": 47,
+        "prevalence": 0.0029617493225786123,
+        "tp": 27,
+        "fp": 22,
+        "fn": 20,
+        "tn": 15800,
+        "precision": 0.5510204081632653,
+        "recall": 0.574468085106383,
+        "f1": 0.5625,
+        "mcc": 0.5612957904134233,
+        "roc_auc": 0.9964633139420735,
+        "pr_auc": 0.464187450516549,
+        "brier": 0.0037347354221235543,
+        "ece": 0.005848656135166442
+      },
+      "insult": {
+        "threshold": 0.79,
+        "support": 795,
+        "prevalence": 0.05009767471170206,
+        "tp": 615,
+        "fp": 171,
+        "fn": 180,
+        "tn": 14903,
+        "precision": 0.7824427480916031,
+        "recall": 0.7735849056603774,
+        "f1": 0.777988614800759,
+        "mcc": 0.7663636764213159,
+        "roc_auc": 0.9900449188614994,
+        "pr_auc": 0.8396624972018609,
+        "brier": 0.02217268555198291,
+        "ece": 0.023729831254410735
+      },
+      "identity_hate": {
+        "threshold": 0.77,
+        "support": 141,
+        "prevalence": 0.008885247967735837,
+        "tp": 95,
+        "fp": 62,
+        "fn": 46,
+        "tn": 15666,
+        "precision": 0.6050955414012739,
+        "recall": 0.6737588652482269,
+        "f1": 0.6375838926174496,
+        "mcc": 0.6350922517709383,
+        "roc_auc": 0.9912461310361248,
+        "pr_auc": 0.6453072634269933,
+        "brier": 0.008588516181548832,
+        "ece": 0.014284392385509267
+      }
+    }
+  },
+  "bootstrap_info": {
+    "seed": 42,
+    "n_resamples": 1000,
+    "ci_level": 0.95,
+    "n_test": 15841,
+    "n_val": 15869,
+    "rng": "np.random.default_rng(seed)"
+  },
+  "model_specific": {
+    "training_history_table": "reports/2b_bigru_attn_v2/tables/training_history.csv",
+    "training_curves_figure": "visualizations/2b_bigru_attn_v2/training_curves.png",
+    "attention_table": "reports/2b_bigru_attn_v2/tables/top_attention_tokens.csv",
+    "top_attention_tokens": [
+      {
+        "rank": 1,
+        "token": "idiot",
+        "mean_attention": 0.421559,
+        "count": 48
+      },
+      {
+        "rank": 2,
+        "token": "Fuck",
+        "mean_attention": 0.332268,
+        "count": 67
+      },
+      {
+        "rank": 3,
+        "token": "die",
+        "mean_attention": 0.327847,
+        "count": 35
+      },
+      {
+        "rank": 4,
+        "token": "bullshit",
+        "mean_attention": 0.311235,
+        "count": 31
+      },
+      {
+        "rank": 5,
+        "token": "hell",
+        "mean_attention": 0.291563,
+        "count": 49
+      },
+      {
+        "rank": 6,
+        "token": "crap",
+        "mean_attention": 0.283276,
+        "count": 33
+      },
+      {
+        "rank": 7,
+        "token": "stupid",
+        "mean_attention": 0.268966,
+        "count": 99
+      },
+      {
+        "rank": 8,
+        "token": "dick",
+        "mean_attention": 0.257223,
+        "count": 54
+      },
+      {
+        "rank": 9,
+        "token": "fuck",
+        "mean_attention": 0.249676,
+        "count": 238
+      },
+      {
+        "rank": 10,
+        "token": "hate",
+        "mean_attention": 0.202532,
+        "count": 38
+      },
+      {
+        "rank": 11,
+        "token": "faggot",
+        "mean_attention": 0.196984,
+        "count": 80
+      },
+      {
+        "rank": 12,
+        "token": "fucking",
+        "mean_attention": 0.188785,
+        "count": 228
+      },
+      {
+        "rank": 13,
+        "token": "gay",
+        "mean_attention": 0.17368,
+        "count": 115
+      },
+      {
+        "rank": 14,
+        "token": "racist",
+        "mean_attention": 0.166932,
+        "count": 36
+      },
+      {
+        "rank": 15,
+        "token": "suck",
+        "mean_attention": 0.158418,
+        "count": 98
+      },
+      {
+        "rank": 16,
+        "token": "shit",
+        "mean_attention": 0.152728,
+        "count": 186
+      },
+      {
+        "rank": 17,
+        "token": "asshole",
+        "mean_attention": 0.148703,
+        "count": 101
+      },
+      {
+        "rank": 18,
+        "token": "penis",
+        "mean_attention": 0.135431,
+        "count": 34
+      },
+      {
+        "rank": 19,
+        "token": "FUCK",
+        "mean_attention": 0.124093,
+        "count": 164
+      },
+      {
+        "rank": 20,
+        "token": "bitch",
+        "mean_attention": 0.120576,
+        "count": 115
+      }
+    ],
+    "attention_figure": "visualizations/2b_bigru_attn_v2/top_attention_tokens.png"
+  },
+  "inference_benchmark": {
+    "benchmark_sample_size": 1000,
+    "total_time_seconds": 0.0878,
+    "latency_ms_per_comment": 0.088,
+    "throughput_comments_per_sec": 11390.5,
+    "time_per_1000_comments_sec": 0.088,
+    "device": "GPU",
+    "batch_size": 1000,
+    "details": {
+      "gpu_batch_1000": {
+        "device": "GPU",
+        "batch_size": 1000,
+        "sample_size": 1000,
+        "median_seconds": 0.0878,
+        "latency_ms_per_comment": 0.088,
+        "throughput_comments_per_sec": 11390.5,
+        "time_per_1000_comments_sec": 0.088,
+        "repeats_seconds": [
+          0.1353,
+          0.086,
+          0.1052,
+          0.0878,
+          0.0877
+        ],
+        "gpu_name": "NVIDIA GeForce RTX 3060 Laptop GPU",
+        "cpu_threads": 8
+      },
+      "gpu_batch_1": {
+        "device": "GPU",
+        "batch_size": 1,
+        "sample_size": 1000,
+        "median_seconds": 4.2438,
+        "latency_ms_per_comment": 4.244,
+        "throughput_comments_per_sec": 235.6,
+        "time_per_1000_comments_sec": 4.244,
+        "repeats_seconds": [
+          4.2505,
+          4.1881,
+          4.2438,
+          4.2334,
+          4.2473
+        ]
+      },
+      "cpu_batch_1000": {
+        "device": "CPU",
+        "batch_size": 1000,
+        "sample_size": 1000,
+        "median_seconds": 0.4803,
+        "latency_ms_per_comment": 0.48,
+        "throughput_comments_per_sec": 2082.2,
+        "time_per_1000_comments_sec": 0.48,
+        "repeats_seconds": [
+          0.4829,
+          0.4672,
+          0.4803,
+          0.475,
+          0.4962
+        ]
+      },
+      "cpu_batch_1": {
+        "device": "CPU",
+        "batch_size": 1,
+        "sample_size": 1000,
+        "median_seconds": 5.8352,
+        "latency_ms_per_comment": 5.835,
+        "throughput_comments_per_sec": 171.4,
+        "time_per_1000_comments_sec": 5.835,
+        "repeats_seconds": [
+          5.8352,
+          5.8338,
+          5.8822,
+          5.8766,
+          5.8065
+        ]
+      }
+    },
+    "cpu_threads": 8,
+    "gpu_name": "NVIDIA GeForce RTX 3060 Laptop GPU"
+  },
+  "model_size_mb": 58.62
+}

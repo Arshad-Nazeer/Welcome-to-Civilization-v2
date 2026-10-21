@@ -182,6 +182,8 @@ MODEL_SPECIFIC_DISPATCH: dict[str, Any] = {
     "1_tfidf_lr": lambda mid, sm, r_dir, v_dir, lbls, df_t, P_t, Y_t: run_model_specific_tfidf(mid, sm, r_dir, v_dir, lbls),
     "bigru_attn": run_model_specific_bigru,
     "2_bigru_attn": run_model_specific_bigru,
+    "bigru_attn_v2": run_model_specific_bigru,
+    "2b_bigru_attn_v2": run_model_specific_bigru,
 }
 
 

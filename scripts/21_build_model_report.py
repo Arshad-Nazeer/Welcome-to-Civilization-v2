@@ -66,20 +66,39 @@ def get_overview_text(adapter_type: str, model_id: str, meta: dict, feat_counts:
         lines.append(f"- **Feature Space**: Sparse column concatenation of word and char features ({feat_counts.get('total_features', 150000):,} total features, dtype `float32`).")
         lines.append("- **Classifiers**: 6 independent binary `LogisticRegression` models (solver `liblinear`, L2 regularization penalty, C=2.0, max_iter=200, random_state=42), trained in parallel across CPU cores using the `threading` backend.")
     elif "bigru" in adapter_type:
-        lines.append(
-            f"Model 2 (`{model_id}`) implements a deep recurrent sequence classifier for the **Welcome to Civilization** "
-            "toxicity moderation pipeline. It combines frozen pretrained fastText word embeddings with a bidirectional "
-            "Gated Recurrent Unit (BiGRU) and an additive attention pooling mechanism, capturing sequential semantics "
-            "and long-range token dependencies while maintaining efficient inference."
-        )
-        lines.append("")
-        lines.append("### Pipeline Architecture")
-        lines.append("- **Input text**: `text_clean` lowercased and tokenized with regex `\\w+|[^\\w\\s]`.")
-        lines.append("- **Vocabulary & Embeddings**: Top 50,000 train vocabulary tokens mapped to 300-d fastText Crawl embeddings (frozen during training). Padded positions use zero vectors.")
-        lines.append("- **Spatial Dropout**: 0.25 dropout applied to entire embedding feature channels across time.")
-        lines.append("- **Encoder**: 1-layer bidirectional GRU with 128 hidden units per direction (256-d concatenated output) with 0.3 dropout, using `pack_padded_sequence` to prevent padding intrusion.")
-        lines.append("- **Attention Mechanism**: Additive attention pooling with 128-d projection and learned context vector, masked over padding positions with float32 softmax.")
-        lines.append("- **Classification Head**: Linear layer (256 -> 6 logits) with log-odds prior bias initialization.")
+        is_v2 = "v2" in model_id or "2b" in model_id or not meta.get("config", {}).get("embedding", {}).get("frozen", True)
+        if is_v2:
+            lines.append(
+                f"Model 2b (`{model_id}`) implements an improved deep recurrent sequence classifier for the **Welcome to Civilization** "
+                "toxicity moderation pipeline. Engineered specifically to resolve the setbacks identified in Model 2, Model 2b preserves casing "
+                "to capture shouting and aggressive capitalization, unfreezes fastText embeddings for domain fine-tuning with differential learning rates, "
+                "increases spatial dropout (0.35) for embedding regularization, uses a cosine learning rate schedule with warmup, and applies calibrated "
+                "positive class weighting to prevent threshold and calibration distortion."
+            )
+            lines.append("")
+            lines.append("### Pipeline Architecture & Model 2b Setback Fixes")
+            lines.append("- **Input text**: `text_clean` with **casing preserved** (no lowercasing), tokenized with regex `\\w+|[^\\w\\s]`.")
+            lines.append("- **Vocabulary & Fine-Tuned Embeddings**: Top 50,000 train vocabulary tokens initialized with 300-d fastText Crawl embeddings and **fine-tuned end-to-end** using a 0.1x differential learning rate scale (1e-4 vs 1e-3).")
+            lines.append("- **Spatial Dropout**: Increased to 0.35 across embedding channels to regularize fine-tuned representations.")
+            lines.append("- **Encoder**: 1-layer bidirectional GRU with 128 hidden units per direction (256-d concatenated output) with 0.3 dropout, using `pack_padded_sequence` to prevent padding intrusion.")
+            lines.append("- **Attention Mechanism**: Additive attention pooling with 128-d projection and learned context vector, masked over padding positions with float32 softmax.")
+            lines.append("- **Imbalance & Thresholds**: Smoothed class imbalance weighting (`power: 0.45`, max cap 14.0) with log-odds prior bias initialization, eliminating calibration distortion.")
+            lines.append("- **Optimization & Schedule**: AdamW with Cosine Annealing learning rate schedule and linear warmup across 8 epochs with patience 3.")
+        else:
+            lines.append(
+                f"Model 2 (`{model_id}`) implements a deep recurrent sequence classifier for the **Welcome to Civilization** "
+                "toxicity moderation pipeline. It combines frozen pretrained fastText word embeddings with a bidirectional "
+                "Gated Recurrent Unit (BiGRU) and an additive attention pooling mechanism, capturing sequential semantics "
+                "and long-range token dependencies while maintaining efficient inference."
+            )
+            lines.append("")
+            lines.append("### Pipeline Architecture")
+            lines.append("- **Input text**: `text_clean` lowercased and tokenized with regex `\\w+|[^\\w\\s]`.")
+            lines.append("- **Vocabulary & Embeddings**: Top 50,000 train vocabulary tokens mapped to 300-d fastText Crawl embeddings (frozen during training). Padded positions use zero vectors.")
+            lines.append("- **Spatial Dropout**: 0.25 dropout applied to entire embedding feature channels across time.")
+            lines.append("- **Encoder**: 1-layer bidirectional GRU with 128 hidden units per direction (256-d concatenated output) with 0.3 dropout, using `pack_padded_sequence` to prevent padding intrusion.")
+            lines.append("- **Attention Mechanism**: Additive attention pooling with 128-d projection and learned context vector, masked over padding positions with float32 softmax.")
+            lines.append("- **Classification Head**: Linear layer (256 -> 6 logits) with log-odds prior bias initialization.")
     else:
         lines.append(f"Model `{model_id}`: {desc}")
     return lines

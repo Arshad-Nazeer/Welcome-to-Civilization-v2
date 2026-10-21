@@ -86,7 +86,9 @@ class TfidfLrAdapter(BaseModelAdapter):
 
 
 class BiGruAttnAdapter(BaseModelAdapter):
-    """Adapter for Model 2: BiGRU + Additive Attention with fastText embeddings."""
+    """Adapter for Model 2 / 2b: BiGRU + Additive Attention with fastText embeddings.
+    Reads lowercase and freeze_embedding flags from saved meta config.
+    """
 
     def __init__(self) -> None:
         self.model = None
@@ -94,6 +96,7 @@ class BiGruAttnAdapter(BaseModelAdapter):
         self.pad_idx = 0
         self.unk_idx = 1
         self.max_len = 256
+        self.lowercase = True  # Model 2 default; Model 2b overrides to False
         self.labels: list[str] = LABELS
         self.device = None
         self.tokenizer_regex = re.compile(r"\w+|[^\w\s]")
@@ -111,11 +114,17 @@ class BiGruAttnAdapter(BaseModelAdapter):
         self.word2idx = v_data["word2idx"]
         self.pad_idx = v_data.get("pad_idx", 0)
         self.unk_idx = v_data.get("unk_idx", 1)
-        self.max_len = meta.get("config", {}).get("tokenizer", {}).get("max_len", 256)
+
+        tok_cfg = meta.get("config", {}).get("tokenizer", {})
+        self.max_len = tok_cfg.get("max_len", 256)
+        # Respect the lowercase setting used during training
+        self.lowercase = tok_cfg.get("lowercase", True)
 
         cfg_embed = meta.get("config", {}).get("embedding", {})
         cfg_enc = meta.get("config", {}).get("encoder", {})
         cfg_attn = meta.get("config", {}).get("attention", {})
+
+        freeze_embedding = cfg_embed.get("frozen", True)
 
         self.model = BiGruAttentionModel(
             vocab_size=len(self.word2idx),
@@ -126,6 +135,7 @@ class BiGruAttnAdapter(BaseModelAdapter):
             pad_idx=self.pad_idx,
             dropout_gru=cfg_enc.get("output_dropout", 0.3),
             spatial_dropout=cfg_embed.get("spatial_dropout", 0.25),
+            freeze_embedding=freeze_embedding,
         )
 
         model_file = model_dir / "model.pt"
@@ -141,11 +151,12 @@ class BiGruAttnAdapter(BaseModelAdapter):
         if n_samples == 0:
             return np.empty((0, len(self.labels)), dtype=np.float32)
 
-        # 1. Tokenize & map to IDs
+        # 1. Tokenize & map to IDs — respect lowercase setting from training config
         tokenized_ids = []
         lengths = []
         for txt in texts_clean:
-            toks = self.tokenizer_regex.findall(txt.lower())[: self.max_len]
+            txt_proc = txt.lower() if self.lowercase else txt
+            toks = self.tokenizer_regex.findall(txt_proc)[: self.max_len]
             ids = [self.word2idx.get(t, self.unk_idx) for t in toks]
             if not ids:
                 ids = [self.unk_idx]
@@ -184,6 +195,8 @@ ADAPTER_REGISTRY: dict[str, type[BaseModelAdapter]] = {
     "tfidf_lr": TfidfLrAdapter,
     "2_bigru_attn": BiGruAttnAdapter,
     "bigru_attn": BiGruAttnAdapter,
+    "2b_bigru_attn_v2": BiGruAttnAdapter,
+    "bigru_attn_v2": BiGruAttnAdapter,
 }
 
 

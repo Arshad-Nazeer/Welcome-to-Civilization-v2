@@ -1,0 +1,3 @@
+model_id,label,precision,recall,f1
+2b_bigru_attn_v2,severe_toxic (standard),0.4484,0.6135,0.5181
+2b_bigru_attn_v2,severe_toxic (hierarchical),0.4484,0.6135,0.5181

@@ -84,3 +84,56 @@ bigru_attn:
     monitor_metric: val_macro_pr_auc
     mixed_precision: true
 
+bigru_attn_v2:
+  model_id: 2b_bigru_attn_v2
+  description: "BiGRU + Additive Attention, fine-tuned fastText (no lowercasing, unfrozen embeddings)"
+  input_col: text_clean
+  seed: 42
+  tokenizer:
+    regex: "\\w+|[^\\w\\s]"
+    lowercase: false
+    max_len: 256
+    truncation: head
+  vocab:
+    max_vocab: 50000
+    min_freq: 2
+    pad_token: "<pad>"
+    unk_token: "<unk>"
+    pad_idx: 0
+    unk_idx: 1
+  embedding:
+    source: "crawl-300d-2M.vec.zip"
+    url: "https://dl.fbaipublicfiles.com/fasttext/vectors-english/crawl-300d-2M.vec.zip"
+    dim: 300
+    frozen: false
+    spatial_dropout: 0.35
+    embedding_lr_scale: 0.1
+  encoder:
+    type: gru
+    bidirectional: true
+    num_layers: 1
+    hidden_dim: 128
+    output_dropout: 0.3
+  attention:
+    type: additive
+    dim: 128
+  head:
+    num_classes: 6
+  imbalance:
+    method: sqrt_neg_pos_ratio
+    power: 0.45
+    max_weight: 14.0
+    bias_init: log_odds
+  training:
+    optimizer: adamw
+    lr: 0.001
+    weight_decay: 0.01
+    batch_size: 128
+    eval_batch_size: 1024
+    grad_clip: 1.0
+    epochs: 8
+    patience: 3
+    monitor_metric: val_macro_pr_auc
+    mixed_precision: true
+    scheduler: cosine
+    warmup_epochs: 1

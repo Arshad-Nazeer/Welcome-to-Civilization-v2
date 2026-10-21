@@ -123,6 +123,7 @@ def run_model_specific_bigru(
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         from .bigru_module import BiGruAttentionModel
+        freeze_embedding = meta.get("config", {}).get("embedding", {}).get("frozen", True)
         net = BiGruAttentionModel(
             vocab_size=len(word2idx),
             embedding_dim=meta["config"]["embedding"]["dim"],
@@ -132,6 +133,7 @@ def run_model_specific_bigru(
             pad_idx=pad_idx,
             dropout_gru=meta["config"]["encoder"]["output_dropout"],
             spatial_dropout=meta["config"]["embedding"]["spatial_dropout"],
+            freeze_embedding=freeze_embedding,
         )
         state_dict = torch.load(model_pt, map_location=device, weights_only=True)
         net.load_state_dict(state_dict)
@@ -144,6 +146,7 @@ def run_model_specific_bigru(
         toxic_texts = df_test.loc[mask_toxic, "text_clean"].fillna("").tolist()
 
         tokenizer_regex = re.compile(r"\w+|[^\w\s]")
+        lowercase = meta.get("config", {}).get("tokenizer", {}).get("lowercase", True)
         token_sum_attn: dict[str, float] = {}
         token_counts: dict[str, int] = {}
 
@@ -155,7 +158,8 @@ def run_model_specific_bigru(
                 tokenized_batch = []
                 lengths_batch = []
                 for txt in batch_texts:
-                    toks = tokenizer_regex.findall(txt.lower())[:256]
+                    txt_proc = txt.lower() if lowercase else txt
+                    toks = tokenizer_regex.findall(txt_proc)[:256]
                     ids = [word2idx.get(t, unk_idx) for t in toks]
                     if not ids:
                         ids = [unk_idx]

@@ -1,0 +1,305 @@
+{
+  "model_id": "2b_bigru_attn_v2",
+  "model_name": "bigru_attn_v2",
+  "adapter_type": "bigru_attn_v2",
+  "smoke": false,
+  "framework": "PyTorch 2.6.0+cu124",
+  "created_utc": "2026-10-21T18:25:02.827248+00:00",
+  "seed": 42,
+  "labels": [
+    "toxic",
+    "severe_toxic",
+    "obscene",
+    "threat",
+    "insult",
+    "identity_hate"
+  ],
+  "input_column": "text_clean",
+  "class_weights": {
+    "toxic": {
+      "0": 1.0,
+      "1": 2.7491
+    },
+    "severe_toxic": {
+      "0": 1.0,
+      "1": 7.9346
+    },
+    "obscene": {
+      "0": 1.0,
+      "1": 3.6693
+    },
+    "threat": {
+      "0": 1.0,
+      "1": 13.6783
+    },
+    "insult": {
+      "0": 1.0,
+      "1": 3.7912
+    },
+    "identity_hate": {
+      "0": 1.0,
+      "1": 8.391
+    }
+  },
+  "config": {
+    "model_id": "2b_bigru_attn_v2",
+    "description": "BiGRU + Additive Attention, fine-tuned fastText (no lowercasing, unfrozen embeddings)",
+    "input_col": "text_clean",
+    "seed": 42,
+    "tokenizer": {
+      "regex": "\\w+|[^\\w\\s]",
+      "lowercase": false,
+      "max_len": 256,
+      "truncation": "head"
+    },
+    "vocab": {
+      "max_vocab": 50000,
+      "min_freq": 2,
+      "pad_token": "<pad>",
+      "unk_token": "<unk>",
+      "pad_idx": 0,
+      "unk_idx": 1
+    },
+    "embedding": {
+      "source": "crawl-300d-2M.vec.zip",
+      "url": "https://dl.fbaipublicfiles.com/fasttext/vectors-english/crawl-300d-2M.vec.zip",
+      "dim": 300,
+      "frozen": false,
+      "spatial_dropout": 0.35,
+      "embedding_lr_scale": 0.1
+    },
+    "encoder": {
+      "type": "gru",
+      "bidirectional": true,
+      "num_layers": 1,
+      "hidden_dim": 128,
+      "output_dropout": 0.3
+    },
+    "attention": {
+      "type": "additive",
+      "dim": 128
+    },
+    "head": {
+      "num_classes": 6
+    },
+    "imbalance": {
+      "method": "sqrt_neg_pos_ratio",
+      "power": 0.45,
+      "max_weight": 14.0,
+      "bias_init": "log_odds"
+    },
+    "training": {
+      "optimizer": "adamw",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "batch_size": 128,
+      "eval_batch_size": 1024,
+      "grad_clip": 1.0,
+      "epochs": 8,
+      "patience": 3,
+      "monitor_metric": "val_macro_pr_auc",
+      "mixed_precision": true,
+      "scheduler": "cosine",
+      "warmup_epochs": 1
+    }
+  },
+  "parameters": {
+    "trainable": 15365406,
+    "frozen": 0,
+    "total": 15365406
+  },
+  "tokenizer_info": {
+    "total_unique_tokens": 206219,
+    "total_token_occurrences": 10915047,
+    "vocab_size": 50002,
+    "token_coverage_pct": 97.94,
+    "lowercase": false,
+    "pad_idx": 0,
+    "unk_idx": 1,
+    "val_truncated_pct": 5.92,
+    "test_truncated_pct": 5.62
+  },
+  "fasttext_info": {
+    "vocab_hash": "ecd0f507920e339086056138214efed0bbaaa37291dce99fc90dafcd29471fab",
+    "fasttext_source": "crawl-300d-2M.vec.zip",
+    "total_vocab": 50002,
+    "found_words": 47229,
+    "missing_words": 2772,
+    "type_hit_rate_pct": 94.46,
+    "embedding_dim": 300,
+    "token_weighted_hit_rate_pct": 98.01
+  },
+  "training_history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.1325,
+      "val_loss": 0.0949,
+      "val_macro_pr_auc": 0.6518,
+      "val_mean_roc_auc": 0.989,
+      "epoch_time_seconds": 28.52,
+      "samples_per_sec": 4483.4,
+      "peak_memory_mb": 2569.2,
+      "gpu_util_pct": 93,
+      "learning_rates": [
+        0.0001,
+        0.001
+      ],
+      "patience": 0,
+      "is_best": true
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.1038,
+      "val_loss": 0.089,
+      "val_macro_pr_auc": 0.681,
+      "val_mean_roc_auc": 0.9905,
+      "epoch_time_seconds": 28.34,
+      "samples_per_sec": 4511.5,
+      "peak_memory_mb": 2569.2,
+      "gpu_util_pct": 99,
+      "learning_rates": [
+        0.0001,
+        0.001
+      ],
+      "patience": 0,
+      "is_best": true
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.0947,
+      "val_loss": 0.0861,
+      "val_macro_pr_auc": 0.6865,
+      "val_mean_roc_auc": 0.9908,
+      "epoch_time_seconds": 27.06,
+      "samples_per_sec": 4725.2,
+      "peak_memory_mb": 2569.2,
+      "gpu_util_pct": 100,
+      "learning_rates": [
+        9.5e-05,
+        0.00095
+      ],
+      "patience": 0,
+      "is_best": true
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.0873,
+      "val_loss": 0.0855,
+      "val_macro_pr_auc": 0.6989,
+      "val_mean_roc_auc": 0.991,
+      "epoch_time_seconds": 26.34,
+      "samples_per_sec": 4854.5,
+      "peak_memory_mb": 2569.2,
+      "gpu_util_pct": 86,
+      "learning_rates": [
+        8.1e-05,
+        0.000812
+      ],
+      "patience": 0,
+      "is_best": true
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.0825,
+      "val_loss": 0.0836,
+      "val_macro_pr_auc": 0.7081,
+      "val_mean_roc_auc": 0.9914,
+      "epoch_time_seconds": 27.37,
+      "samples_per_sec": 4672.4,
+      "peak_memory_mb": 2569.2,
+      "gpu_util_pct": 100,
+      "learning_rates": [
+        6.1e-05,
+        0.000611
+      ],
+      "patience": 0,
+      "is_best": true
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.0777,
+      "val_loss": 0.084,
+      "val_macro_pr_auc": 0.7122,
+      "val_mean_roc_auc": 0.9916,
+      "epoch_time_seconds": 26.89,
+      "samples_per_sec": 4755.7,
+      "peak_memory_mb": 2569.2,
+      "gpu_util_pct": 87,
+      "learning_rates": [
+        3.9e-05,
+        0.000389
+      ],
+      "patience": 0,
+      "is_best": true
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.0749,
+      "val_loss": 0.0833,
+      "val_macro_pr_auc": 0.7126,
+      "val_mean_roc_auc": 0.9914,
+      "epoch_time_seconds": 29.41,
+      "samples_per_sec": 4347.8,
+      "peak_memory_mb": 2569.2,
+      "gpu_util_pct": 99,
+      "learning_rates": [
+        1.9e-05,
+        0.000188
+      ],
+      "patience": 0,
+      "is_best": true
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.0726,
+      "val_loss": 0.0832,
+      "val_macro_pr_auc": 0.7146,
+      "val_mean_roc_auc": 0.9914,
+      "epoch_time_seconds": 28.14,
+      "samples_per_sec": 4544.2,
+      "peak_memory_mb": 2569.2,
+      "gpu_util_pct": 100,
+      "learning_rates": [
+        5e-06,
+        5e-05
+      ],
+      "patience": 0,
+      "is_best": true
+    }
+  ],
+  "best_epoch": 8,
+  "epochs_run": 8,
+  "best_val_macro_pr_auc": 0.7146,
+  "mean_epoch_time_seconds": 27.76,
+  "train_time_seconds": 275.43,
+  "stage_timings_seconds": {
+    "1_load_verify": 1.19,
+    "2_tokenize_vocab": 7.84,
+    "3_fasttext_matrix": 37.06,
+    "4_build_model_gpu": 2.09,
+    "5_training_epochs": 225.14,
+    "6_predict_and_save": 2.12
+  },
+  "model_size_bytes": 61464878,
+  "model_size_mb": 58.62,
+  "device_info": {
+    "gpu_name": "NVIDIA GeForce RTX 3060 Laptop GPU",
+    "vram_gb": 6.0,
+    "cuda_version": "12.4",
+    "peak_vram_mb": 2641.3
+  },
+  "artifacts": {
+    "model_pt": "models/2b_bigru_attn_v2/model.pt",
+    "vocab_json": "models/2b_bigru_attn_v2/vocab.json",
+    "history_json": "models/2b_bigru_attn_v2/history.json",
+    "probs_val": "predictions/2b_bigru_attn_v2/probs_val.npy",
+    "probs_test": "predictions/2b_bigru_attn_v2/probs_test.npy"
+  },
+  "versions": {
+    "python": "3.12.6",
+    "torch": "2.6.0+cu124",
+    "cuda": "12.4",
+    "pandas": "2.2.3",
+    "numpy": "1.26.4"
+  }
+}

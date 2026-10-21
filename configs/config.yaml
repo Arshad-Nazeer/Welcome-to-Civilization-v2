@@ -45,6 +45,7 @@ paths:
 model_ids:
   tfidf_lr: 1_tfidf_lr
   bigru_attn: 2_bigru_attn
+  bigru_attn_v2: 2b_bigru_attn_v2
   distilroberta: 3_distilroberta
 
 # ---------- Tokenizer (for EDA step e) ----------

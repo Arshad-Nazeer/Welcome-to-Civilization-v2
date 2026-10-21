@@ -1,9 +1,10 @@
 """
 src/wtc/bigru_module.py
 -----------------------
-PyTorch neural network architecture for Model 2:
-Bidirectional GRU + Additive Attention Pooling with frozen fastText embeddings.
+PyTorch neural network architecture for Model 2 / 2b:
+Bidirectional GRU + Additive Attention Pooling with fastText embeddings.
 Features:
+- Configurable frozen or trainable embeddings (freeze_embedding param)
 - Spatial Dropout on 300-d embeddings (F.dropout1d across time)
 - 1-layer BiGRU with pack_padded_sequence (enforce_sorted=False)
 - Additive Attention with float32 masked softmax
@@ -39,6 +40,7 @@ class BiGruAttentionModel(nn.Module):
         dropout_gru: float = 0.3,
         spatial_dropout: float = 0.25,
         pretrained_embeddings: np.ndarray | torch.Tensor | None = None,
+        freeze_embedding: bool = True,
     ) -> None:
         super().__init__()
         self.vocab_size = vocab_size
@@ -49,7 +51,7 @@ class BiGruAttentionModel(nn.Module):
         self.pad_idx = pad_idx
         self.spatial_dropout_p = spatial_dropout
 
-        # 1. Embedding Layer (Frozen)
+        # 1. Embedding Layer (frozen or fine-tuned based on freeze_embedding)
         self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=pad_idx)
         if pretrained_embeddings is not None:
             if isinstance(pretrained_embeddings, np.ndarray):
@@ -57,7 +59,7 @@ class BiGruAttentionModel(nn.Module):
             else:
                 weight_tensor = pretrained_embeddings.float()
             self.embedding.weight.data.copy_(weight_tensor)
-        self.embedding.weight.requires_grad = False
+        self.embedding.weight.requires_grad = not freeze_embedding
 
         # 2. Encoder: 1-layer Bidirectional GRU
         self.gru = nn.GRU(

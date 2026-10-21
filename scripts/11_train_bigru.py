@@ -91,14 +91,15 @@ def get_gpu_utilization() -> int | None:
         return None
 
 
-def build_vocab(train_texts: list[str], max_vocab: int = 50000, min_freq: int = 2) -> tuple[dict[str, int], dict[str, Any]]:
-    """Build vocabulary from lowercased train comments."""
+def build_vocab(train_texts: list[str], max_vocab: int = 50000, min_freq: int = 2, lowercase: bool = True) -> tuple[dict[str, int], dict[str, Any]]:
+    """Build vocabulary from train comments (respecting lowercase flag)."""
     tokenizer_regex = re.compile(r"\w+|[^\w\s]")
     counts: dict[str, int] = {}
     total_tokens = 0
 
     for text in train_texts:
-        tokens = tokenizer_regex.findall(text.lower())
+        t_proc = text.lower() if lowercase else text
+        tokens = tokenizer_regex.findall(t_proc)
         total_tokens += len(tokens)
         for tok in tokens:
             counts[tok] = counts.get(tok, 0) + 1
@@ -120,6 +121,7 @@ def build_vocab(train_texts: list[str], max_vocab: int = 50000, min_freq: int = 
         "total_token_occurrences": total_tokens,
         "vocab_size": len(word2idx),
         "token_coverage_pct": round(token_coverage, 2),
+        "lowercase": lowercase,
         "pad_idx": 0,
         "unk_idx": 1,
     }
@@ -315,17 +317,19 @@ def main() -> None:
     v_cfg = m_cfg.get("vocab", {})
     max_vocab = int(v_cfg.get("max_vocab", 50000))
     min_freq = int(v_cfg.get("min_freq", 2))
-    max_len = int(m_cfg.get("tokenizer", {}).get("max_len", 256))
+    tok_cfg = m_cfg.get("tokenizer", {})
+    max_len = int(tok_cfg.get("max_len", 256))
+    lowercase = bool(tok_cfg.get("lowercase", True))
 
     full_train_texts = df_train_full[input_col].fillna("").tolist()
-    word2idx, vocab_stats = build_vocab(full_train_texts, max_vocab=max_vocab, min_freq=min_freq)
+    word2idx, vocab_stats = build_vocab(full_train_texts, max_vocab=max_vocab, min_freq=min_freq, lowercase=lowercase)
     pad_idx = vocab_stats["pad_idx"]
     unk_idx = vocab_stats["unk_idx"]
 
     coverage = vocab_stats["token_coverage_pct"]
-    logger.info(f"Vocab built: {vocab_stats['vocab_size']:,} tokens. Token coverage on train: {coverage:.2f}%")
-    if abs(coverage - 98.6) > 2.0:
-        logger.warning(f"Token coverage ({coverage:.2f}%) differs somewhat from expected ~98.6%.")
+    logger.info(f"Vocab built: {vocab_stats['vocab_size']:,} tokens (lowercase={lowercase}). Token coverage on train: {coverage:.2f}%")
+    if abs(coverage - 98.6) > 4.0:
+        logger.warning(f"Token coverage ({coverage:.2f}%) differs from expected ~98.6%.")
 
     tokenizer_regex = re.compile(r"\w+|[^\w\s]")
 
@@ -336,7 +340,8 @@ def main() -> None:
         truncated_count = 0
 
         for i, txt in enumerate(texts):
-            tokens = tokenizer_regex.findall(txt.lower())
+            t_proc = txt.lower() if lowercase else txt
+            tokens = tokenizer_regex.findall(t_proc)
             if len(tokens) > max_len:
                 truncated_count += 1
                 tokens = tokens[:max_len]
@@ -376,8 +381,7 @@ def main() -> None:
     update_status(status_file, "RUNNING", "3/6_fasttext_matrix")
 
     fasttext_zip = PROJECT_ROOT / "external" / "fasttext" / "crawl-300d-2M.vec.zip"
-    cache_dir = PROJECT_ROOT / "models" / "2_bigru_attn"
-    cache_path = cache_dir / "embedding_cache.npy"
+    cache_path = model_dir / "embedding_cache.npy"
 
     embedding_matrix, fasttext_meta = get_fasttext_embeddings(
         word2idx=word2idx,
@@ -390,7 +394,9 @@ def main() -> None:
     # Token-weighted hit rate
     tok_weighted_hits = 0
     tok_total = 0
-    sample_text = " ".join(full_train_texts[:5000]).lower()
+    sample_text = " ".join(full_train_texts[:5000])
+    if lowercase:
+        sample_text = sample_text.lower()
     for tok in tokenizer_regex.findall(sample_text):
         tok_total += 1
         if tok in word2idx and not np.all(embedding_matrix[word2idx[tok]] == 0.0):
@@ -412,7 +418,11 @@ def main() -> None:
     logger.info("[4/6] Allocating tensors to GPU and constructing BiGRU model...")
     update_status(status_file, "RUNNING", "4/6_build_model_gpu")
 
-    # Compute train split class weights: w_l = (neg/pos)^0.5
+    # Compute train split class weights: w_l = (neg/pos)^power, capped at max_weight
+    imb_cfg = m_cfg.get("imbalance", {})
+    power = float(imb_cfg.get("power", 0.5))
+    max_weight = float(imb_cfg.get("max_weight", 50.0))
+
     Y_train_np = df_train_sub[LABELS].values.astype(np.float32)
     Y_val_np = df_val[LABELS].values.astype(np.float32)
     Y_test_np = df_test[LABELS].values.astype(np.float32)
@@ -426,12 +436,13 @@ def main() -> None:
         neg_cnt = int(np.sum(Y_train_np[:, idx] == 0))
         n_tot = len(Y_train_np)
         pos_rate = pos_cnt / n_tot if n_tot > 0 else 0.01
-        w_l = math.sqrt(neg_cnt / pos_cnt) if pos_cnt > 0 else 1.0
+        raw_w = ((neg_cnt / pos_cnt) ** power) if pos_cnt > 0 else 1.0
+        w_l = min(raw_w, max_weight)
 
         pos_weights_list.append(w_l)
         pos_rates_list.append(pos_rate)
         class_weights_dict[l] = {"0": 1.0, "1": round(w_l, 4)}
-        logger.info(f"Label '{l}': pos={pos_cnt:,}, neg={neg_cnt:,}, w_1={w_l:.4f}")
+        logger.info(f"Label '{l}': pos={pos_cnt:,}, neg={neg_cnt:,}, w_1={w_l:.4f} (power={power}, max_cap={max_weight})")
 
     pos_weights_tensor = torch.tensor(pos_weights_list, dtype=torch.float32, device=device)
 
@@ -446,6 +457,7 @@ def main() -> None:
     cfg_enc = m_cfg.get("encoder", {})
     cfg_attn = m_cfg.get("attention", {})
     cfg_embed = m_cfg.get("embedding", {})
+    freeze_embedding = bool(cfg_embed.get("frozen", True))
 
     model = BiGruAttentionModel(
         vocab_size=len(word2idx),
@@ -457,6 +469,7 @@ def main() -> None:
         dropout_gru=float(cfg_enc.get("output_dropout", 0.3)),
         spatial_dropout=float(cfg_embed.get("spatial_dropout", 0.25)),
         pretrained_embeddings=embedding_matrix,
+        freeze_embedding=freeze_embedding,
     )
     model.init_head_bias(pos_rates_list)
     model.to(device)
@@ -464,12 +477,40 @@ def main() -> None:
     param_counts = model.count_parameters()
     logger.info(f"Model parameters: Trainable = {param_counts['trainable']:,} | Frozen = {param_counts['frozen']:,} | Total = {param_counts['total']:,}")
 
-    # Optimizer on trainable parameters only
+    # Optimizer on trainable parameters with differential LR support
     t_cfg = m_cfg.get("training", {})
     lr = float(t_cfg.get("lr", 1e-3))
     weight_decay = float(t_cfg.get("weight_decay", 0.01))
+    emb_lr_scale = float(cfg_embed.get("embedding_lr_scale", 1.0))
     trainable_params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.AdamW(trainable_params, lr=lr, weight_decay=weight_decay)
+
+    if not freeze_embedding and emb_lr_scale != 1.0:
+        emb_params = [p for p in model.embedding.parameters() if p.requires_grad]
+        other_params = [p for n, p in model.named_parameters() if not n.startswith("embedding.") and p.requires_grad]
+        param_groups = [
+            {"params": emb_params, "lr": lr * emb_lr_scale, "weight_decay": weight_decay * 0.5},
+            {"params": other_params, "lr": lr, "weight_decay": weight_decay},
+        ]
+        optimizer = torch.optim.AdamW(param_groups)
+        logger.info(f"Differential LR enabled: Embedding LR = {lr * emb_lr_scale:.6f} ({emb_lr_scale}x), Backbone LR = {lr:.6f}")
+    else:
+        optimizer = torch.optim.AdamW(trainable_params, lr=lr, weight_decay=weight_decay)
+
+    # Learning rate scheduler (e.g. Cosine Annealing with Warmup)
+    max_epochs = 2 if smoke else int(t_cfg.get("epochs", 6))
+    scheduler_type = t_cfg.get("scheduler", None)
+    scheduler = None
+    if scheduler_type == "cosine":
+        warmup_epochs = int(t_cfg.get("warmup_epochs", 1))
+
+        def lr_lambda(current_epoch: int) -> float:
+            if current_epoch < warmup_epochs:
+                return float(current_epoch + 1) / float(max(1, warmup_epochs))
+            progress = float(current_epoch - warmup_epochs) / float(max(1, max_epochs - warmup_epochs))
+            return max(0.01, 0.5 * (1.0 + math.cos(math.pi * progress)))
+
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
+        logger.info(f"Cosine Annealing LR schedule configured: {warmup_epochs} warmup epoch(s), max {max_epochs} epochs")
 
     # Loss function with pos_weight
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weights_tensor)
@@ -643,6 +684,10 @@ def main() -> None:
         else:
             patience_counter += 1
 
+        current_lrs = [float(f"{group['lr']:.6f}") for group in optimizer.param_groups]
+        if scheduler is not None:
+            scheduler.step()
+
         ep_record = {
             "epoch": epoch,
             "train_loss": round(train_loss, 4),
@@ -653,6 +698,7 @@ def main() -> None:
             "samples_per_sec": round(samples_per_sec, 1),
             "peak_memory_mb": round(peak_vram_mb, 1),
             "gpu_util_pct": gpu_util,
+            "learning_rates": current_lrs,
             "patience": patience_counter,
             "is_best": is_best,
         }
@@ -752,7 +798,7 @@ def main() -> None:
     meta_payload = {
         "model_id": model_id,
         "model_name": model_name,
-        "adapter_type": "bigru_attn",
+        "adapter_type": "bigru_attn_v2" if "v2" in model_name else "bigru_attn",
         "smoke": smoke,
         "framework": f"PyTorch {torch.__version__}",
         "created_utc": datetime.now(timezone.utc).isoformat(),
