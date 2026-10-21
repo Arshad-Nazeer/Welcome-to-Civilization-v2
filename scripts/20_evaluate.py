@@ -302,7 +302,7 @@ def measure_inference_speed(
 
 
 def compare_models() -> None:
-    """Compare all evaluated models saved in reports/."""
+    """Compare all evaluated models saved in reports/ with generic & per-label metrics."""
     model_ids_map = CFG.get("model_ids", {})
     available_metrics = {}
 
@@ -317,27 +317,106 @@ def compare_models() -> None:
         return
 
     print(f"\nFound {len(available_metrics)} models for comparison: {list(available_metrics.keys())}")
-    rows = []
+    
+    # 1. Overall Generics Metrics Table
+    rows_overall = []
+    rows_per_label = []
+
     for mid, data in available_metrics.items():
         ov = data["test"]["overall"]
+        per_l = data["test"]["per_label"]
         bench = data.get("inference_benchmark", {})
-        rows.append({
+
+        tot_tp = sum(m.get("tp", 0) for m in per_l.values())
+        tot_fp = sum(m.get("fp", 0) for m in per_l.values())
+        tot_fn = sum(m.get("fn", 0) for m in per_l.values())
+        calc_micro_prec = (tot_tp / (tot_tp + tot_fp)) if (tot_tp + tot_fp) > 0 else 0.0
+        calc_micro_rec = (tot_tp / (tot_tp + tot_fn)) if (tot_tp + tot_fn) > 0 else 0.0
+
+        rows_overall.append({
             "model_id": mid,
-            "macro_f1": ov["macro_f1"],
-            "micro_f1": ov["micro_f1"],
-            "macro_pr_auc": ov["macro_pr_auc"],
-            "mean_roc_auc": ov["mean_roc_auc"],
-            "exact_match_acc": ov["exact_match_accuracy"],
-            "hamming_loss": ov["hamming_loss"],
+            "overall_macro_f1": round(ov["macro_f1"], 4),
+            "overall_macro_precision": round(ov.get("macro_precision", np.nan), 4),
+            "overall_macro_recall": round(ov.get("macro_recall", np.nan), 4),
+            "overall_micro_f1": round(ov["micro_f1"], 4),
+            "overall_micro_precision": round(ov.get("micro_precision", calc_micro_prec), 4),
+            "overall_micro_recall": round(ov.get("micro_recall", calc_micro_rec), 4),
+            "overall_macro_pr_auc": round(ov["macro_pr_auc"], 4),
+            "overall_mean_roc_auc": round(ov["mean_roc_auc"], 4),
+            "exact_match_acc": round(ov["exact_match_accuracy"], 4),
+            "hamming_loss": round(ov["hamming_loss"], 4),
             "latency_ms": bench.get("latency_ms_per_comment", np.nan),
             "throughput_cps": bench.get("throughput_comments_per_sec", np.nan),
         })
 
-    df_comp = pd.DataFrame(rows)
+        for lbl, m in per_l.items():
+            rows_per_label.append({
+                "model_id": mid,
+                "label": lbl,
+                "support": m.get("support", 0),
+                "threshold": round(m.get("threshold", 0.5), 2),
+                "f1": round(m.get("f1", 0.0), 4),
+                "precision": round(m.get("precision", 0.0), 4),
+                "recall": round(m.get("recall", 0.0), 4),
+                "pr_auc": round(m.get("pr_auc", 0.0), 4),
+                "roc_auc": round(m.get("roc_auc", 0.0), 4),
+                "tp": m.get("tp", 0),
+                "fp": m.get("fp", 0),
+                "fn": m.get("fn", 0),
+                "tn": m.get("tn", 0),
+            })
+
+    # Save overall comparison CSV
+    df_comp = pd.DataFrame(rows_overall)
     comp_file = PROJECT_ROOT / "reports/model_comparison.csv"
     df_comp.to_csv(comp_file, index=False)
-    print(f"Saved comparison table to {comp_file}")
+    print(f"\n[Saved] Overall comparison table: {comp_file}")
     print(df_comp.to_string(index=False))
+
+    # Save per-label comparison CSV
+    df_per_l = pd.DataFrame(rows_per_label)
+    per_l_file = PROJECT_ROOT / "reports/model_comparison_per_label.csv"
+    df_per_l.to_csv(per_l_file, index=False)
+    print(f"\n[Saved] Per-label comparison table: {per_l_file}")
+
+    # Generate Markdown Summary Report: reports/model_comparison.md
+    md_file = PROJECT_ROOT / "reports/model_comparison.md"
+    md_lines = [
+        "# Model Comparison & Generic Evaluation Metrics",
+        "",
+        f"**Generated UTC**: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}  ",
+        f"**Dataset Split**: Test Split (15,841 comments, multi-label toxicity)  ",
+        "",
+        "---",
+        "",
+        "## 1. Overall Generics Metrics Comparison",
+        "",
+        "| Model ID | Macro F1 | Macro Precision | Macro Recall | Micro F1 | Micro Precision | Micro Recall | Macro PR-AUC | Mean ROC-AUC | Exact Match | Throughput (cps) |",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    for r in rows_overall:
+        md_lines.append(
+            f"| `{r['model_id']}` | **{r['overall_macro_f1']:.4f}** | {r['overall_macro_precision']:.4f} | {r['overall_macro_recall']:.4f} | "
+            f"{r['overall_micro_f1']:.4f} | {r['overall_micro_precision']:.4f} | {r['overall_micro_recall']:.4f} | "
+            f"**{r['overall_macro_pr_auc']:.4f}** | {r['overall_mean_roc_auc']:.4f} | {r['exact_match_acc']:.4f} | {r['throughput_cps']} |"
+        )
+
+    md_lines.extend([
+        "",
+        "## 2. Per-Label Metrics Breakdown Across Models",
+        "",
+        "| Label | Model ID | Tuned Thresh | F1 Score | Precision | Recall | PR-AUC | ROC-AUC | TP | FP | FN |",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
+    ])
+    for r in rows_per_label:
+        md_lines.append(
+            f"| `{r['label']}` | `{r['model_id']}` | {r['threshold']:.2f} | **{r['f1']:.4f}** | {r['precision']:.4f} | {r['recall']:.4f} | "
+            f"**{r['pr_auc']:.4f}** | {r['roc_auc']:.4f} | {r['tp']} | {r['fp']} | {r['fn']} |"
+        )
+
+    with open(md_file, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(md_lines) + "\n")
+    print(f"\n[Saved] Comparison Markdown report: {md_file}")
 
 
 def main() -> None:

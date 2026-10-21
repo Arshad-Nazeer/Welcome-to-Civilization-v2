@@ -1,7 +1,7 @@
 # Model Evaluation Report: 2_bigru_attn
 
 **Architecture**: BiGRU with Additive Attention and Frozen fastText  
-**Generated UTC**: 2026-10-21 16:10:43 UTC  
+**Generated UTC**: 2026-10-21 19:47:32 UTC  
 **Mode**: Full Production Run  
 **Seed**: 42  
 **Python**: 3.12.6 | **Framework**: PyTorch 2.6.0+cu124 | **Platform**: NVIDIA GeForce RTX 3060 Laptop GPU

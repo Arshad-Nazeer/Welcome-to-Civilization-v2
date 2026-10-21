@@ -1,7 +1,7 @@
 # Model Evaluation Report: 1_tfidf_lr
 
 **Architecture**: Word + Char TF-IDF with Logistic Regression per label  
-**Generated UTC**: 2026-10-21 16:10:51 UTC  
+**Generated UTC**: 2026-10-21 19:47:32 UTC  
 **Mode**: Full Production Run  
 **Seed**: 42  
 **Python**: 3.12.6 | **Framework**: PyTorch / Scikit-Learn | **Platform**: CPU / CUDA
