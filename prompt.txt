@@ -1,0 +1,139 @@
+let's focus on the 1st model only.
+
+Now that data loading, preprocessing and EDA are done, we move forward to models: 
+
+Processed data:
+- data/processed/processed.csv
+- data/processed/processed.parquet
+- data/processed/DATA_DICTIONARY.md
+- data/processed/qa_report.json
+
+
+Split files at the parent level:
+- data/splits/train_idx.json
+- data/splits/val_idx.json
+- data/splits/test_idx.json
+- data/splits/split_manifest.json
+
+Output directories:
+- models/1_tfidf_lr/
+- predictions/1_tfidf_lr/
+- reports/1_tfidf_lr/
+- visualizations/1_tfidf_lr/
+- logs/1_tfidf_lr/
+
+1. TF-IDF + Logistic Regression
+
+Tokens: Word TF-IDF: 1–2-grams, lowercased, min_df=3, up to 50k features, sublinear TF. Char TF-IDF: char_wb 2–5-grams, case kept (to retain SHOUTING), min_df=3, up to 100k features, sublinear TF. Vectorizers fit on train only.
+
+Embedding: None. About 150k sparse features, with the word and char blocks stacked side by side.
+
+Encoder: None.
+
+Classifier: One-vs-rest Logistic Regression, L2, liblinear, C=2.0, seed 42.
+
+Imbalance: Damped class_weight per label, as above.
+
+Hardware / time: CPU, roughly 5–15 minutes.
+
+And after training/prediction, generate visualizations, evaluations and metrics (especially F1, Macro-F1, Micro-F1, Per-label precision, Per-label recall, Per-label F1, Per-label ROC-AUC, Per-label PR-AUC / Average Precision), also generate conclusions and a report on training/inference/prediction.
+
+The evaluation/visualization code should be reusable for the upcoming two models. The code for evaluations, visualizations and metrics will be the same for the outputs of all three models.
+
+Save the trained models, generated predictions (sigmoid probabilities and output labels), visualizations, comparisons and results because they will later be used to estimate the severity score and build the web app.
+
+Note that I want the training status and completion to be visible while training. After the code is written and the training environment is set up for my CPU AMD Ryzen 7 5800H and GPU RTX 3060 6GB, begin training and show progress and completion status.
+
+Note that I have a limited number of Anti Gravity agent requests, so try to get everything done without interruption. Inspect the existing project structure, reuse the completed data loading, preprocessing and EDA pipeline, and avoid unnecessary changes or repeated work. Do not ask for confirmation unless absolutely necessary. Complete the implementation, run the training and evaluation, save all outputs, and report the results.
+
+next:-
+ROLE
+You are a senior ML engineer. Build, RUN and evaluate MODEL 1 (TF-IDF + Logistic Regression) for "Welcome to Civilization"
+(multi-label toxicity: toxic, severe_toxic, obscene, threat, insult, identity_hate). The data foundation is DONE and verified:
+do NOT modify or regenerate anything under data/ and do NOT rerun scripts 01-04. Reuse existing code (`wtc.data.load_split`,
+`wtc.config` LABELS/CFG, utils, logging). Make minimal changes to existing files.
+
+QUOTA RULES (important)
+My Antigravity request limit is low. Work in ONE continuous pass, no questions, no confirmations. Read only what you need:
+src/wtc/{config,data,utils}.py, configs/config.yaml, requirements.txt, .gitignore, PROGRESS.md. Write files in a few large
+writes. Minimal narration. Do not commit or push. No absolute paths. Seed 42.
+
+ENVIRONMENT (Windows, PowerShell, existing .venv, Ryzen 7 5800H, 8 cores)
+This model is CPU-only: do NOT install PyTorch or CUDA. Only ensure pandas, scikit-learn, joblib, scipy, matplotlib, seaborn,
+tqdm, pyyaml are installed (they are in requirements.txt; install anything missing and pin it). UTF-8 console, no emoji in logs.
+
+DATA (verify at runtime; abort with a clear message on mismatch)
+- `wtc.data.load_split("train"|"val"|"test")` gives DataFrames with `id`, `text_clean` and the six label columns. Sizes:
+  train 127,861 / val 15,869 / test 15,841. Never read processed.csv.
+- Check sha256 of data/processed/processed.parquet equals `processed_parquet_sha256` in data/splits/split_manifest.json and
+  split_version == "v2_near_dup".
+
+OUTPUT DIRECTORIES (create as needed; <id> = 1_tfidf_lr)
+models/<id>/  predictions/<id>/  reports/<id>/  visualizations/<id>/  logs/<id>/
+Also add to configs: `model_ids: {tfidf_lr: 1_tfidf_lr, bigru_attn: 2_bigru_attn, distilroberta: 3_distilroberta}`.
+
+MODEL 1 SPEC (FIXED; put it in configs/models.yaml under `tfidf_lr`, read everything from it)
+- Input: `text_clean`.
+- Word TF-IDF: ngram (1,2), lowercase=True, min_df=3, max_features=50000, sublinear_tf=True.
+- Char TF-IDF: analyzer char_wb, ngram (2,5), lowercase=False (keep case), min_df=3, max_features=100000, sublinear_tf=True.
+- Both vectorizers FIT ON TRAIN ONLY, dtype float32; hstack the two sparse blocks (~150k features). No embedding, no encoder.
+- Classifier: one binary LogisticRegression PER LABEL (L2, solver liblinear, C=2.0, max_iter=200, random_state=42), fitted for
+  the 6 labels in parallel with joblib threading backend (n_jobs=6) so the matrix is shared, not copied.
+- Config supports a tune grid `tune: {C: [2.0]}` (select by val macro PR-AUC if more values are listed); keep it [2.0] now.
+- IMBALANCE: per-label class_weight {0: 1, 1: w_l} with w_l = (neg/pos)^0.5 computed from the TRAIN split and logged (expect
+  about toxic 3.08, severe_toxic 9.99, obscene 4.24, threat 18.29, insult 4.40, identity_hate 10.63). No resampling.
+- Probabilities: predict_proba[:, 1] per label (6 independent sigmoid-type probabilities, LABELS order).
+
+TRAINING SCRIPT: scripts/10_train_tfidf.py (supports --smoke)
+- Stage-based progress, visible live: [1/5] load+verify, [2/5] word TF-IDF fit+transform, [3/5] char TF-IDF fit+transform,
+  [4/5] per-label LR fits (print one line per finished label with elapsed and ETA), [5/5] predict val/test and save.
+  Use tqdm plus timing lines. Update models/<id>/status.json (state, stage, labels done, elapsed, ETA, updated_at) at each stage.
+  Log to logs/<id>/train_<date>.log. At the end print a DONE banner (total time, outputs) and beep (winsound, try/except).
+- --smoke: 2,000 train rows, 500 val/test rows, outputs to *_smoke directories; used only for a quick check.
+- Save: models/<id>/{vectorizer_word.joblib, vectorizer_char.joblib, classifiers.joblib, meta.json (label order, class weights,
+  config, versions, train time, feature counts, model size on disk)}; predictions/<id>/{probs_val.npy, probs_test.npy}
+  (float32 [n,6], LABELS order, split row order).
+
+REUSABLE EVALUATION (shared by all three models; NO model-specific code): src/wtc/evaluation.py and src/wtc/plotting.py,
+driven by scripts/20_evaluate.py --model-id <id>. Contract: it reads ONLY predictions/<id>/probs_val.npy, probs_test.npy,
+models/<id>/meta.json and the split labels. A later --compare mode will read the saved metrics of all three models
+(design the metrics.json schema now so that comparison works without re-running models).
+1. THRESHOLDS (VAL only), per label: grid 0.01..0.99 step 0.01 maximising F1; repeat on 200 bootstrap resamples of val (skip
+   resamples without positives) and take the MEDIAN threshold. Save predictions/<id>/thresholds.json. Apply to test. Also report
+   results at fixed 0.5, and a variant where severe_toxic is positive only if toxic is positive.
+2. METRICS on TEST (val for reference): per-label precision, recall, F1, ROC-AUC, PR-AUC (average precision), MCC, TP/FP/FN/TN,
+   prevalence, support; overall F1 macro and micro, macro precision/recall, macro PR-AUC, mean ROC-AUC, Hamming loss, exact-match
+   accuracy; calibration (Brier, ECE with 15 bins). 1000 bootstrap resamples of test for 95% CIs on every headline metric (store the
+   resample indices seed so the later comparison can reuse paired resamples). Save reports/<id>/metrics.json and tables/*.csv.
+3. PREDICTION FILES: predictions/<id>/{val,test}_predictions.csv with `id`, p_<label> x6 (sigmoid probabilities), pred_<label> x6
+   (tuned-threshold 0/1), pred_hier_severe_toxic, y_<label> x6 (true labels).
+4. FIGURES (PNG, 200 dpi, titled, labelled, a fixed colour per model id) to visualizations/<id>/: per-label bars for precision,
+   recall, F1, ROC-AUC, PR-AUC (with CI error bars); macro/micro F1 + macro PR-AUC + mean ROC-AUC summary; PR curves and ROC curves
+   per label (6 subplots each); threshold-vs-F1 curves per label with the chosen threshold marked; confusion matrix per label;
+   reliability diagram; predicted-probability histograms by true class per label.
+5. MODEL-SPECIFIC (not in the shared module): top 20 positive-weight word and char n-grams per label (table + bar chart), CPU
+   inference latency and throughput per 1,000 comments INCLUDING vectorization (warm-up first), model size on disk.
+6. src/wtc/inference.py: `Moderator(model_id)` with `.predict_proba(texts) -> [n,6]` and `.predict(texts)` using the saved
+   thresholds. It applies `wtc.preprocess.clean_text`, then the model's own pipeline. Implement TF-IDF now; make it registry-based
+   so models 2 and 3 plug in later. Write models/<id>/meta.json fields needed for loading.
+
+REPORT: scripts/21_build_model_report.py --model-id <id> -> reports/<id>/model_report.md built ENTIRELY from metrics.json, meta.json
+and logs (no hardcoded numbers). Sections: overview and setup; data and split; model config and imbalance recipe; training summary
+(stage timings, total time, feature counts, class weights); inference and prediction summary (latency, throughput, prediction file schema,
+how thresholds were applied); evaluation tables and embedded figures; interpretation (best and worst labels, thresholds vs 0.5,
+calibration, top n-grams); conclusions generated conditionally from computed numbers; limitations. Always include these static
+limitations: single run, fixed untuned hyperparameters, validation used for both threshold tuning and any C selection, only 47 val / 50
+test threat positives so threat estimates are noisy, near-duplicate threshold is Jaccard 0.8 on char 5-grams. No claim without a number.
+
+EXECUTION (you do this, in order, in the visible terminal)
+1. `python -m compileall -q src scripts`, then a --smoke run of 10_train_tfidf.py, 20_evaluate.py and 21_build_model_report.py
+   (smoke outputs only); fix failures; delete the *_smoke outputs.
+2. Run the FULL training in the foreground so I can watch progress: `.venv\Scripts\python scripts\10_train_tfidf.py`. Do not poll in a
+   loop; wait for it to finish.
+3. Run `scripts/20_evaluate.py --model-id 1_tfidf_lr` then `scripts/21_build_model_report.py --model-id 1_tfidf_lr`.
+4. .gitignore: ignore models/ weights and *_smoke dirs; allow predictions/, reports/, visualizations/ to be tracked. README: short
+   "Model 1" section with the commands. PROGRESS.md: short entry.
+
+FINAL OUTPUT (short)
+Training time and stage timings; headline TEST metrics (macro-F1, micro-F1, macro PR-AUC, mean ROC-AUC) and per-label F1 / PR-AUC
+with the tuned thresholds; the list of saved files; any deviations. Do not claim anything you did not run.

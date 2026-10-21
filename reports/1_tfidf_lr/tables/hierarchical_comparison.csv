@@ -1,0 +1,3 @@
+model_id,label,precision,recall,f1
+1_tfidf_lr,severe_toxic (standard),0.4974,0.5951,0.5419
+1_tfidf_lr,severe_toxic (hierarchical),0.4974,0.5951,0.5419

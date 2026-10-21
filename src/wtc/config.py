@@ -49,3 +49,51 @@ LABELS: list[str] = CFG["labels"]
 SEED: int = CFG["seed"]
 TEXT_COL: str = CFG["text_column"]
 ID_COL: str = CFG["id_column"]
+
+
+def load_models_config(config_path: str | Path | None = None) -> dict[str, Any]:
+    """Return the parsed YAML models config dict."""
+    if config_path is None:
+        config_path = PROJECT_ROOT / "configs" / "models.yaml"
+    with open(config_path, "r", encoding="utf-8") as fh:
+        return yaml.safe_load(fh)
+
+
+def get_model_id(name: str) -> str:
+    """Return model directory ID from config (e.g. tfidf_lr -> 1_tfidf_lr)."""
+    return CFG.get("model_ids", {}).get(name, name)
+
+
+def get_model_dir(model_id: str, smoke: bool = False) -> Path:
+    suffix = "_smoke" if smoke else ""
+    p = PROJECT_ROOT / f"models/{model_id}{suffix}"
+    p.mkdir(parents=True, exist_ok=True)
+    return p
+
+
+def get_predictions_dir(model_id: str, smoke: bool = False) -> Path:
+    suffix = "_smoke" if smoke else ""
+    p = PROJECT_ROOT / f"predictions/{model_id}{suffix}"
+    p.mkdir(parents=True, exist_ok=True)
+    return p
+
+
+def get_reports_dir(model_id: str, smoke: bool = False) -> Path:
+    suffix = "_smoke" if smoke else ""
+    p = PROJECT_ROOT / f"reports/{model_id}{suffix}"
+    p.mkdir(parents=True, exist_ok=True)
+    return p
+
+
+def get_visualizations_dir(model_id: str, smoke: bool = False) -> Path:
+    suffix = "_smoke" if smoke else ""
+    p = PROJECT_ROOT / f"visualizations/{model_id}{suffix}"
+    p.mkdir(parents=True, exist_ok=True)
+    return p
+
+
+def get_logs_dir(model_id: str, smoke: bool = False) -> Path:
+    suffix = "_smoke" if smoke else ""
+    p = PROJECT_ROOT / f"logs/{model_id}{suffix}"
+    p.mkdir(parents=True, exist_ok=True)
+    return p

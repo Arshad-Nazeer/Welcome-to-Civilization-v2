@@ -1,0 +1,14 @@
+{
+  "state": "COMPLETED",
+  "stage": "done",
+  "updated_at": "2026-10-21T13:14:29.195636+00:00",
+  "total_train_seconds": 173.64,
+  "stage_timings": {
+    "1_load_and_verify": 1.26,
+    "2_word_tfidf": 21.57,
+    "3_char_tfidf": 94.61,
+    "4_lr_fits": 51.95,
+    "5_predict_and_save": 3.43
+  },
+  "model_size_mb": 8.03
+}

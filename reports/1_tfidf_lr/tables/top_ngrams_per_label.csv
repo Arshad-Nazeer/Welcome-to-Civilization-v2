@@ -1,0 +1,241 @@
+label,type,rank,ngram,coefficient
+toxic,word,1,fuck,12.4745
+toxic,word,2,shit,11.2195
+toxic,word,3,ass,10.2593
+toxic,word,4,idiot,8.4858
+toxic,word,5,stupid,8.4232
+toxic,word,6,fucking,8.1449
+toxic,word,7,crap,8.1295
+toxic,word,8,penis,7.7486
+toxic,word,9,dick,7.5422
+toxic,word,10,gay,7.16
+toxic,word,11,bitch,7.0245
+toxic,word,12,hell,6.8671
+toxic,word,13,suck,6.1053
+toxic,word,14,pig,6.0418
+toxic,word,15,you,5.7303
+toxic,word,16,moron,5.6966
+toxic,word,17,sucks,5.468
+toxic,word,18,die,5.3578
+toxic,word,19,asshole,5.3553
+toxic,word,20,cunt,5.2218
+toxic,char,1,uck,10.5314
+toxic,char,2,fuc,8.0211
+toxic,char,3,fuck,7.85
+toxic,char,4,ck,6.4396
+toxic,char,5,shit,6.3667
+toxic,char,6, fuc,6.2843
+toxic,char,7, fuck,5.9771
+toxic,char,8,uc,5.9555
+toxic,char,9,**,5.1889
+toxic,char,10,! ,5.1505
+toxic,char,11,hit,5.135
+toxic,char,12,diot,4.8906
+toxic,char,13,iot,4.6451
+toxic,char,14,dick,4.6083
+toxic,char,15, dick,4.6072
+toxic,char,16,tard,4.5618
+toxic,char,17,suck,4.5176
+toxic,char,18, shit,4.3767
+toxic,char,19,CK,4.2757
+toxic,char,20, suck,4.1185
+severe_toxic,word,1,bitch,4.4131
+severe_toxic,word,2,ck,3.5533
+severe_toxic,word,3,off,3.2689
+severe_toxic,word,4,nigger you,3.2395
+severe_toxic,word,5,cking,3.1979
+severe_toxic,word,6,sex,3.1729
+severe_toxic,word,7,nazi,3.1559
+severe_toxic,word,8,penis,3.1471
+severe_toxic,word,9,filthy,3.1433
+severe_toxic,word,10,give me,3.1132
+severe_toxic,word,11,ass,3.0889
+severe_toxic,word,12,hate,3.0734
+severe_toxic,word,13,retarded,3.0689
+severe_toxic,word,14,die,3.0432
+severe_toxic,word,15,wikipedia loves,3.0364
+severe_toxic,word,16,cunt,2.9944
+severe_toxic,word,17,anal,2.9877
+severe_toxic,word,18,su,2.9478
+severe_toxic,word,19,fuck,2.8977
+severe_toxic,word,20,hahahahahahahahahahahahaha,2.8874
+severe_toxic,char,1,uck,5.2819
+severe_toxic,char,2, g ,4.4925
+severe_toxic,char,3,CK,4.1462
+severe_toxic,char,4,ck,3.9992
+severe_toxic,char,5,uc,3.4624
+severe_toxic,char,6, f ,3.2136
+severe_toxic,char,7,K ,3.0109
+severe_toxic,char,8, U ,2.9291
+severe_toxic,char,9,ker,2.5388
+severe_toxic,char,10, n ,2.5161
+severe_toxic,char,11,FU,2.4738
+severe_toxic,char,12, F*,2.4514
+severe_toxic,char,13,F*,2.4375
+severe_toxic,char,14,cker,2.3916
+severe_toxic,char,15, fag,2.374
+severe_toxic,char,16,UC,2.367
+severe_toxic,char,17,dick,2.3551
+severe_toxic,char,18,U ,2.3504
+severe_toxic,char,19,UCK,2.331
+severe_toxic,char,20,fuk,2.3295
+obscene,word,1,fuck,14.7251
+obscene,word,2,ass,13.0397
+obscene,word,3,bitch,9.9432
+obscene,word,4,shit,9.7097
+obscene,word,5,fucking,9.1121
+obscene,word,6,cunt,8.8343
+obscene,word,7,dick,8.5253
+obscene,word,8,asshole,6.8399
+obscene,word,9,penis,6.7526
+obscene,word,10,bullshit,6.6395
+obscene,word,11,moron,6.3588
+obscene,word,12,suck,6.1936
+obscene,word,13,crap,6.1903
+obscene,word,14,anal,5.8196
+obscene,word,15,bastard,5.8078
+obscene,word,16,pussy,5.4095
+obscene,word,17,cock,5.408
+obscene,word,18,wtf,5.3876
+obscene,word,19,stupid,5.1686
+obscene,word,20,damn,5.1647
+obscene,char,1,uck,12.0489
+obscene,char,2,fuc,9.8225
+obscene,char,3,fuck,9.3794
+obscene,char,4,ck,7.6485
+obscene,char,5,uc,7.0083
+obscene,char,6,shit,6.8944
+obscene,char,7, fuc,6.7527
+obscene,char,8, F,6.3408
+obscene,char,9, fuck,6.2796
+obscene,char,10,hit,5.9936
+obscene,char,11,CK,5.8151
+obscene,char,12,ass,5.6597
+obscene,char,13, ass,5.6119
+obscene,char,14,fu,5.5329
+obscene,char,15, fu,5.0919
+obscene,char,16,dick,4.7702
+obscene,char,17,UCK,4.6266
+obscene,char,18,Fuc,4.4886
+obscene,char,19,Fuck,4.4819
+obscene,char,20, dick,4.429
+threat,word,1,die,10.1949
+threat,word,2,kill,7.3884
+threat,word,3,kill you,6.2704
+threat,word,4,death to,5.5145
+threat,word,5,will,5.3561
+threat,word,6,burn,5.3425
+threat,word,7,death,5.2423
+threat,word,8,destroy,4.7122
+threat,word,9,dead,4.6667
+threat,word,10,shot,4.3927
+threat,word,11,shoot,4.3782
+threat,word,12,you die,4.0063
+threat,word,13,punch,3.9922
+threat,word,14,rape,3.7159
+threat,word,15,down,3.656
+threat,word,16,and,3.5567
+threat,word,17,to death,3.3941
+threat,word,18,hang,3.3203
+threat,word,19,ll,3.2653
+threat,word,20,kick,3.1323
+threat,char,1, kill,2.8808
+threat,char,2, ki,2.8743
+threat,char,3, kil,2.7855
+threat,char,4, die,2.7568
+threat,char,5,kill,2.6789
+threat,char,6,die,2.6451
+threat,char,7, dea,2.6142
+threat,char,8,kil,2.4733
+threat,char,9, k,2.3636
+threat,char,10,ill,2.2896
+threat,char,11, deat,2.1627
+threat,char,12,ill ,2.1428
+threat,char,13,death,2.1331
+threat,char,14,ll ,2.1303
+threat,char,15,deat,2.1264
+threat,char,16,! ,2.0537
+threat,char,17,eath,2.0535
+threat,char,18, rape,1.9814
+threat,char,19,dea,1.9635
+threat,char,20,ll,1.9233
+insult,word,1,idiot,7.602
+insult,word,2,ass,7.2164
+insult,word,3,bitch,7.0625
+insult,word,4,stupid,6.4669
+insult,word,5,moron,6.2866
+insult,word,6,asshole,6.1704
+insult,word,7,fool,5.3832
+insult,word,8,dick,5.3784
+insult,word,9,you,5.3405
+insult,word,10,cunt,5.1637
+insult,word,11,scum,5.0517
+insult,word,12,suck,4.8944
+insult,word,13,dumb,4.763
+insult,word,14,idiots,4.7036
+insult,word,15,loser,4.5556
+insult,word,16,freak,4.3715
+insult,word,17,pig,4.338
+insult,word,18,morons,4.3116
+insult,word,19,fat,4.2803
+insult,word,20,faggot,4.2757
+insult,char,1,uck,7.0055
+insult,char,2,ck,4.8637
+insult,char,3,diot,4.7063
+insult,char,4,dio,4.4322
+insult,char,5,iot,4.2571
+insult,char,6,fuc,4.1912
+insult,char,7, idi,3.9793
+insult,char,8,gg,3.971
+insult,char,9, idio,3.8752
+insult,char,10,uc,3.8227
+insult,char,11,idio,3.7783
+insult,char,12,idiot,3.6702
+insult,char,13,! ,3.6377
+insult,char,14,fuck,3.5596
+insult,char,15,bitch,3.548
+insult,char,16,bitc,3.5247
+insult,char,17, U ,3.4742
+insult,char,18, bic,3.4509
+insult,char,19, a ,3.4222
+insult,char,20,tard,3.401
+identity_hate,word,1,jew,7.9235
+identity_hate,word,2,gay,7.6429
+identity_hate,word,3,nigger,5.5704
+identity_hate,word,4,hate,4.9262
+identity_hate,word,5,nazi,4.7579
+identity_hate,word,6,negro,4.693
+identity_hate,word,7,niggers,4.626
+identity_hate,word,8,nigga,4.4952
+identity_hate,word,9,homosexual,4.4243
+identity_hate,word,10,muslim,4.3455
+identity_hate,word,11,black,4.3207
+identity_hate,word,12,jews,4.0194
+identity_hate,word,13,rat,3.9015
+identity_hate,word,14,fag,3.7346
+identity_hate,word,15,sucker,3.6744
+identity_hate,word,16,racist,3.4969
+identity_hate,word,17,the ass,3.4693
+identity_hate,word,18,abd,3.4308
+identity_hate,word,19,fucking,3.4164
+identity_hate,word,20,jewish,3.3959
+identity_hate,char,1,nigg,4.951
+identity_hate,char,2,gg,4.798
+identity_hate,char,3, gay,4.6551
+identity_hate,char,4,gay,4.5687
+identity_hate,char,5,igg,4.5088
+identity_hate,char,6, g ,4.393
+identity_hate,char,7,homo,4.2901
+identity_hate,char,8, homo,4.1884
+identity_hate,char,9,jew,3.8926
+identity_hate,char,10,nig,3.7926
+identity_hate,char,11, nigg,3.7636
+identity_hate,char,12, jew,3.7046
+identity_hate,char,13,ian,3.6751
+identity_hate,char,14, nig,3.3695
+identity_hate,char,15,gger,3.3282
+identity_hate,char,16,GA,3.3008
+identity_hate,char,17,omo,3.2261
+identity_hate,char,18,ger,3.2082
+identity_hate,char,19,GAY,3.2009
+identity_hate,char,20,gga,3.1431

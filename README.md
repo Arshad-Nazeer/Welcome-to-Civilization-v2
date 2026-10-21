@@ -182,3 +182,34 @@ make test
 - All 21 required feature and label columns present
 - `n_labels` consistent with sum of label columns
 - `is_clean` consistent with inverse of positive label sum
+
+---
+
+## Model 1: TF-IDF + Logistic Regression (`1_tfidf_lr`)
+
+Linear baseline using dual Word (50,000) and Char (100,000) TF-IDF representations with six independent parallel `LogisticRegression` classifiers (L2, liblinear, C=2.0) using square-root class weighting ($w_1 = \sqrt{N_{neg}/N_{pos}}$) to address class imbalance without resampling.
+
+### Commands
+
+```powershell
+# 1. Train Model 1 (word + char TF-IDF, parallel LR fits)
+.venv\Scripts\python scripts\10_train_tfidf.py
+
+# Optional quick smoke test:
+.venv\Scripts\python scripts\10_train_tfidf.py --smoke
+
+# 2. Reusable evaluation (val bootstrap threshold tuning, test metrics, 1000-bootstrap 95% CIs)
+.venv\Scripts\python scripts\20_evaluate.py --model-id 1_tfidf_lr
+
+# 3. Build comprehensive model evaluation report
+.venv\Scripts\python scripts\21_build_model_report.py --model-id 1_tfidf_lr
+```
+
+### Key Performance (Test Split)
+- **Macro F1**: 0.6443 (95% CI: [0.6162, 0.6689])
+- **Micro F1**: 0.7585 (95% CI: [0.7462, 0.7706])
+- **Macro PR-AUC**: 0.6750 (95% CI: [0.6457, 0.7091])
+- **Mean ROC-AUC**: 0.9858 (95% CI: [0.9842, 0.9874])
+- **Throughput**: 1,631.9 comments/sec (0.61 ms/comment on CPU)
+- **Model Report**: [reports/1_tfidf_lr/model_report.md](reports/1_tfidf_lr/model_report.md)
+

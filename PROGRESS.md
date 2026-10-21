@@ -18,6 +18,7 @@
 | **5** | **EDA (Analyses a–l)** | **DONE-VERIFIED** | 2026-10-21 | `reports/eda/eda_findings.json`, 24 CSV tables in `reports/eda/tables/`, 27 PNG figures in `reports/eda/figures/` (200 dpi), `logs/03_eda_2026-10-21.log` | None |
 | **6** | **Report Building** | **DONE-VERIFIED** | 2026-10-21 | `reports/eda/eda_conclusions.md`, `reports/eda/eda_report.md`, `logs/04_build_report_2026-10-21.log` | None |
 | **7** | **Verification** | **DONE-VERIFIED** | 2026-10-21 | End-to-end execution verified (`run_all.ps1`, `run_all.sh`), pytest full suite (12/12 passed), `README.md` updated | None |
+| **8** | **Model 1 (TF-IDF + LR)** | **DONE-VERIFIED** | 2026-10-21 | `models/1_tfidf_lr/`, `predictions/1_tfidf_lr/`, `reports/1_tfidf_lr/`, `visualizations/1_tfidf_lr/`, `scripts/10,20,21`, `src/wtc/{evaluation,plotting,inference}.py` | None |
 
 ---
 
@@ -62,3 +63,12 @@
   - Fixed project root resolution in `notebooks/01_eda.ipynb` so kernel locates `src/` whether started from root or `notebooks/`. (Backup saved to `backup_20261021_0050/`).
   - Updated `README.md` with accurate 12-test suite description and PowerShell run instructions.
   - Full test suite passed: `12 passed in 4.81s`.
+- **Stage 8 executed & verified (Model 1: TF-IDF + Logistic Regression)**:
+  - Configuration: `configs/models.yaml` (word 50k, char 100k, L2, liblinear, C=2.0, sqrt neg/pos class weights).
+  - Modules implemented: `src/wtc/evaluation.py` (reusable metrics & bootstrapping), `src/wtc/plotting.py` (8x 200 DPI figures), `src/wtc/inference.py` (`Moderator` registry engine).
+  - Scripts implemented: `scripts/10_train_tfidf.py`, `scripts/20_evaluate.py`, `scripts/21_build_model_report.py`.
+  - Full training ran in 173.6s (2.89 min); 150k features, 8.03 MB model size.
+  - Evaluation executed: Val bootstrap median threshold tuning, 1,000 bootstrap resamples on test for 95% CIs.
+  - Headline metrics (Test): Macro F1 = 0.6443, Micro F1 = 0.7585, Macro PR-AUC = 0.6750, Mean ROC-AUC = 0.9858.
+  - CPU throughput: 1,631.9 comments/sec (0.61 ms/comment).
+  - Generated full report: `reports/1_tfidf_lr/model_report.md`.

@@ -1,0 +1,2006 @@
+{
+  "model_id": "1_tfidf_lr",
+  "meta": {
+    "model_id": "1_tfidf_lr",
+    "model_name": "tfidf_lr",
+    "adapter_type": "tfidf_lr",
+    "smoke": false,
+    "created_utc": "2026-10-21T13:14:29.195636+00:00",
+    "seed": 42,
+    "labels": [
+      "toxic",
+      "severe_toxic",
+      "obscene",
+      "threat",
+      "insult",
+      "identity_hate"
+    ],
+    "input_column": "text_clean",
+    "class_weights": {
+      "toxic": {
+        "0": 1.0,
+        "1": 3.076
+      },
+      "severe_toxic": {
+        "0": 1.0,
+        "1": 9.9879
+      },
+      "obscene": {
+        "0": 1.0,
+        "1": 4.2395
+      },
+      "threat": {
+        "0": 1.0,
+        "1": 18.2919
+      },
+      "insult": {
+        "0": 1.0,
+        "1": 4.3963
+      },
+      "identity_hate": {
+        "0": 1.0,
+        "1": 10.6282
+      }
+    },
+    "chosen_C": 2.0,
+    "config": {
+      "model_id": "1_tfidf_lr",
+      "description": "Word + Char TF-IDF with Logistic Regression per label",
+      "input_col": "text_clean",
+      "seed": 42,
+      "vectorizer_word": {
+        "ngram_range": [
+          1,
+          2
+        ],
+        "lowercase": true,
+        "min_df": 3,
+        "max_features": 50000,
+        "sublinear_tf": true,
+        "dtype": "float32"
+      },
+      "vectorizer_char": {
+        "analyzer": "char_wb",
+        "ngram_range": [
+          2,
+          5
+        ],
+        "lowercase": false,
+        "min_df": 3,
+        "max_features": 100000,
+        "sublinear_tf": true,
+        "dtype": "float32"
+      },
+      "classifier": {
+        "penalty": "l2",
+        "solver": "liblinear",
+        "C": 2.0,
+        "max_iter": 200,
+        "random_state": 42,
+        "n_jobs": 6
+      },
+      "tune": {
+        "C": [
+          2.0
+        ]
+      },
+      "imbalance": {
+        "method": "sqrt_neg_pos_ratio",
+        "negative_weight": 1.0
+      }
+    },
+    "feature_counts": {
+      "word_features": 50000,
+      "char_features": 100000,
+      "total_features": 150000
+    },
+    "artifacts": {
+      "vectorizer_word": "models/1_tfidf_lr/vectorizer_word.joblib",
+      "vectorizer_char": "models/1_tfidf_lr/vectorizer_char.joblib",
+      "classifiers": "models/1_tfidf_lr/classifiers.joblib",
+      "probs_val": "predictions/1_tfidf_lr/probs_val.npy",
+      "probs_test": "predictions/1_tfidf_lr/probs_test.npy"
+    },
+    "model_size_bytes": 8419901,
+    "model_size_mb": 8.03,
+    "train_time_seconds": 173.64,
+    "stage_timings_seconds": {
+      "1_load_and_verify": 1.26,
+      "2_word_tfidf": 21.57,
+      "3_char_tfidf": 94.61,
+      "4_lr_fits": 51.95,
+      "5_predict_and_save": 3.43
+    },
+    "versions": {
+      "python": "3.12.6",
+      "scikit_learn": "1.5.2",
+      "pandas": "2.2.3",
+      "numpy": "1.26.4",
+      "scipy": "1.14.1",
+      "joblib": "1.6.0"
+    }
+  },
+  "labels": [
+    "toxic",
+    "severe_toxic",
+    "obscene",
+    "threat",
+    "insult",
+    "identity_hate"
+  ],
+  "threshold_tuning": {
+    "method": "bootstrap_median_f1",
+    "n_bootstrap": 200,
+    "seed": 42,
+    "grid_range": [
+      0.01,
+      0.99,
+      0.01
+    ],
+    "thresholds": {
+      "toxic": 0.49,
+      "severe_toxic": 0.51,
+      "obscene": 0.46,
+      "threat": 0.42,
+      "insult": 0.58,
+      "identity_hate": 0.49
+    },
+    "val_optimal_single_run": {
+      "toxic": 0.52,
+      "severe_toxic": 0.5,
+      "obscene": 0.5,
+      "threat": 0.42,
+      "insult": 0.66,
+      "identity_hate": 0.51
+    },
+    "bootstrap_details": {
+      "toxic": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.49,
+        "single_run_threshold": 0.52,
+        "mean": 0.4867,
+        "std": 0.0536,
+        "q25": 0.43,
+        "q75": 0.52
+      },
+      "severe_toxic": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.51,
+        "single_run_threshold": 0.5,
+        "mean": 0.5481,
+        "std": 0.0776,
+        "q25": 0.5,
+        "q75": 0.59
+      },
+      "obscene": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.46,
+        "single_run_threshold": 0.5,
+        "mean": 0.4368,
+        "std": 0.063,
+        "q25": 0.37,
+        "q75": 0.5
+      },
+      "threat": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.42,
+        "single_run_threshold": 0.42,
+        "mean": 0.4501,
+        "std": 0.145,
+        "q25": 0.41,
+        "q75": 0.52
+      },
+      "insult": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.58,
+        "single_run_threshold": 0.66,
+        "mean": 0.5693,
+        "std": 0.0857,
+        "q25": 0.48,
+        "q75": 0.66
+      },
+      "identity_hate": {
+        "n_resamples_evaluated": 200,
+        "median_threshold": 0.49,
+        "single_run_threshold": 0.51,
+        "mean": 0.4626,
+        "std": 0.0725,
+        "q25": 0.4,
+        "q75": 0.51
+      }
+    }
+  },
+  "test": {
+    "overall": {
+      "macro_f1": 0.6443253149999048,
+      "micro_f1": 0.758450602060061,
+      "macro_pr_auc": 0.6749755208381972,
+      "mean_roc_auc": 0.985818809617509,
+      "macro_precision": 0.6562585780047846,
+      "macro_recall": 0.6356023180279728,
+      "hamming_loss": 0.017517833470109212,
+      "exact_match_accuracy": 0.9195757843570481,
+      "mean_brier": 0.013373506256167365,
+      "mean_ece": 0.00953761396077437,
+      "macro_f1_ci": [
+        0.6162,
+        0.6689
+      ],
+      "micro_f1_ci": [
+        0.7462,
+        0.7706
+      ],
+      "macro_pr_auc_ci": [
+        0.6457,
+        0.7091
+      ],
+      "mean_roc_auc_ci": [
+        0.9842,
+        0.9874
+      ],
+      "macro_precision_ci": [
+        0.6232,
+        0.689
+      ],
+      "macro_recall_ci": [
+        0.6067,
+        0.6675
+      ],
+      "exact_match_accuracy_ci": [
+        0.9155,
+        0.9239
+      ],
+      "hamming_loss_ci": [
+        0.0165,
+        0.0185
+      ]
+    },
+    "per_label": {
+      "toxic": {
+        "threshold": 0.49,
+        "support": 1543,
+        "prevalence": 0.09740546682658922,
+        "tp": 1217,
+        "fp": 253,
+        "fn": 326,
+        "tn": 14045,
+        "precision": 0.827891156462585,
+        "recall": 0.7887232663642255,
+        "f1": 0.8078327248589445,
+        "mcc": 0.7879322376823048,
+        "roc_auc": 0.9791390000840366,
+        "pr_auc": 0.8945183870077784,
+        "brier": 0.02758416439955103,
+        "ece": 0.01732664566882897,
+        "f1_ci": [
+          0.7933,
+          0.8231
+        ],
+        "precision_ci": [
+          0.8087,
+          0.8459
+        ],
+        "recall_ci": [
+          0.7681,
+          0.8085
+        ],
+        "pr_auc_ci": [
+          0.8827,
+          0.9063
+        ],
+        "roc_auc_ci": [
+          0.9761,
+          0.9822
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.8078719146097398,
+        "precision_at_05": 0.8323024054982818,
+        "recall_at_05": 0.7848347375243033
+      },
+      "severe_toxic": {
+        "threshold": 0.51,
+        "support": 163,
+        "prevalence": 0.01028975443469478,
+        "tp": 97,
+        "fp": 98,
+        "fn": 66,
+        "tn": 15580,
+        "precision": 0.49743589743589745,
+        "recall": 0.5950920245398773,
+        "f1": 0.5418994413407822,
+        "mcc": 0.5389126435475986,
+        "roc_auc": 0.9881293939301449,
+        "pr_auc": 0.48159499008250706,
+        "brier": 0.008308778874045665,
+        "ece": 0.0072332930779951095,
+        "f1_ci": [
+          0.4736,
+          0.599
+        ],
+        "precision_ci": [
+          0.4264,
+          0.5657
+        ],
+        "recall_ci": [
+          0.5127,
+          0.6724
+        ],
+        "pr_auc_ci": [
+          0.4083,
+          0.5688
+        ],
+        "roc_auc_ci": [
+          0.9846,
+          0.9911
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.5414364640883977,
+        "precision_at_05": 0.49246231155778897,
+        "recall_at_05": 0.6012269938650306
+      },
+      "obscene": {
+        "threshold": 0.46,
+        "support": 857,
+        "prevalence": 0.05410011994192286,
+        "tp": 688,
+        "fp": 116,
+        "fn": 169,
+        "tn": 14868,
+        "precision": 0.8557213930348259,
+        "recall": 0.8028004667444574,
+        "f1": 0.8284166164960867,
+        "mcc": 0.8193981123598721,
+        "roc_auc": 0.9896700393293881,
+        "pr_auc": 0.9002627913260159,
+        "brier": 0.013858418966581732,
+        "ece": 0.009750271919684432,
+        "f1_ci": [
+          0.8076,
+          0.8488
+        ],
+        "precision_ci": [
+          0.831,
+          0.8793
+        ],
+        "recall_ci": [
+          0.7765,
+          0.8298
+        ],
+        "pr_auc_ci": [
+          0.8825,
+          0.9155
+        ],
+        "roc_auc_ci": [
+          0.9868,
+          0.9923
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.8289713937918441,
+        "precision_at_05": 0.8664122137404581,
+        "recall_at_05": 0.79463243873979
+      },
+      "threat": {
+        "threshold": 0.42,
+        "support": 50,
+        "prevalence": 0.0031563663910106686,
+        "tp": 24,
+        "fp": 23,
+        "fn": 26,
+        "tn": 15768,
+        "precision": 0.5106382978723404,
+        "recall": 0.48,
+        "f1": 0.4948453608247423,
+        "mcc": 0.4935330275976817,
+        "roc_auc": 0.9957684757140143,
+        "pr_auc": 0.4979015212951102,
+        "brier": 0.002360182996654707,
+        "ece": 0.003015181457011973,
+        "f1_ci": [
+          0.3571,
+          0.6078
+        ],
+        "precision_ci": [
+          0.3589,
+          0.6552
+        ],
+        "recall_ci": [
+          0.3442,
+          0.623
+        ],
+        "pr_auc_ci": [
+          0.3566,
+          0.6452
+        ],
+        "roc_auc_ci": [
+          0.9934,
+          0.9977
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.4888888888888889,
+        "precision_at_05": 0.55,
+        "recall_at_05": 0.44
+      },
+      "insult": {
+        "threshold": 0.58,
+        "support": 792,
+        "prevalence": 0.04999684363360899,
+        "tp": 518,
+        "fp": 170,
+        "fn": 274,
+        "tn": 14879,
+        "precision": 0.752906976744186,
+        "recall": 0.6540404040404041,
+        "f1": 0.7,
+        "mcc": 0.6872438999738549,
+        "roc_auc": 0.9802716009856018,
+        "pr_auc": 0.7727939679217712,
+        "brier": 0.02111444343674285,
+        "ece": 0.013043666231998308,
+        "f1_ci": [
+          0.6718,
+          0.7264
+        ],
+        "precision_ci": [
+          0.7194,
+          0.783
+        ],
+        "recall_ci": [
+          0.619,
+          0.688
+        ],
+        "pr_auc_ci": [
+          0.7419,
+          0.8036
+        ],
+        "roc_auc_ci": [
+          0.9766,
+          0.9837
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.7128205128205128,
+        "precision_at_05": 0.7239583333333334,
+        "recall_at_05": 0.702020202020202
+      },
+      "identity_hate": {
+        "threshold": 0.49,
+        "support": 142,
+        "prevalence": 0.008964080550470299,
+        "tp": 70,
+        "fp": 72,
+        "fn": 72,
+        "tn": 15627,
+        "precision": 0.49295774647887325,
+        "recall": 0.49295774647887325,
+        "f1": 0.49295774647887325,
+        "mcc": 0.48837146709802093,
+        "roc_auc": 0.9819343476618677,
+        "pr_auc": 0.5027814673960005,
+        "brier": 0.00701504886342822,
+        "ece": 0.0068566254091274315,
+        "f1_ci": [
+          0.4211,
+          0.5598
+        ],
+        "precision_ci": [
+          0.4067,
+          0.5762
+        ],
+        "recall_ci": [
+          0.4167,
+          0.5745
+        ],
+        "pr_auc_ci": [
+          0.4185,
+          0.5867
+        ],
+        "roc_auc_ci": [
+          0.9756,
+          0.9872
+        ],
+        "threshold_fixed_05": 0.5,
+        "f1_at_05": 0.49469964664310956,
+        "precision_at_05": 0.49645390070921985,
+        "recall_at_05": 0.49295774647887325
+      }
+    },
+    "hierarchical": {
+      "severe_toxic_standard_f1": 0.5418994413407822,
+      "severe_toxic_standard_precision": 0.49743589743589745,
+      "severe_toxic_standard_recall": 0.5950920245398773,
+      "severe_toxic_hierarchical_f1": 0.5418994413407822,
+      "severe_toxic_hierarchical_precision": 0.49743589743589745,
+      "severe_toxic_hierarchical_recall": 0.5950920245398773,
+      "hierarchical_micro_f1": 0.758450602060061,
+      "hierarchical_exact_match": 0.9195757843570481
+    },
+    "overall_fixed_05": {
+      "macro_f1": 0.6457814701404155,
+      "micro_f1": 0.7606689734717417,
+      "macro_pr_auc": 0.6749755208381972,
+      "mean_roc_auc": 0.985818809617509,
+      "macro_precision": 0.6602648608065137,
+      "macro_recall": 0.6359453531046998,
+      "hamming_loss": 0.017465227363592364,
+      "exact_match_accuracy": 0.9195126570292279,
+      "mean_brier": 0.013373506256167365,
+      "mean_ece": 0.00953761396077437
+    },
+    "per_label_fixed_05": {
+      "toxic": {
+        "threshold": 0.5,
+        "support": 1543,
+        "prevalence": 0.09740546682658922,
+        "tp": 1211,
+        "fp": 244,
+        "fn": 332,
+        "tn": 14054,
+        "precision": 0.8323024054982818,
+        "recall": 0.7848347375243033,
+        "f1": 0.8078719146097398,
+        "mcc": 0.7882244306841033,
+        "roc_auc": 0.9791390000840366,
+        "pr_auc": 0.8945183870077784,
+        "brier": 0.02758416439955103,
+        "ece": 0.01732664566882897
+      },
+      "severe_toxic": {
+        "threshold": 0.5,
+        "support": 163,
+        "prevalence": 0.01028975443469478,
+        "tp": 98,
+        "fp": 101,
+        "fn": 65,
+        "tn": 15577,
+        "precision": 0.49246231155778897,
+        "recall": 0.6012269938650306,
+        "f1": 0.5414364640883977,
+        "mcc": 0.5389225399995835,
+        "roc_auc": 0.9881293939301449,
+        "pr_auc": 0.48159499008250706,
+        "brier": 0.008308778874045665,
+        "ece": 0.0072332930779951095
+      },
+      "obscene": {
+        "threshold": 0.5,
+        "support": 857,
+        "prevalence": 0.05410011994192286,
+        "tp": 681,
+        "fp": 105,
+        "fn": 176,
+        "tn": 14879,
+        "precision": 0.8664122137404581,
+        "recall": 0.79463243873979,
+        "f1": 0.8289713937918441,
+        "mcc": 0.8204877720487967,
+        "roc_auc": 0.9896700393293881,
+        "pr_auc": 0.9002627913260159,
+        "brier": 0.013858418966581732,
+        "ece": 0.009750271919684432
+      },
+      "threat": {
+        "threshold": 0.5,
+        "support": 50,
+        "prevalence": 0.0031563663910106686,
+        "tp": 22,
+        "fp": 18,
+        "fn": 28,
+        "tn": 15773,
+        "precision": 0.55,
+        "recall": 0.44,
+        "f1": 0.4888888888888889,
+        "mcc": 0.4905052324355872,
+        "roc_auc": 0.9957684757140143,
+        "pr_auc": 0.4979015212951102,
+        "brier": 0.002360182996654707,
+        "ece": 0.003015181457011973
+      },
+      "insult": {
+        "threshold": 0.5,
+        "support": 792,
+        "prevalence": 0.04999684363360899,
+        "tp": 556,
+        "fp": 212,
+        "fn": 236,
+        "tn": 14837,
+        "precision": 0.7239583333333334,
+        "recall": 0.702020202020202,
+        "f1": 0.7128205128205128,
+        "mcc": 0.6980427552964169,
+        "roc_auc": 0.9802716009856018,
+        "pr_auc": 0.7727939679217712,
+        "brier": 0.02111444343674285,
+        "ece": 0.013043666231998308
+      },
+      "identity_hate": {
+        "threshold": 0.5,
+        "support": 142,
+        "prevalence": 0.008964080550470299,
+        "tp": 70,
+        "fp": 71,
+        "fn": 72,
+        "tn": 15628,
+        "precision": 0.49645390070921985,
+        "recall": 0.49295774647887325,
+        "f1": 0.49469964664310956,
+        "mcc": 0.4901485342946106,
+        "roc_auc": 0.9819343476618677,
+        "pr_auc": 0.5027814673960005,
+        "brier": 0.00701504886342822,
+        "ece": 0.0068566254091274315
+      }
+    }
+  },
+  "val_reference": {
+    "overall": {
+      "macro_f1": 0.6758678658591889,
+      "micro_f1": 0.7751654230606786,
+      "macro_pr_auc": 0.7035367461004229,
+      "mean_roc_auc": 0.9874919685681341,
+      "macro_precision": 0.6595189212114493,
+      "macro_recall": 0.6991594578039386,
+      "hamming_loss": 0.016772743504106537,
+      "exact_match_accuracy": 0.9205368958346462,
+      "mean_brier": 0.012987159875193832,
+      "mean_ece": 0.011104988371111265
+    },
+    "per_label": {
+      "toxic": {
+        "threshold": 0.49,
+        "support": 1529,
+        "prevalence": 0.09635137689835528,
+        "tp": 1221,
+        "fp": 279,
+        "fn": 308,
+        "tn": 14061,
+        "precision": 0.814,
+        "recall": 0.7985611510791367,
+        "f1": 0.806206668867613,
+        "mcc": 0.7858062068404568,
+        "roc_auc": 0.980626871648364,
+        "pr_auc": 0.8955800819456455,
+        "brier": 0.027611271847068554,
+        "ece": 0.018923822265546994
+      },
+      "severe_toxic": {
+        "threshold": 0.51,
+        "support": 163,
+        "prevalence": 0.010271598714474762,
+        "tp": 105,
+        "fp": 135,
+        "fn": 58,
+        "tn": 15571,
+        "precision": 0.4375,
+        "recall": 0.6441717791411042,
+        "f1": 0.5210918114143921,
+        "mcc": 0.5250771298432769,
+        "roc_auc": 0.9859480843943036,
+        "pr_auc": 0.5094170899062963,
+        "brier": 0.009126352464456965,
+        "ece": 0.009144443747309198
+      },
+      "obscene": {
+        "threshold": 0.46,
+        "support": 853,
+        "prevalence": 0.053752599407650134,
+        "tp": 721,
+        "fp": 138,
+        "fn": 132,
+        "tn": 14878,
+        "precision": 0.8393480791618161,
+        "recall": 0.8452520515826495,
+        "f1": 0.8422897196261683,
+        "mcc": 0.8333033474733742,
+        "roc_auc": 0.9906652911376751,
+        "pr_auc": 0.910090454518131,
+        "brier": 0.013591042573717136,
+        "ece": 0.011650757508369188
+      },
+      "threat": {
+        "threshold": 0.42,
+        "support": 47,
+        "prevalence": 0.0029617493225786123,
+        "tp": 27,
+        "fp": 24,
+        "fn": 20,
+        "tn": 15798,
+        "precision": 0.5294117647058824,
+        "recall": 0.574468085106383,
+        "f1": 0.5510204081632653,
+        "mcc": 0.5500933390894583,
+        "roc_auc": 0.9929333516219,
+        "pr_auc": 0.4892101641446465,
+        "brier": 0.0023079063777663913,
+        "ece": 0.0030255854035928817
+      },
+      "insult": {
+        "threshold": 0.58,
+        "support": 795,
+        "prevalence": 0.05009767471170206,
+        "tp": 597,
+        "fp": 185,
+        "fn": 198,
+        "tn": 14889,
+        "precision": 0.7634271099744245,
+        "recall": 0.7509433962264151,
+        "f1": 0.7571337983512999,
+        "mcc": 0.7444641982358525,
+        "roc_auc": 0.9865253428995572,
+        "pr_auc": 0.8258921065918511,
+        "brier": 0.01938619276693194,
+        "ece": 0.017012460669536503
+      },
+      "identity_hate": {
+        "threshold": 0.49,
+        "support": 141,
+        "prevalence": 0.008885247967735837,
+        "tp": 82,
+        "fp": 61,
+        "fn": 59,
+        "tn": 15667,
+        "precision": 0.5734265734265734,
+        "recall": 0.5815602836879432,
+        "f1": 0.5774647887323944,
+        "mcc": 0.5736643677545538,
+        "roc_auc": 0.9882528697070049,
+        "pr_auc": 0.5910305794959672,
+        "brier": 0.005900193221222013,
+        "ece": 0.006872860632312829
+      }
+    }
+  },
+  "bootstrap_info": {
+    "seed": 42,
+    "n_resamples": 1000,
+    "ci_level": 0.95
+  },
+  "model_specific": {
+    "top_ngrams_table": "reports/1_tfidf_lr/tables/top_ngrams_per_label.csv",
+    "top_ngrams_figure": "visualizations/1_tfidf_lr/top_positive_ngrams.png",
+    "top_per_label": {
+      "toxic": {
+        "top_words": [
+          {
+            "rank": 1,
+            "feature": "fuck",
+            "coef": 12.4745
+          },
+          {
+            "rank": 2,
+            "feature": "shit",
+            "coef": 11.2195
+          },
+          {
+            "rank": 3,
+            "feature": "ass",
+            "coef": 10.2593
+          },
+          {
+            "rank": 4,
+            "feature": "idiot",
+            "coef": 8.4858
+          },
+          {
+            "rank": 5,
+            "feature": "stupid",
+            "coef": 8.4232
+          },
+          {
+            "rank": 6,
+            "feature": "fucking",
+            "coef": 8.1449
+          },
+          {
+            "rank": 7,
+            "feature": "crap",
+            "coef": 8.1295
+          },
+          {
+            "rank": 8,
+            "feature": "penis",
+            "coef": 7.7486
+          },
+          {
+            "rank": 9,
+            "feature": "dick",
+            "coef": 7.5422
+          },
+          {
+            "rank": 10,
+            "feature": "gay",
+            "coef": 7.16
+          },
+          {
+            "rank": 11,
+            "feature": "bitch",
+            "coef": 7.0245
+          },
+          {
+            "rank": 12,
+            "feature": "hell",
+            "coef": 6.8671
+          },
+          {
+            "rank": 13,
+            "feature": "suck",
+            "coef": 6.1053
+          },
+          {
+            "rank": 14,
+            "feature": "pig",
+            "coef": 6.0418
+          },
+          {
+            "rank": 15,
+            "feature": "you",
+            "coef": 5.7303
+          },
+          {
+            "rank": 16,
+            "feature": "moron",
+            "coef": 5.6966
+          },
+          {
+            "rank": 17,
+            "feature": "sucks",
+            "coef": 5.468
+          },
+          {
+            "rank": 18,
+            "feature": "die",
+            "coef": 5.3578
+          },
+          {
+            "rank": 19,
+            "feature": "asshole",
+            "coef": 5.3553
+          },
+          {
+            "rank": 20,
+            "feature": "cunt",
+            "coef": 5.2218
+          }
+        ],
+        "top_chars": [
+          {
+            "rank": 1,
+            "feature": "uck",
+            "coef": 10.5314
+          },
+          {
+            "rank": 2,
+            "feature": "fuc",
+            "coef": 8.0211
+          },
+          {
+            "rank": 3,
+            "feature": "fuck",
+            "coef": 7.85
+          },
+          {
+            "rank": 4,
+            "feature": "ck",
+            "coef": 6.4396
+          },
+          {
+            "rank": 5,
+            "feature": "shit",
+            "coef": 6.3667
+          },
+          {
+            "rank": 6,
+            "feature": " fuc",
+            "coef": 6.2843
+          },
+          {
+            "rank": 7,
+            "feature": " fuck",
+            "coef": 5.9771
+          },
+          {
+            "rank": 8,
+            "feature": "uc",
+            "coef": 5.9555
+          },
+          {
+            "rank": 9,
+            "feature": "**",
+            "coef": 5.1889
+          },
+          {
+            "rank": 10,
+            "feature": "! ",
+            "coef": 5.1505
+          },
+          {
+            "rank": 11,
+            "feature": "hit",
+            "coef": 5.135
+          },
+          {
+            "rank": 12,
+            "feature": "diot",
+            "coef": 4.8906
+          },
+          {
+            "rank": 13,
+            "feature": "iot",
+            "coef": 4.6451
+          },
+          {
+            "rank": 14,
+            "feature": "dick",
+            "coef": 4.6083
+          },
+          {
+            "rank": 15,
+            "feature": " dick",
+            "coef": 4.6072
+          },
+          {
+            "rank": 16,
+            "feature": "tard",
+            "coef": 4.5618
+          },
+          {
+            "rank": 17,
+            "feature": "suck",
+            "coef": 4.5176
+          },
+          {
+            "rank": 18,
+            "feature": " shit",
+            "coef": 4.3767
+          },
+          {
+            "rank": 19,
+            "feature": "CK",
+            "coef": 4.2757
+          },
+          {
+            "rank": 20,
+            "feature": " suck",
+            "coef": 4.1185
+          }
+        ]
+      },
+      "severe_toxic": {
+        "top_words": [
+          {
+            "rank": 1,
+            "feature": "bitch",
+            "coef": 4.4131
+          },
+          {
+            "rank": 2,
+            "feature": "ck",
+            "coef": 3.5533
+          },
+          {
+            "rank": 3,
+            "feature": "off",
+            "coef": 3.2689
+          },
+          {
+            "rank": 4,
+            "feature": "nigger you",
+            "coef": 3.2395
+          },
+          {
+            "rank": 5,
+            "feature": "cking",
+            "coef": 3.1979
+          },
+          {
+            "rank": 6,
+            "feature": "sex",
+            "coef": 3.1729
+          },
+          {
+            "rank": 7,
+            "feature": "nazi",
+            "coef": 3.1559
+          },
+          {
+            "rank": 8,
+            "feature": "penis",
+            "coef": 3.1471
+          },
+          {
+            "rank": 9,
+            "feature": "filthy",
+            "coef": 3.1433
+          },
+          {
+            "rank": 10,
+            "feature": "give me",
+            "coef": 3.1132
+          },
+          {
+            "rank": 11,
+            "feature": "ass",
+            "coef": 3.0889
+          },
+          {
+            "rank": 12,
+            "feature": "hate",
+            "coef": 3.0734
+          },
+          {
+            "rank": 13,
+            "feature": "retarded",
+            "coef": 3.0689
+          },
+          {
+            "rank": 14,
+            "feature": "die",
+            "coef": 3.0432
+          },
+          {
+            "rank": 15,
+            "feature": "wikipedia loves",
+            "coef": 3.0364
+          },
+          {
+            "rank": 16,
+            "feature": "cunt",
+            "coef": 2.9944
+          },
+          {
+            "rank": 17,
+            "feature": "anal",
+            "coef": 2.9877
+          },
+          {
+            "rank": 18,
+            "feature": "su",
+            "coef": 2.9478
+          },
+          {
+            "rank": 19,
+            "feature": "fuck",
+            "coef": 2.8977
+          },
+          {
+            "rank": 20,
+            "feature": "hahahahahahahahahahahahaha",
+            "coef": 2.8874
+          }
+        ],
+        "top_chars": [
+          {
+            "rank": 1,
+            "feature": "uck",
+            "coef": 5.2819
+          },
+          {
+            "rank": 2,
+            "feature": " g ",
+            "coef": 4.4925
+          },
+          {
+            "rank": 3,
+            "feature": "CK",
+            "coef": 4.1462
+          },
+          {
+            "rank": 4,
+            "feature": "ck",
+            "coef": 3.9992
+          },
+          {
+            "rank": 5,
+            "feature": "uc",
+            "coef": 3.4624
+          },
+          {
+            "rank": 6,
+            "feature": " f ",
+            "coef": 3.2136
+          },
+          {
+            "rank": 7,
+            "feature": "K ",
+            "coef": 3.0109
+          },
+          {
+            "rank": 8,
+            "feature": " U ",
+            "coef": 2.9291
+          },
+          {
+            "rank": 9,
+            "feature": "ker",
+            "coef": 2.5388
+          },
+          {
+            "rank": 10,
+            "feature": " n ",
+            "coef": 2.5161
+          },
+          {
+            "rank": 11,
+            "feature": "FU",
+            "coef": 2.4738
+          },
+          {
+            "rank": 12,
+            "feature": " F*",
+            "coef": 2.4514
+          },
+          {
+            "rank": 13,
+            "feature": "F*",
+            "coef": 2.4375
+          },
+          {
+            "rank": 14,
+            "feature": "cker",
+            "coef": 2.3916
+          },
+          {
+            "rank": 15,
+            "feature": " fag",
+            "coef": 2.374
+          },
+          {
+            "rank": 16,
+            "feature": "UC",
+            "coef": 2.367
+          },
+          {
+            "rank": 17,
+            "feature": "dick",
+            "coef": 2.3551
+          },
+          {
+            "rank": 18,
+            "feature": "U ",
+            "coef": 2.3504
+          },
+          {
+            "rank": 19,
+            "feature": "UCK",
+            "coef": 2.331
+          },
+          {
+            "rank": 20,
+            "feature": "fuk",
+            "coef": 2.3295
+          }
+        ]
+      },
+      "obscene": {
+        "top_words": [
+          {
+            "rank": 1,
+            "feature": "fuck",
+            "coef": 14.7251
+          },
+          {
+            "rank": 2,
+            "feature": "ass",
+            "coef": 13.0397
+          },
+          {
+            "rank": 3,
+            "feature": "bitch",
+            "coef": 9.9432
+          },
+          {
+            "rank": 4,
+            "feature": "shit",
+            "coef": 9.7097
+          },
+          {
+            "rank": 5,
+            "feature": "fucking",
+            "coef": 9.1121
+          },
+          {
+            "rank": 6,
+            "feature": "cunt",
+            "coef": 8.8343
+          },
+          {
+            "rank": 7,
+            "feature": "dick",
+            "coef": 8.5253
+          },
+          {
+            "rank": 8,
+            "feature": "asshole",
+            "coef": 6.8399
+          },
+          {
+            "rank": 9,
+            "feature": "penis",
+            "coef": 6.7526
+          },
+          {
+            "rank": 10,
+            "feature": "bullshit",
+            "coef": 6.6395
+          },
+          {
+            "rank": 11,
+            "feature": "moron",
+            "coef": 6.3588
+          },
+          {
+            "rank": 12,
+            "feature": "suck",
+            "coef": 6.1936
+          },
+          {
+            "rank": 13,
+            "feature": "crap",
+            "coef": 6.1903
+          },
+          {
+            "rank": 14,
+            "feature": "anal",
+            "coef": 5.8196
+          },
+          {
+            "rank": 15,
+            "feature": "bastard",
+            "coef": 5.8078
+          },
+          {
+            "rank": 16,
+            "feature": "pussy",
+            "coef": 5.4095
+          },
+          {
+            "rank": 17,
+            "feature": "cock",
+            "coef": 5.408
+          },
+          {
+            "rank": 18,
+            "feature": "wtf",
+            "coef": 5.3876
+          },
+          {
+            "rank": 19,
+            "feature": "stupid",
+            "coef": 5.1686
+          },
+          {
+            "rank": 20,
+            "feature": "damn",
+            "coef": 5.1647
+          }
+        ],
+        "top_chars": [
+          {
+            "rank": 1,
+            "feature": "uck",
+            "coef": 12.0489
+          },
+          {
+            "rank": 2,
+            "feature": "fuc",
+            "coef": 9.8225
+          },
+          {
+            "rank": 3,
+            "feature": "fuck",
+            "coef": 9.3794
+          },
+          {
+            "rank": 4,
+            "feature": "ck",
+            "coef": 7.6485
+          },
+          {
+            "rank": 5,
+            "feature": "uc",
+            "coef": 7.0083
+          },
+          {
+            "rank": 6,
+            "feature": "shit",
+            "coef": 6.8944
+          },
+          {
+            "rank": 7,
+            "feature": " fuc",
+            "coef": 6.7527
+          },
+          {
+            "rank": 8,
+            "feature": " F",
+            "coef": 6.3408
+          },
+          {
+            "rank": 9,
+            "feature": " fuck",
+            "coef": 6.2796
+          },
+          {
+            "rank": 10,
+            "feature": "hit",
+            "coef": 5.9936
+          },
+          {
+            "rank": 11,
+            "feature": "CK",
+            "coef": 5.8151
+          },
+          {
+            "rank": 12,
+            "feature": "ass",
+            "coef": 5.6597
+          },
+          {
+            "rank": 13,
+            "feature": " ass",
+            "coef": 5.6119
+          },
+          {
+            "rank": 14,
+            "feature": "fu",
+            "coef": 5.5329
+          },
+          {
+            "rank": 15,
+            "feature": " fu",
+            "coef": 5.0919
+          },
+          {
+            "rank": 16,
+            "feature": "dick",
+            "coef": 4.7702
+          },
+          {
+            "rank": 17,
+            "feature": "UCK",
+            "coef": 4.6266
+          },
+          {
+            "rank": 18,
+            "feature": "Fuc",
+            "coef": 4.4886
+          },
+          {
+            "rank": 19,
+            "feature": "Fuck",
+            "coef": 4.4819
+          },
+          {
+            "rank": 20,
+            "feature": " dick",
+            "coef": 4.429
+          }
+        ]
+      },
+      "threat": {
+        "top_words": [
+          {
+            "rank": 1,
+            "feature": "die",
+            "coef": 10.1949
+          },
+          {
+            "rank": 2,
+            "feature": "kill",
+            "coef": 7.3884
+          },
+          {
+            "rank": 3,
+            "feature": "kill you",
+            "coef": 6.2704
+          },
+          {
+            "rank": 4,
+            "feature": "death to",
+            "coef": 5.5145
+          },
+          {
+            "rank": 5,
+            "feature": "will",
+            "coef": 5.3561
+          },
+          {
+            "rank": 6,
+            "feature": "burn",
+            "coef": 5.3425
+          },
+          {
+            "rank": 7,
+            "feature": "death",
+            "coef": 5.2423
+          },
+          {
+            "rank": 8,
+            "feature": "destroy",
+            "coef": 4.7122
+          },
+          {
+            "rank": 9,
+            "feature": "dead",
+            "coef": 4.6667
+          },
+          {
+            "rank": 10,
+            "feature": "shot",
+            "coef": 4.3927
+          },
+          {
+            "rank": 11,
+            "feature": "shoot",
+            "coef": 4.3782
+          },
+          {
+            "rank": 12,
+            "feature": "you die",
+            "coef": 4.0063
+          },
+          {
+            "rank": 13,
+            "feature": "punch",
+            "coef": 3.9922
+          },
+          {
+            "rank": 14,
+            "feature": "rape",
+            "coef": 3.7159
+          },
+          {
+            "rank": 15,
+            "feature": "down",
+            "coef": 3.656
+          },
+          {
+            "rank": 16,
+            "feature": "and",
+            "coef": 3.5567
+          },
+          {
+            "rank": 17,
+            "feature": "to death",
+            "coef": 3.3941
+          },
+          {
+            "rank": 18,
+            "feature": "hang",
+            "coef": 3.3203
+          },
+          {
+            "rank": 19,
+            "feature": "ll",
+            "coef": 3.2653
+          },
+          {
+            "rank": 20,
+            "feature": "kick",
+            "coef": 3.1323
+          }
+        ],
+        "top_chars": [
+          {
+            "rank": 1,
+            "feature": " kill",
+            "coef": 2.8808
+          },
+          {
+            "rank": 2,
+            "feature": " ki",
+            "coef": 2.8743
+          },
+          {
+            "rank": 3,
+            "feature": " kil",
+            "coef": 2.7855
+          },
+          {
+            "rank": 4,
+            "feature": " die",
+            "coef": 2.7568
+          },
+          {
+            "rank": 5,
+            "feature": "kill",
+            "coef": 2.6789
+          },
+          {
+            "rank": 6,
+            "feature": "die",
+            "coef": 2.6451
+          },
+          {
+            "rank": 7,
+            "feature": " dea",
+            "coef": 2.6142
+          },
+          {
+            "rank": 8,
+            "feature": "kil",
+            "coef": 2.4733
+          },
+          {
+            "rank": 9,
+            "feature": " k",
+            "coef": 2.3636
+          },
+          {
+            "rank": 10,
+            "feature": "ill",
+            "coef": 2.2896
+          },
+          {
+            "rank": 11,
+            "feature": " deat",
+            "coef": 2.1627
+          },
+          {
+            "rank": 12,
+            "feature": "ill ",
+            "coef": 2.1428
+          },
+          {
+            "rank": 13,
+            "feature": "death",
+            "coef": 2.1331
+          },
+          {
+            "rank": 14,
+            "feature": "ll ",
+            "coef": 2.1303
+          },
+          {
+            "rank": 15,
+            "feature": "deat",
+            "coef": 2.1264
+          },
+          {
+            "rank": 16,
+            "feature": "! ",
+            "coef": 2.0537
+          },
+          {
+            "rank": 17,
+            "feature": "eath",
+            "coef": 2.0535
+          },
+          {
+            "rank": 18,
+            "feature": " rape",
+            "coef": 1.9814
+          },
+          {
+            "rank": 19,
+            "feature": "dea",
+            "coef": 1.9635
+          },
+          {
+            "rank": 20,
+            "feature": "ll",
+            "coef": 1.9233
+          }
+        ]
+      },
+      "insult": {
+        "top_words": [
+          {
+            "rank": 1,
+            "feature": "idiot",
+            "coef": 7.602
+          },
+          {
+            "rank": 2,
+            "feature": "ass",
+            "coef": 7.2164
+          },
+          {
+            "rank": 3,
+            "feature": "bitch",
+            "coef": 7.0625
+          },
+          {
+            "rank": 4,
+            "feature": "stupid",
+            "coef": 6.4669
+          },
+          {
+            "rank": 5,
+            "feature": "moron",
+            "coef": 6.2866
+          },
+          {
+            "rank": 6,
+            "feature": "asshole",
+            "coef": 6.1704
+          },
+          {
+            "rank": 7,
+            "feature": "fool",
+            "coef": 5.3832
+          },
+          {
+            "rank": 8,
+            "feature": "dick",
+            "coef": 5.3784
+          },
+          {
+            "rank": 9,
+            "feature": "you",
+            "coef": 5.3405
+          },
+          {
+            "rank": 10,
+            "feature": "cunt",
+            "coef": 5.1637
+          },
+          {
+            "rank": 11,
+            "feature": "scum",
+            "coef": 5.0517
+          },
+          {
+            "rank": 12,
+            "feature": "suck",
+            "coef": 4.8944
+          },
+          {
+            "rank": 13,
+            "feature": "dumb",
+            "coef": 4.763
+          },
+          {
+            "rank": 14,
+            "feature": "idiots",
+            "coef": 4.7036
+          },
+          {
+            "rank": 15,
+            "feature": "loser",
+            "coef": 4.5556
+          },
+          {
+            "rank": 16,
+            "feature": "freak",
+            "coef": 4.3715
+          },
+          {
+            "rank": 17,
+            "feature": "pig",
+            "coef": 4.338
+          },
+          {
+            "rank": 18,
+            "feature": "morons",
+            "coef": 4.3116
+          },
+          {
+            "rank": 19,
+            "feature": "fat",
+            "coef": 4.2803
+          },
+          {
+            "rank": 20,
+            "feature": "faggot",
+            "coef": 4.2757
+          }
+        ],
+        "top_chars": [
+          {
+            "rank": 1,
+            "feature": "uck",
+            "coef": 7.0055
+          },
+          {
+            "rank": 2,
+            "feature": "ck",
+            "coef": 4.8637
+          },
+          {
+            "rank": 3,
+            "feature": "diot",
+            "coef": 4.7063
+          },
+          {
+            "rank": 4,
+            "feature": "dio",
+            "coef": 4.4322
+          },
+          {
+            "rank": 5,
+            "feature": "iot",
+            "coef": 4.2571
+          },
+          {
+            "rank": 6,
+            "feature": "fuc",
+            "coef": 4.1912
+          },
+          {
+            "rank": 7,
+            "feature": " idi",
+            "coef": 3.9793
+          },
+          {
+            "rank": 8,
+            "feature": "gg",
+            "coef": 3.971
+          },
+          {
+            "rank": 9,
+            "feature": " idio",
+            "coef": 3.8752
+          },
+          {
+            "rank": 10,
+            "feature": "uc",
+            "coef": 3.8227
+          },
+          {
+            "rank": 11,
+            "feature": "idio",
+            "coef": 3.7783
+          },
+          {
+            "rank": 12,
+            "feature": "idiot",
+            "coef": 3.6702
+          },
+          {
+            "rank": 13,
+            "feature": "! ",
+            "coef": 3.6377
+          },
+          {
+            "rank": 14,
+            "feature": "fuck",
+            "coef": 3.5596
+          },
+          {
+            "rank": 15,
+            "feature": "bitch",
+            "coef": 3.548
+          },
+          {
+            "rank": 16,
+            "feature": "bitc",
+            "coef": 3.5247
+          },
+          {
+            "rank": 17,
+            "feature": " U ",
+            "coef": 3.4742
+          },
+          {
+            "rank": 18,
+            "feature": " bic",
+            "coef": 3.4509
+          },
+          {
+            "rank": 19,
+            "feature": " a ",
+            "coef": 3.4222
+          },
+          {
+            "rank": 20,
+            "feature": "tard",
+            "coef": 3.401
+          }
+        ]
+      },
+      "identity_hate": {
+        "top_words": [
+          {
+            "rank": 1,
+            "feature": "jew",
+            "coef": 7.9235
+          },
+          {
+            "rank": 2,
+            "feature": "gay",
+            "coef": 7.6429
+          },
+          {
+            "rank": 3,
+            "feature": "nigger",
+            "coef": 5.5704
+          },
+          {
+            "rank": 4,
+            "feature": "hate",
+            "coef": 4.9262
+          },
+          {
+            "rank": 5,
+            "feature": "nazi",
+            "coef": 4.7579
+          },
+          {
+            "rank": 6,
+            "feature": "negro",
+            "coef": 4.693
+          },
+          {
+            "rank": 7,
+            "feature": "niggers",
+            "coef": 4.626
+          },
+          {
+            "rank": 8,
+            "feature": "nigga",
+            "coef": 4.4952
+          },
+          {
+            "rank": 9,
+            "feature": "homosexual",
+            "coef": 4.4243
+          },
+          {
+            "rank": 10,
+            "feature": "muslim",
+            "coef": 4.3455
+          },
+          {
+            "rank": 11,
+            "feature": "black",
+            "coef": 4.3207
+          },
+          {
+            "rank": 12,
+            "feature": "jews",
+            "coef": 4.0194
+          },
+          {
+            "rank": 13,
+            "feature": "rat",
+            "coef": 3.9015
+          },
+          {
+            "rank": 14,
+            "feature": "fag",
+            "coef": 3.7346
+          },
+          {
+            "rank": 15,
+            "feature": "sucker",
+            "coef": 3.6744
+          },
+          {
+            "rank": 16,
+            "feature": "racist",
+            "coef": 3.4969
+          },
+          {
+            "rank": 17,
+            "feature": "the ass",
+            "coef": 3.4693
+          },
+          {
+            "rank": 18,
+            "feature": "abd",
+            "coef": 3.4308
+          },
+          {
+            "rank": 19,
+            "feature": "fucking",
+            "coef": 3.4164
+          },
+          {
+            "rank": 20,
+            "feature": "jewish",
+            "coef": 3.3959
+          }
+        ],
+        "top_chars": [
+          {
+            "rank": 1,
+            "feature": "nigg",
+            "coef": 4.951
+          },
+          {
+            "rank": 2,
+            "feature": "gg",
+            "coef": 4.798
+          },
+          {
+            "rank": 3,
+            "feature": " gay",
+            "coef": 4.6551
+          },
+          {
+            "rank": 4,
+            "feature": "gay",
+            "coef": 4.5687
+          },
+          {
+            "rank": 5,
+            "feature": "igg",
+            "coef": 4.5088
+          },
+          {
+            "rank": 6,
+            "feature": " g ",
+            "coef": 4.393
+          },
+          {
+            "rank": 7,
+            "feature": "homo",
+            "coef": 4.2901
+          },
+          {
+            "rank": 8,
+            "feature": " homo",
+            "coef": 4.1884
+          },
+          {
+            "rank": 9,
+            "feature": "jew",
+            "coef": 3.8926
+          },
+          {
+            "rank": 10,
+            "feature": "nig",
+            "coef": 3.7926
+          },
+          {
+            "rank": 11,
+            "feature": " nigg",
+            "coef": 3.7636
+          },
+          {
+            "rank": 12,
+            "feature": " jew",
+            "coef": 3.7046
+          },
+          {
+            "rank": 13,
+            "feature": "ian",
+            "coef": 3.6751
+          },
+          {
+            "rank": 14,
+            "feature": " nig",
+            "coef": 3.3695
+          },
+          {
+            "rank": 15,
+            "feature": "gger",
+            "coef": 3.3282
+          },
+          {
+            "rank": 16,
+            "feature": "GA",
+            "coef": 3.3008
+          },
+          {
+            "rank": 17,
+            "feature": "omo",
+            "coef": 3.2261
+          },
+          {
+            "rank": 18,
+            "feature": "ger",
+            "coef": 3.2082
+          },
+          {
+            "rank": 19,
+            "feature": "GAY",
+            "coef": 3.2009
+          },
+          {
+            "rank": 20,
+            "feature": "gga",
+            "coef": 3.1431
+          }
+        ]
+      }
+    }
+  },
+  "inference_benchmark": {
+    "benchmark_sample_size": 1000,
+    "total_time_seconds": 0.6128,
+    "latency_ms_per_comment": 0.613,
+    "throughput_comments_per_sec": 1631.9,
+    "time_per_1000_comments_sec": 0.613
+  },
+  "model_size_mb": 8.03
+}

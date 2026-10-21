@@ -1,0 +1,11 @@
+metric,value,ci_95
+Macro F1,0.6443,"[0.6162, 0.6689]"
+Micro F1,0.7585,"[0.7462, 0.7706]"
+Macro PR-AUC,0.675,"[0.6457, 0.7091]"
+Mean ROC-AUC,0.9858,"[0.9842, 0.9874]"
+Macro Precision,0.6563,"[0.6232, 0.6890]"
+Macro Recall,0.6356,"[0.6067, 0.6675]"
+Exact Match Accuracy,0.9196,"[0.9155, 0.9239]"
+Hamming Loss,0.0175,"[0.0165, 0.0185]"
+Mean Brier Score,0.0134,N/A
+Mean ECE (15 bins),0.0095,N/A

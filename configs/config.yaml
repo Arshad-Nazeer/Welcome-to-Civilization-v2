@@ -36,6 +36,16 @@ paths:
   figures:          reports/eda/figures
   tables:           reports/eda/tables
   runs:             runs
+  models:           models
+  predictions:      predictions
+  reports:          reports
+  visualizations:   visualizations
+
+# ---------- Model IDs ----------
+model_ids:
+  tfidf_lr: 1_tfidf_lr
+  bigru_attn: 2_bigru_attn
+  distilroberta: 3_distilroberta
 
 # ---------- Tokenizer (for EDA step e) ----------
 tokenizer_name: roberta-base

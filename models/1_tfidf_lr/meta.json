@@ -1,0 +1,120 @@
+{
+  "model_id": "1_tfidf_lr",
+  "model_name": "tfidf_lr",
+  "adapter_type": "tfidf_lr",
+  "smoke": false,
+  "created_utc": "2026-10-21T13:14:29.195636+00:00",
+  "seed": 42,
+  "labels": [
+    "toxic",
+    "severe_toxic",
+    "obscene",
+    "threat",
+    "insult",
+    "identity_hate"
+  ],
+  "input_column": "text_clean",
+  "class_weights": {
+    "toxic": {
+      "0": 1.0,
+      "1": 3.076
+    },
+    "severe_toxic": {
+      "0": 1.0,
+      "1": 9.9879
+    },
+    "obscene": {
+      "0": 1.0,
+      "1": 4.2395
+    },
+    "threat": {
+      "0": 1.0,
+      "1": 18.2919
+    },
+    "insult": {
+      "0": 1.0,
+      "1": 4.3963
+    },
+    "identity_hate": {
+      "0": 1.0,
+      "1": 10.6282
+    }
+  },
+  "chosen_C": 2.0,
+  "config": {
+    "model_id": "1_tfidf_lr",
+    "description": "Word + Char TF-IDF with Logistic Regression per label",
+    "input_col": "text_clean",
+    "seed": 42,
+    "vectorizer_word": {
+      "ngram_range": [
+        1,
+        2
+      ],
+      "lowercase": true,
+      "min_df": 3,
+      "max_features": 50000,
+      "sublinear_tf": true,
+      "dtype": "float32"
+    },
+    "vectorizer_char": {
+      "analyzer": "char_wb",
+      "ngram_range": [
+        2,
+        5
+      ],
+      "lowercase": false,
+      "min_df": 3,
+      "max_features": 100000,
+      "sublinear_tf": true,
+      "dtype": "float32"
+    },
+    "classifier": {
+      "penalty": "l2",
+      "solver": "liblinear",
+      "C": 2.0,
+      "max_iter": 200,
+      "random_state": 42,
+      "n_jobs": 6
+    },
+    "tune": {
+      "C": [
+        2.0
+      ]
+    },
+    "imbalance": {
+      "method": "sqrt_neg_pos_ratio",
+      "negative_weight": 1.0
+    }
+  },
+  "feature_counts": {
+    "word_features": 50000,
+    "char_features": 100000,
+    "total_features": 150000
+  },
+  "artifacts": {
+    "vectorizer_word": "models/1_tfidf_lr/vectorizer_word.joblib",
+    "vectorizer_char": "models/1_tfidf_lr/vectorizer_char.joblib",
+    "classifiers": "models/1_tfidf_lr/classifiers.joblib",
+    "probs_val": "predictions/1_tfidf_lr/probs_val.npy",
+    "probs_test": "predictions/1_tfidf_lr/probs_test.npy"
+  },
+  "model_size_bytes": 8419901,
+  "model_size_mb": 8.03,
+  "train_time_seconds": 173.64,
+  "stage_timings_seconds": {
+    "1_load_and_verify": 1.26,
+    "2_word_tfidf": 21.57,
+    "3_char_tfidf": 94.61,
+    "4_lr_fits": 51.95,
+    "5_predict_and_save": 3.43
+  },
+  "versions": {
+    "python": "3.12.6",
+    "scikit_learn": "1.5.2",
+    "pandas": "2.2.3",
+    "numpy": "1.26.4",
+    "scipy": "1.14.1",
+    "joblib": "1.6.0"
+  }
+}

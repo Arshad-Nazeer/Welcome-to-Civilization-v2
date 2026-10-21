@@ -17,7 +17,7 @@ data/processed/*
 !data/processed/.gitkeep
 !data/processed/DATA_DICTIONARY.md
 !data/processed/qa_report.json
-data/splits/*
++data/splits/*
 !data/splits/.gitkeep
 !data/splits/*.json
 !data/splits/v1_exact_dup/
@@ -32,6 +32,22 @@ data/raw/kaggle_manual/
 reports/eda/figures/*.png
 reports/eda/tables/*.csv
 !reports/dedup/
+
+# Allow predictions, reports, visualizations to be tracked
+!predictions/**
+!reports/**
+!visualizations/**
+
+# Model weights (ignore large binaries, allow metadata and status)
+models/**/*.joblib
+models/**/*.bin
+models/**/*.pt
+models/**/*.pth
+models/**/*.onnx
+
+# Smoke test outputs
+*_smoke/
+*_smoke/**
 
 # Local backups from pipeline development
 backup_*/
