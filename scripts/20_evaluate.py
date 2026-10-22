@@ -187,6 +187,12 @@ MODEL_SPECIFIC_DISPATCH: dict[str, Any] = {
     "distilroberta": run_model_specific_distilroberta,
     "3_distilroberta": run_model_specific_distilroberta,
     "transformer": run_model_specific_distilroberta,
+    "detoxify": lambda **kwargs: {
+        "model_source": "unitaryai/detoxify",
+        "checkpoint": "original",
+        "backbone": "bert-base-uncased",
+        "description": "External pretrained BERT-base baseline from Unitary AI",
+    },
 }
 
 
@@ -212,32 +218,37 @@ def measure_inference_speed(
     headline_info = {}
 
     def _benchmark_runner(mod_obj, batch_size: int, dev_name: str) -> dict[str, Any]:
-        warmup_n = min(50, len(test_sample))
+        limit = 100 if (batch_size == 1 or (dev_name == "CPU" and torch.cuda.is_available())) else len(test_sample)
+        curr_sample = test_sample[:min(limit, len(test_sample))]
+        curr_n = len(curr_sample)
+        warmup_n = min(10, curr_n)
+        n_repeats = 3 if (dev_name == "CPU" and torch.cuda.is_available()) else 5
+
         if batch_size == 1:
-            for txt in test_sample[:warmup_n]:
+            for txt in curr_sample[:warmup_n]:
                 _ = mod_obj.predict_proba(txt)
         else:
-            _ = mod_obj.predict_proba(test_sample[:warmup_n])
+            _ = mod_obj.predict_proba(curr_sample[:warmup_n])
 
         repeats = []
-        for _ in range(5):
+        for _ in range(n_repeats):
             t0 = time.perf_counter()
             if batch_size == 1:
-                for txt in test_sample:
+                for txt in curr_sample:
                     _ = mod_obj.predict_proba(txt)
             else:
-                _ = mod_obj.predict_proba(test_sample)
+                _ = mod_obj.predict_proba(curr_sample)
             repeats.append(time.perf_counter() - t0)
 
         med_sec = float(np.median(repeats))
-        latency_ms = (med_sec / sample_size) * 1000.0
-        throughput = sample_size / med_sec if med_sec > 0 else 0.0
-        time_1000 = med_sec * (1000.0 / sample_size)
+        latency_ms = (med_sec / curr_n) * 1000.0
+        throughput = curr_n / med_sec if med_sec > 0 else 0.0
+        time_1000 = (med_sec / curr_n) * 1000.0
 
         return {
             "device": dev_name,
             "batch_size": batch_size,
-            "sample_size": sample_size,
+            "sample_size": curr_n,
             "median_seconds": round(med_sec, 4),
             "latency_ms_per_comment": round(latency_ms, 3),
             "throughput_comments_per_sec": round(throughput, 1),
@@ -272,10 +283,15 @@ def measure_inference_speed(
 
         # CPU benchmark
         mod_cpu = Moderator(model_id=model_id, smoke=smoke)
-        if hasattr(mod_cpu.adapter, "device"):
+        if hasattr(mod_cpu.adapter, "to"):
+            mod_cpu.adapter.to("cpu")
+        elif hasattr(mod_cpu.adapter, "device"):
             mod_cpu.adapter.device = torch.device("cpu")
             if hasattr(mod_cpu.adapter, "model") and mod_cpu.adapter.model is not None:
-                mod_cpu.adapter.model.to("cpu")
+                if hasattr(mod_cpu.adapter.model, "to"):
+                    mod_cpu.adapter.model.to("cpu")
+                elif hasattr(mod_cpu.adapter.model, "model") and hasattr(mod_cpu.adapter.model.model, "to"):
+                    mod_cpu.adapter.model.model.to("cpu")
 
         cpu_b1000 = _benchmark_runner(mod_cpu, 1000, "CPU")
         cpu_b1 = _benchmark_runner(mod_cpu, 1, "CPU")

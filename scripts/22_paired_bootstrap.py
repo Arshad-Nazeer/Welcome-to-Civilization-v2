@@ -51,9 +51,11 @@ def main() -> None:
 
     p_m3 = get_predictions_dir(m3_id, smoke=smoke)
     p_base = get_predictions_dir(base_id, smoke=smoke)
-    if not p_base.exists() or not (p_base / "probs_test.npy").exists():
-        p_base = get_predictions_dir("2_bigru_attn", smoke=smoke)
-        base_id = "2_bigru_attn"
+    if not (p_base / "probs_test.npy").exists():
+        if (get_predictions_dir(base_id, smoke=False) / "probs_test.npy").exists():
+            p_base = get_predictions_dir(base_id, smoke=False)
+        else:
+            raise FileNotFoundError(f"Missing predictions for baseline '{base_id}' at {p_base}")
 
     print("=" * 75)
     print(f"PAIRED BOOTSTRAP SIGNIFICANCE TESTING: {m3_id} vs {base_id}")

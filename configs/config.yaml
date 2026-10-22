@@ -47,6 +47,7 @@ model_ids:
   bigru_attn: 2_bigru_attn
   bigru_attn_v2: 2b_bigru_attn_v2
   distilroberta: 3_distilroberta
+  detoxify: detoxify
 
 # ---------- Tokenizer (for EDA step e) ----------
 tokenizer_name: roberta-base

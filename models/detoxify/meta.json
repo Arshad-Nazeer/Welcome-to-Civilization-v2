@@ -1,0 +1,47 @@
+{
+  "model_id": "detoxify",
+  "model_name": "Detoxify Original (BERT-base Pretrained Baseline)",
+  "adapter_type": "detoxify",
+  "role": "External Pretrained Baseline",
+  "labels": [
+    "toxic",
+    "severe_toxic",
+    "obscene",
+    "threat",
+    "insult",
+    "identity_hate"
+  ],
+  "source": "unitaryai/detoxify",
+  "repository_url": "https://github.com/unitaryai/detoxify",
+  "checkpoint": "original",
+  "backbone": "bert-base-uncased",
+  "num_classes": 6,
+  "parameters": {
+    "total": 110000000,
+    "trainable": 0,
+    "frozen": 110000000
+  },
+  "model_size_mb": 418.0,
+  "model_size_bytes": 438308864,
+  "label_mapping": {
+    "toxic": "toxicity",
+    "severe_toxic": "severe_toxicity",
+    "obscene": "obscene",
+    "threat": "threat",
+    "insult": "insult",
+    "identity_hate": "identity_attack"
+  },
+  "training_source": "2018 Kaggle Jigsaw Toxic Comment Classification Challenge",
+  "stage_timings_seconds": {
+    "model_load": 6.69,
+    "val_inference": 93.2,
+    "test_inference": 96.85,
+    "total": 196.74
+  },
+  "device_info": {
+    "device": "cuda",
+    "cpu_threads": 8,
+    "cuda_available": true
+  },
+  "created_at_utc": "2026-10-22T18:47:17.079373+00:00"
+}

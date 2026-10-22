@@ -1,0 +1,82 @@
+{
+  "method": "bootstrap_median_f1",
+  "n_bootstrap": 200,
+  "seed": 42,
+  "grid_range": [
+    0.01,
+    0.99,
+    0.01
+  ],
+  "thresholds": {
+    "toxic": 0.43,
+    "severe_toxic": 0.34,
+    "obscene": 0.63,
+    "threat": 0.66,
+    "insult": 0.63,
+    "identity_hate": 0.51
+  },
+  "val_optimal_single_run": {
+    "toxic": 0.43,
+    "severe_toxic": 0.34,
+    "obscene": 0.63,
+    "threat": 0.67,
+    "insult": 0.62,
+    "identity_hate": 0.51
+  },
+  "bootstrap_details": {
+    "toxic": {
+      "n_resamples_evaluated": 200,
+      "median_threshold": 0.43,
+      "single_run_threshold": 0.43,
+      "mean": 0.4487,
+      "std": 0.0535,
+      "q25": 0.41,
+      "q75": 0.4825
+    },
+    "severe_toxic": {
+      "n_resamples_evaluated": 200,
+      "median_threshold": 0.34,
+      "single_run_threshold": 0.34,
+      "mean": 0.3241,
+      "std": 0.0262,
+      "q25": 0.3,
+      "q75": 0.34
+    },
+    "obscene": {
+      "n_resamples_evaluated": 200,
+      "median_threshold": 0.63,
+      "single_run_threshold": 0.63,
+      "mean": 0.6502,
+      "std": 0.0548,
+      "q25": 0.62,
+      "q75": 0.7
+    },
+    "threat": {
+      "n_resamples_evaluated": 200,
+      "median_threshold": 0.66,
+      "single_run_threshold": 0.67,
+      "mean": 0.6507,
+      "std": 0.028,
+      "q25": 0.62,
+      "q75": 0.67
+    },
+    "insult": {
+      "n_resamples_evaluated": 200,
+      "median_threshold": 0.63,
+      "single_run_threshold": 0.62,
+      "mean": 0.6424,
+      "std": 0.0487,
+      "q25": 0.61,
+      "q75": 0.68
+    },
+    "identity_hate": {
+      "n_resamples_evaluated": 200,
+      "median_threshold": 0.51,
+      "single_run_threshold": 0.51,
+      "mean": 0.4999,
+      "std": 0.0552,
+      "q25": 0.5,
+      "q75": 0.53
+    }
+  }
+}

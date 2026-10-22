@@ -102,6 +102,13 @@
   - Paired bootstrap testing (`scripts/22_paired_bootstrap.py`): 1,000 resamples vs Model 2b. Statistically significant improvements in Macro F1 (+0.0213, p=0.0320*), Mean ROC-AUC (+0.0015, p=0.0150*), toxic PR-AUC (+0.0083, p=0.0120*), insult F1 (+0.0233, p=0.0140*), and insult PR-AUC (+0.0198, p=0.0080**).
   - Inference benchmark: GPU throughput: 1,997.9 comments/sec (0.501 ms/comment); CPU throughput: 52.3 comments/sec (19.11 ms/comment).
   - Integrity check: Pre- and post-run SHA-256 hashes of Models 1, 2, 2b `metrics.json` verified 100% byte-identical.
-  - Report generated: `reports/3_distilroberta/model_report.md`.
+- **External Baseline Integration & Audit (Detoxify Original / BERT-base)**:
+  - Imported and integrated Unitary AI's `detoxify` (`original` checkpoint, BERT-base uncased fine-tuned on the 2018 Jigsaw Toxic Comment Classification Challenge) as an authoritative external pretrained baseline.
+  - Correctly mapped Detoxify's 6 output scores to repo schema: `toxicity` -> `toxic`, `severe_toxicity` -> `severe_toxic`, `obscene` -> `obscene`, `threat` -> `threat`, `insult` -> `insult`, `identity_attack` -> `identity_hate`.
+  - Stored artifacts in dedicated `detoxify` folders: `models/detoxify/`, `predictions/detoxify/`, `reports/detoxify/`, `visualizations/detoxify/`.
+  - Implemented dynamic length-sorted batching (`scripts/17_run_detoxify.py` and `DetoxifyAdapter` in `src/wtc/inference.py`), achieving 170.3 val comments/sec and 163.6 test comments/sec on RTX 3060 Laptop GPU.
+  - Evaluation (`scripts/20_evaluate.py --model-id detoxify`): Test Macro F1 = 0.8006 [95% CI: 0.7789, 0.8192], Micro F1 = 0.8749 [95% CI: 0.8666, 0.8828], Macro PR-AUC = 0.8316 [95% CI: 0.8042, 0.8595], Mean ROC-AUC = 0.9968 [95% CI: 0.9965, 0.9972].
+  - Generated full suite of 8 publication figures (200 DPI), 6 CSV tables, `model_report.md`, and paired bootstrap tests (`reports/3_distilroberta/tables/paired_bootstrap_vs_detoxify.csv` and `reports/detoxify/tables/paired_bootstrap_vs_1_tfidf_lr.csv`).
+  - Updated cross-model comparison tables (`reports/model_comparison.md`, `reports/model_comparison.csv`, `reports/model_comparison_per_label.csv`) across all 5 models.
 
 

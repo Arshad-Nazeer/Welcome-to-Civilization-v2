@@ -304,6 +304,71 @@ class TransformerAdapter(BaseModelAdapter):
         return probs_ordered
 
 
+class DetoxifyAdapter(BaseModelAdapter):
+    """Adapter for Detoxify original (BERT-base pretrained baseline)."""
+
+    def __init__(self) -> None:
+        self.model = None
+        self.device = "cpu"
+        self.labels = LABELS
+        self.detox_map = {
+            "toxic": "toxicity",
+            "severe_toxic": "severe_toxicity",
+            "obscene": "obscene",
+            "threat": "threat",
+            "insult": "insult",
+            "identity_hate": "identity_attack",
+        }
+
+    def load(self, model_dir: Path, meta: dict[str, Any]) -> None:
+        import torch
+        from detoxify import Detoxify
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.model = Detoxify("original", device=self.device)
+        self.labels = meta.get("labels", LABELS)
+
+    def to(self, device: Any) -> None:
+        import torch
+        self.device = str(device)
+        if self.model is not None and hasattr(self.model, "model"):
+            self.model.device = self.device
+            self.model.model.to(torch.device(self.device))
+
+    def predict_proba(self, texts_clean: list[str]) -> np.ndarray:
+        n_samples = len(texts_clean)
+        if n_samples == 0:
+            return np.empty((0, len(self.labels)), dtype=np.float32)
+
+        if n_samples == 1:
+            d = self.model.predict(texts_clean[0])
+            row = [float(d[self.detox_map[lbl]]) for lbl in self.labels]
+            return np.array([row], dtype=np.float32)
+
+        # Dynamic length sorting for fast, low-padding batch inference
+        lengths = np.array([len(t) for t in texts_clean], dtype=np.int64)
+        sorted_indices = np.argsort(lengths)
+        batch_size = 64 if str(self.device).startswith("cuda") else 32
+
+        probs_ordered = np.zeros((n_samples, len(self.labels)), dtype=np.float32)
+        for i in range(0, n_samples, batch_size):
+            b_idx = sorted_indices[i : i + batch_size]
+            b_texts = [texts_clean[idx] for idx in b_idx]
+            preds_dict = self.model.predict(b_texts)
+
+            chunk_cols = []
+            for lbl in self.labels:
+                detox_key = self.detox_map[lbl]
+                vals = preds_dict[detox_key]
+                if isinstance(vals, (int, float)):
+                    vals = [vals]
+                chunk_cols.append(np.array(vals, dtype=np.float32))
+
+            chunk_arr = np.column_stack(chunk_cols)
+            probs_ordered[b_idx] = chunk_arr
+
+        return probs_ordered
+
+
 # Registry of model adapters
 ADAPTER_REGISTRY: dict[str, type[BaseModelAdapter]] = {
     "1_tfidf_lr": TfidfLrAdapter,
@@ -316,6 +381,7 @@ ADAPTER_REGISTRY: dict[str, type[BaseModelAdapter]] = {
     "distilroberta": TransformerAdapter,
     "distilroberta_base": TransformerAdapter,
     "transformer": TransformerAdapter,
+    "detoxify": DetoxifyAdapter,
 }
 
 
