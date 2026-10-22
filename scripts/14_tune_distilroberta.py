@@ -88,9 +88,11 @@ class FastCollator:
 
 
 def parse_args() -> argparse.Namespace:
+    models_cfg = load_models_config().get("3_distilroberta", {})
+    cfg_trials = models_cfg.get("tune", {}).get("n_trials", 5)
     parser = argparse.ArgumentParser(description="Tune Model 3 DistilRoBERTa hyperparameters")
-    parser.add_argument("--n-trials", type=int, default=12, help="Total tuning trials (default 12)")
-    parser.add_argument("--quick", action="store_true", help="Quick mode (8 trials)")
+    parser.add_argument("--n-trials", type=int, default=cfg_trials, help=f"Total tuning trials (default {cfg_trials} from config)")
+    parser.add_argument("--quick", action="store_true", help="Quick mode (4 trials)")
     parser.add_argument("--seed", type=int, default=42, help="Seed for sampling and tuning")
     return parser.parse_args()
 
@@ -98,7 +100,9 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     seed = args.seed
-    n_trials = 8 if args.quick else args.n_trials
+    models_cfg = load_models_config().get("3_distilroberta", {})
+    cfg_trials = models_cfg.get("tune", {}).get("n_trials", 5)
+    n_trials = 4 if args.quick else (args.n_trials or cfg_trials)
     set_seed(seed)
 
     if not torch.cuda.is_available():

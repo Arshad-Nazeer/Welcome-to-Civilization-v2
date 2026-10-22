@@ -3,7 +3,7 @@
 scripts/16_run_model3_pipeline.py
 -----------------------------------
 End-to-End Orchestrator for Model 3:
-1. Multi-seed training (Seeds 42, 43, 44) using best tuned parameters.
+1. Single-seed training (Seed 42) using best tuned parameters (per reduced scope).
 2. Ensemble and Blend Evaluation (scripts/15_ensemble_and_blend.py).
 3. Comprehensive Evaluation (scripts/20_evaluate.py --model-id 3_distilroberta).
 4. Publication-Quality Report Generation (scripts/21_build_model_report.py --model-id 3_distilroberta).
@@ -37,7 +37,7 @@ def run_cmd(cmd: list[str], desc: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run Model 3 End-to-End Pipeline")
     parser.add_argument("--smoke", action="store_true", help="Run in smoke test mode")
-    parser.add_argument("--single-seed", action="store_true", help="Run only seed 42")
+    parser.add_argument("--seeds", type=int, nargs="+", default=None, help="Seeds to train (default from models.yaml)")
     args = parser.parse_args()
 
     python_exe = sys.executable
@@ -46,7 +46,12 @@ def main() -> None:
     params_file = PROJECT_ROOT / "runs/distilroberta_best_params.json"
     params_flag = ["--params", str(params_file)] if params_file.exists() else []
 
-    seeds = [42] if args.single_seed else [42, 43, 44]
+    if args.seeds is not None:
+        seeds = args.seeds
+    else:
+        sys.path.insert(0, str(PROJECT_ROOT / "src"))
+        from wtc.config import load_models_config
+        seeds = load_models_config().get("3_distilroberta", {}).get("final", {}).get("seeds", [42])
 
     total_start = time.perf_counter()
 

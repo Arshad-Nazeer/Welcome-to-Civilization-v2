@@ -1,10 +1,10 @@
 # Model Evaluation Report: 3_distilroberta
 
 **Architecture**: DistilRoBERTa-base fine-tuned, weighted BCE, optional focal/oversampling  
-**Generated UTC**: 2026-10-22 15:05:38 UTC  
+**Generated UTC**: 2026-10-22 17:18:05 UTC  
 **Mode**: Full Production Run  
 **Seed**: 42  
-**Python**: 3.12.6 | **Framework**: PyTorch / Scikit-Learn | **Platform**: CPU / CUDA
+**Python**: 3.12.6 | **Framework**: PyTorch 2.6.0+cu124 / Transformers 4.45.2 | **Platform**: NVIDIA GeForce RTX 3060 Laptop GPU
 
 ---
 
@@ -32,29 +32,35 @@ Data integrity was verified before feature extraction against `data/splits/split
 
 ## 3. Model Configuration & Imbalance Recipe
 
-Because severe class imbalance characterizes toxicity labels (ranging from 9.56% down to 0.298% positive rate on train), per-label class weighting is applied directly to the loss function:
+Because severe class imbalance characterizes toxicity labels (ranging from 9.56% down to 0.298% positive rate on train), Model 3 applies tuned damped positive class weighting directly to the loss function with exponent $p=0.577$ and maximum weight cap $w_{max}=14.0$:
 
-$$w_l = \sqrt{\frac{N_{neg}}{N_{pos}}}$$
+$$w_l = \min\left(\left(\frac{N_{neg}}{N_{pos}}\right)^{0.577}, 14.0\right)$$
 
-Negative samples receive a fixed weight of 1.0, while positive samples are up-weighted by the square root of the imbalance ratio. This provides balanced gradient flow across rare positive categories without resampling or data duplication.
+This is combined with focal factor $\gamma=1.0$ to down-weight easy negatives and concentrate gradient flow on hard ambiguous examples, as well as log-odds prior bias initialization on the classification head to eliminate early calibration distortion.
 
 | Label | Train Positives | Train Negatives | Positive Rate (%) | Imbalance Ratio | Weight ($w_1$) |
 |---|---|---|---|---|---|
-| `toxic` | 12,222 | 115,639 | 9.56% | 9.46:1 | **3.08** |
-| `severe_toxic` | 1,269 | 126,592 | 0.99% | 99.76:1 | **9.99** |
-| `obscene` | 6,739 | 121,122 | 5.27% | 17.97:1 | **4.24** |
-| `threat` | 381 | 127,480 | 0.30% | 334.59:1 | **18.29** |
-| `insult` | 6,290 | 121,571 | 4.92% | 19.33:1 | **4.40** |
-| `identity_hate` | 1,122 | 126,739 | 0.88% | 112.96:1 | **10.63** |
+| `toxic` | 12,222 | 115,639 | 9.56% | 9.46:1 | **3.65** |
+| `severe_toxic` | 1,269 | 126,592 | 0.99% | 99.76:1 | **14.00** |
+| `obscene` | 6,739 | 121,122 | 5.27% | 17.97:1 | **5.29** |
+| `threat` | 381 | 127,480 | 0.30% | 334.59:1 | **14.00** |
+| `insult` | 6,290 | 121,571 | 4.92% | 19.33:1 | **5.52** |
+| `identity_hate` | 1,122 | 126,739 | 0.88% | 112.96:1 | **14.00** |
 
 ## 4. Training Summary
 
-- **Total Training Time**: 0.00 seconds (0.00 minutes)
-- **Model Size on Disk**: 315.54 MB (0 bytes)
+- **Total Training Time**: 1511.60 seconds (25.19 minutes)
+- **Model Size on Disk**: 315.54 MB (330,867,112 bytes)
 
 ### Stage Timings
 | Stage | Description | Duration (s) | % of Total |
 |---|---|---|---|
+| `1_load_verify` | [1/6] Load & Verify Data | 1.08s | 0.1% |
+| `2_tokenize` | [2/6] Byte-Level BPE Tokenization | 7.11s | 0.5% |
+| `3_setup_model` | [3/6] Transformer & LLRD Optimizer Setup | 3.12s | 0.2% |
+| `4_training` | [4/6] 4-Epoch Model Fine-Tuning | 1485.91s | 98.3% |
+| `5_predict` | [5/6] Sigmoid Probabilities & Hierarchy Ablation | 13.50s | 0.9% |
+| `6_save_bundle` | [6/6] Bundle Export & Moderator Parity | 0.88s | 0.1% |
 
 ## 5. Inference & Prediction Summary
 
@@ -182,6 +188,8 @@ By definition, severe toxicity is a semantic subset of toxicity. The table below
 
 ### Optuna Hyperparameter Tuning Trials (5 Trials Total)
 
+> **Scope Reduction Note**: The original preliminary specification allocated up to 8–12 tuning trials. During execution, the tuning scope was formally reduced and capped at 5 trials total (Trials 0–4) once Trial 4 established a superior objective (0.5996) that outperformed Trial 0 (0.5935) by +0.0061 (exceeding the +0.005 threshold). No subsequent trials were executed, and `n_trials: 5` was pinned in `configs/models.yaml`.
+
 | Trial | State | Objective Value | LR | Pos Weight Power | Pos Weight Cap | Focal Gamma | Oversample Factor | Warmup Ratio | Weight Decay | LLRD | Head Dropout |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 0 | COMPLETE | **0.5935** | 3.02e-05 | 0.585 | 8.0 | 2 | 2 | 0.147 | 0.01 | 0.9 | 0.2 |
@@ -217,6 +225,8 @@ By definition, severe toxicity is a semantic subset of toxicity. The table below
 
 ### Single Seed, Ensemble & Model 1 Blend Evaluation
 
+> **Scope Reduction Note**: The original preliminary specification planned a 3-seed ensemble across seeds [42, 43, 44]. During execution, the scope was consolidated to train strictly a single model with Seed 42, skipping seeds 43/44 and the seed-ensemble variant (`final.seeds: [42]`, `ensemble: none`). Seed 42 was designated as the definitive backend serving choice.
+
 - **Serving Choice**: `seed_42`
 - **TF-IDF Blend Weight**: 0.55 DistilRoBERTa + 0.45 Model 1 (TF-IDF)
 - **Validation Macro PR-AUC Gain**: **+0.0173**
@@ -237,9 +247,10 @@ With a Macro F1 of **0.6934** and Mean ROC-AUC of **0.9909**, Model 3 (`3_distil
 ## 11. Limitations
 
 The following limitations apply strictly to this model evaluation:
-1. **Single run**: Results represent a single deterministic seed run (`seed=42`) without multi-seed averaging.
-2. **Fixed untuned hyperparameters**: Model hyperparameters were evaluated with fixed settings without extensive grid search.
+1. **Single seed serving (scope reduction)**: Per project scope adjustment, training was consolidated to a single deterministic seed (Seed 42) rather than a 3-seed ensemble ([42, 43, 44]).
+2. **Tuning budget (scope reduction)**: The Optuna hyperparameter study was capped at 5 completed trials (Trials 0–4) rather than the preliminary 8/12-trial plan once Trial 4 achieved superior validation performance.
 3. **Validation reused**: The validation split was utilized for early stopping, checkpoint selection and threshold tuning.
 4. **Noisy threat estimates**: There are only 47 validation and 50 test positive instances for `threat`, causing wider confidence intervals and higher sampling variance on threat metrics.
 5. **Near-duplicate threshold**: Duplicate grouping used MinHash LSH Jaccard similarity threshold of 0.8 on character 5-grams.
+6. **Sequence truncation**: Input text truncated at head 128 tokens, affecting comments exceeding this length.
 

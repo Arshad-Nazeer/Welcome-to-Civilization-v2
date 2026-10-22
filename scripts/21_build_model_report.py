@@ -248,6 +248,8 @@ def get_model_specific_section(adapter_type: str, model_id: str, meta: dict, met
         if tune_csv.exists():
             lines.append("### Optuna Hyperparameter Tuning Trials (5 Trials Total)")
             lines.append("")
+            lines.append("> **Scope Reduction Note**: The original preliminary specification allocated up to 8–12 tuning trials. During execution, the tuning scope was formally reduced and capped at 5 trials total (Trials 0–4) once Trial 4 established a superior objective (0.5996) that outperformed Trial 0 (0.5935) by +0.0061 (exceeding the +0.005 threshold). No subsequent trials were executed, and `n_trials: 5` was pinned in `configs/models.yaml`.")
+            lines.append("")
             df_tune = pd.read_csv(tune_csv)
             lines.append("| Trial | State | Objective Value | LR | Pos Weight Power | Pos Weight Cap | Focal Gamma | Oversample Factor | Warmup Ratio | Weight Decay | LLRD | Head Dropout |")
             lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|")
@@ -290,6 +292,8 @@ def get_model_specific_section(adapter_type: str, model_id: str, meta: dict, met
             with open(blend_json, "r", encoding="utf-8") as fh:
                 b_data = json.load(fh)
             lines.append("### Single Seed, Ensemble & Model 1 Blend Evaluation")
+            lines.append("")
+            lines.append("> **Scope Reduction Note**: The original preliminary specification planned a 3-seed ensemble across seeds [42, 43, 44]. During execution, the scope was consolidated to train strictly a single model with Seed 42, skipping seeds 43/44 and the seed-ensemble variant (`final.seeds: [42]`, `ensemble: none`). Seed 42 was designated as the definitive backend serving choice.")
             lines.append("")
             lines.append(f"- **Serving Choice**: `{b_data.get('serving_choice', 'seed_42')}`")
             b_chk = b_data.get("blend_check", {})
@@ -395,11 +399,26 @@ def main() -> None:
     # 3. Model Config & Imbalance Recipe
     lines.append("## 3. Model Configuration & Imbalance Recipe")
     lines.append("")
-    lines.append("Because severe class imbalance characterizes toxicity labels (ranging from 9.56% down to 0.298% positive rate on train), per-label class weighting is applied directly to the loss function:")
-    lines.append("")
-    lines.append("$$w_l = \\sqrt{\\frac{N_{neg}}{N_{pos}}}$$")
-    lines.append("")
-    lines.append("Negative samples receive a fixed weight of 1.0, while positive samples are up-weighted by the square root of the imbalance ratio. This provides balanced gradient flow across rare positive categories without resampling or data duplication.")
+    if "distilroberta" in adapter_type or "roberta" in adapter_type or "transformer" in adapter_type:
+        p_pow = meta.get("tuning_summary", {}).get("best_params", {}).get("pos_weight_power", 0.577)
+        p_cap = meta.get("tuning_summary", {}).get("best_params", {}).get("pos_weight_cap", 14.0)
+        lines.append(
+            f"Because severe class imbalance characterizes toxicity labels (ranging from 9.56% down to 0.298% positive rate on train), "
+            f"Model 3 applies tuned damped positive class weighting directly to the loss function with exponent $p={p_pow:.3f}$ and maximum weight cap $w_{{max}}={p_cap:.1f}$:"
+        )
+        lines.append("")
+        lines.append(f"$$w_l = \\min\\left(\\left(\\frac{{N_{{neg}}}}{{N_{{pos}}}}\\right)^{{{p_pow:.3f}}}, {p_cap:.1f}\\right)$$")
+        lines.append("")
+        lines.append(
+            "This is combined with focal factor $\\gamma=1.0$ to down-weight easy negatives and concentrate gradient flow on hard ambiguous examples, "
+            "as well as log-odds prior bias initialization on the classification head to eliminate early calibration distortion."
+        )
+    else:
+        lines.append("Because severe class imbalance characterizes toxicity labels (ranging from 9.56% down to 0.298% positive rate on train), per-label class weighting is applied directly to the loss function:")
+        lines.append("")
+        lines.append("$$w_l = \\sqrt{\\frac{N_{neg}}{N_{pos}}}$$")
+        lines.append("")
+        lines.append("Negative samples receive a fixed weight of 1.0, while positive samples are up-weighted by the square root of the imbalance ratio. This provides balanced gradient flow across rare positive categories without resampling or data duplication.")
     lines.append("")
     lines.append("| Label | Train Positives | Train Negatives | Positive Rate (%) | Imbalance Ratio | Weight ($w_1$) |")
     lines.append("|---|---|---|---|---|---|")
@@ -417,7 +436,7 @@ def main() -> None:
     # 4. Training Summary
     lines.append("## 4. Training Summary")
     lines.append("")
-    train_time = meta.get("train_time_seconds", 0.0)
+    train_time = meta.get("train_time_seconds", meta.get("total_train_time_sec", 0.0))
     lines.append(f"- **Total Training Time**: {train_time:.2f} seconds ({train_time/60.0:.2f} minutes)")
     lines.append(f"- **Model Size on Disk**: {meta.get('model_size_mb', 0.0)} MB ({meta.get('model_size_bytes', 0):,} bytes)")
     if feat_counts.get("total_features"):
@@ -438,6 +457,11 @@ def main() -> None:
         "4_build_model_gpu": "[4/6] Initialize Model & Allocate GPU",
         "5_training_epochs": "[5/6] Model Training & Validation",
         "6_predict_and_save": "[6/6] Checkpoint Load & Predict",
+        "2_tokenize": "[2/6] Byte-Level BPE Tokenization",
+        "3_setup_model": "[3/6] Transformer & LLRD Optimizer Setup",
+        "4_training": "[4/6] 4-Epoch Model Fine-Tuning",
+        "5_predict": "[5/6] Sigmoid Probabilities & Hierarchy Ablation",
+        "6_save_bundle": "[6/6] Bundle Export & Moderator Parity",
     }
     for st_key, dur in stage_timings.items():
         pct = (dur / train_time) * 100.0 if train_time > 0 else 0
@@ -667,9 +691,15 @@ def main() -> None:
     lines.append("The following limitations apply strictly to this model evaluation:")
     if "bigru" in adapter_type:
         lines.append("1. **Single run and cuDNN non-determinism**: Results represent a single run (`seed=42`); GPU cuDNN GRU backward passes are inherently non-bit-deterministic.")
+    elif "distilroberta" in adapter_type or "roberta" in adapter_type or "transformer" in adapter_type:
+        lines.append("1. **Single seed serving (scope reduction)**: Per project scope adjustment, training was consolidated to a single deterministic seed (Seed 42) rather than a 3-seed ensemble ([42, 43, 44]).")
     else:
         lines.append("1. **Single run**: Results represent a single deterministic seed run (`seed=42`) without multi-seed averaging.")
-    lines.append("2. **Fixed untuned hyperparameters**: Model hyperparameters were evaluated with fixed settings without extensive grid search.")
+    
+    if "distilroberta" in adapter_type or "roberta" in adapter_type or "transformer" in adapter_type:
+        lines.append("2. **Tuning budget (scope reduction)**: The Optuna hyperparameter study was capped at 5 completed trials (Trials 0–4) rather than the preliminary 8/12-trial plan once Trial 4 achieved superior validation performance.")
+    else:
+        lines.append("2. **Fixed untuned hyperparameters**: Model hyperparameters were evaluated with fixed settings without extensive grid search.")
     lines.append("3. **Validation reused**: The validation split was utilized for early stopping, checkpoint selection and threshold tuning.")
     lines.append(f"4. **Noisy threat estimates**: There are only {n_val_threat} validation and {n_test_threat} test positive instances for `threat`, causing wider confidence intervals and higher sampling variance on threat metrics.")
     lines.append("5. **Near-duplicate threshold**: Duplicate grouping used MinHash LSH Jaccard similarity threshold of 0.8 on character 5-grams.")
@@ -679,6 +709,8 @@ def main() -> None:
         lines.append("6. **Lowercasing signal loss**: Lowercasing discards the uppercase shout/casing signals identified during EDA (the BiGRU is the only model of the three that discards it).")
         lines.append("7. **Frozen embeddings**: fastText 300-d embeddings were frozen without domain-specific continuous fine-tuning.")
         lines.append(f"8. **Sequence truncation**: Input text truncated at 256 tokens, with approximately {trunc_all:.2f}% of comments affected.")
+    elif "distilroberta" in adapter_type or "roberta" in adapter_type or "transformer" in adapter_type:
+        lines.append("6. **Sequence truncation**: Input text truncated at head 128 tokens, affecting comments exceeding this length.")
     lines.append("")
 
     # Save to file

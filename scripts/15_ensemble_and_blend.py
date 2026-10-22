@@ -54,12 +54,15 @@ def main() -> None:
     Y_val = df_val[LABELS].values.astype(np.float32)
     Y_test = df_test[LABELS].values.astype(np.float32)
 
-    seeds = [42, 43, 44]
+    from wtc.config import load_models_config
+    models_cfg = load_models_config().get("3_distilroberta", {})
+    seeds = models_cfg.get("final", {}).get("seeds", [42])
     val_probs_by_seed: dict[int, np.ndarray] = {}
     test_probs_by_seed: dict[int, np.ndarray] = {}
 
     print("=" * 75)
-    print("EVALUATING MULTI-SEED DISTILROBERTA RUNS, ENSEMBLE & BLEND")
+    print("EVALUATING DISTILROBERTA RUNS, ENSEMBLE & BLEND")
+    print(f"Configured Seeds: {seeds}")
     print("=" * 75)
 
     # 1. Load seed predictions
@@ -67,13 +70,17 @@ def main() -> None:
         f_val = preds_dir / f"probs_val_seed{s}.npy"
         f_test = preds_dir / f"probs_test_seed{s}.npy"
         if not f_val.exists() or not f_test.exists():
+            # If s == 42, try loading default probs_val.npy
+            if s == 42 and (preds_dir / "probs_val.npy").exists() and (preds_dir / "probs_test.npy").exists():
+                val_probs_by_seed[42] = np.load(preds_dir / "probs_val.npy")
+                test_probs_by_seed[42] = np.load(preds_dir / "probs_test.npy")
+                continue
             print(f"Warning: Seed {s} prediction files not found in {preds_dir}. Skipping seed {s}.")
             continue
         val_probs_by_seed[s] = np.load(f_val)
         test_probs_by_seed[s] = np.load(f_test)
 
     if not val_probs_by_seed:
-        # Fallback to main probs_val.npy if seed files not explicitly separated
         f_val_main = preds_dir / "probs_val.npy"
         f_test_main = preds_dir / "probs_test.npy"
         if f_val_main.exists() and f_test_main.exists():

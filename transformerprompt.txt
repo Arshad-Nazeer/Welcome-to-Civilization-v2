@@ -1,0 +1,149 @@
+ROLE
+You are a senior ML engineer. Build, RUN and evaluate MODEL 3 (DistilRoBERTa-base) for "Welcome to Civilization" (multi-label toxicity: toxic, severe_toxic, obscene, threat, insult, identity_hate). This is the FINAL model; a backend will be built on it next. Data foundation and Models 1, 2, 2b are DONE: do NOT modify anything under data/, do NOT rerun scripts 01-04, do NOT retrain Models 1/2/2b. Reuse existing code (wtc.data.load_split, wtc.config LABELS/CFG, utils, logging, shared evaluation/plotting/inference/report code). Do NOT duplicate shared code: plug into the existing adapter_type dispatch (see how 20_evaluate.py, inference.py, 21_build_model_report.py and model_specific.py handle tfidf_lr and bigru_attn) and add a transformer adapter the same way. Minimal changes to existing files.
+
+QUOTA RULES
+ONE continuous pass, no questions, no confirmations. Read only what you need: src/wtc/{config,data,utils,inference,model_specific}.py, scripts/11_train_bigru.py (template for stages/status/logging/resume), scripts/20_evaluate.py and 21_build_model_report.py (dispatch only), configs/*.yaml, requirements*.txt, .gitignore, PROGRESS.md. Write files in a few large writes. Minimal narration. Do not commit or push. No absolute paths. Seed 42. Do NOT build the --compare mode.
+
+ENVIRONMENT (Windows, PowerShell, existing .venv, Ryzen 7 5800H, RTX 3060 6GB)
+- torch 2.6.0+cu124 is already installed (requirements-gpu.txt); transformers==4.45.2 is pinned. Print torch/CUDA/GPU/VRAM. If torch.cuda.is_available() is False, ABORT (no silent CPU fallback). No torch.compile. num_workers=0. UTF-8 console, no emoji.
+- Download distilroberta-base once from the HF hub and cache it.
+- Add optuna to requirements.txt. Add *.safetensors and checkpoint dirs to .gitignore.
+
+DATA (verify at runtime; abort on mismatch)
+load_split("train"|"val"|"test") with id, text_clean and 6 label columns. Expected sizes: train 127,861 / val 15,869 / test 15,841. Verify against data/splits/split_manifest.json and the processed parquet SHA-256. Input column: text_clean.
+
+MODEL 3: DistilRoBERTa-base
+Tokens: RoBERTa byte-level BPE (vocab 50,265), case preserved. max_len 128, head truncation, dynamic padding. Eval batches are length-sorted. Train batches are length-bucketed with shuffled bucket order, so batches differ each epoch.
+Embedding: learned token embeddings (768-d) plus learned position embeddings, fine-tuned.
+Encoder: 6 transformer layers, 12 heads, hidden 768, FFN 3072, about 82M parameters.
+Head: HF classification head on the <s> token (768->768, tanh, dropout 0.1, then 768->6). The built-in loss is ignored (labels are never passed to the model).
+
+Training:
+- AdamW, weight decay 0.01 (not applied to bias and LayerNorm), 10% warmup then linear decay.
+- Batch 32, fp16 autocast with gradient scaling, gradient clip 1.0, loss computed in float32, deterministic, seed 42.
+- Layer-wise LR decay 0.9 (head LR 3e-5, lower layers decayed); decay factor is tuned.
+- 4 epochs. Evaluate on val every epoch; keep the best epoch by val macro PR-AUC (not loss). Resumable checkpoints.
+
+Imbalance (extreme): threat is 0.30% positive (~380 train examples); severe_toxic and identity_hate ~1%. Four layers, none touching test:
+1. Damped weighted BCE: pos_weight = min((neg/pos)^p, cap), start p=0.45, cap 14.
+2. Log-odds bias init on the final 768->6 layer.
+3. Optional focal term (1-p_t)^gamma, gamma=0 default (off), 1-2 tuned. If gamma>0, lower pos_weight power (~0.3) to avoid double-counting.
+4. Optional mild oversampling of comments carrying threat/severe_toxic/identity_hate: sampler weight 1+(k-1)*[has rare label], k in {1,2,4}, k=1 off. If k>1, reduce pos_weight so the same positives are not counted twice.
+
+Postprocessing:
+- Per-label thresholds tuned on val with the existing bootstrap-median routine.
+- Hierarchy fix p_toxic = max(p_toxic, p_severe_toxic): save probabilities and metrics both with and without it, report as an ablation, and set the serving default in meta.json to whichever scores higher on VAL.
+
+Hyperparameter tuning (scripts/14_tune_distilroberta.py):
+- Optuna TPE + median pruner, 12 trials (fall back to 8 if I pass --quick), SQLite study under runs/, resumable.
+- Each trial: 40% multilabel-stratified train subsample, 2 epochs (~7 min), objective = mean(val macro PR-AUC, mean val PR-AUC of threat/severe_toxic/identity_hate).
+- Search space: lr 2e-5..6e-5 (log); pos_weight power 0.3..0.6; pos_weight cap {8,14,20}; focal gamma {0,1,2}; oversample k {1,2,4}; warmup 6%..15%; weight decay {0.01,0.1}; LLRD {1.0,0.9}; head dropout {0.1,0.2}.
+- Fixed: batch 32, max_len 128. Write best params to runs/ and let the training script read them via --params. If tuning is skipped, use the config defaults.
+
+Seeds / ensemble:
+- Train the best config with seeds 42, 43, 44. Save each seed's val/test probabilities, plus the mean-probability ensemble as 3b_distilroberta_ens.
+- Report whether the ensemble beats the best single seed on val macro PR-AUC. Mark the ensemble as the serving choice only if it wins by >= 0.01; otherwise mark the best single seed (default seed 42) as the serving choice.
+
+Blend check:
+- Evaluate a probability blend of the serving choice with Model 1 (TF-IDF), blend weight chosen on val only. Save it as an optional candidate; recommend it only if val macro PR-AUC improves by >= 0.005.
+
+Hardware / time: RTX 3060 6GB, est. peak VRAM 3-4 GB at batch 32/len 128; est. 6-10 min per full epoch (~25-40 min per 4-epoch run).
+
+CONFIG
+Add the block below to configs/models.yaml (model_id 3_distilroberta already exists in config.yaml). All hyperparameters come from config; nothing hardcoded.
+
+distilroberta:
+  model_id: 3_distilroberta
+  description: "DistilRoBERTa-base fine-tuned, weighted BCE, optional focal/oversampling"
+  input_col: text_clean
+  seed: 42
+  pretrained: distilroberta-base
+  tokenizer: {max_len: 128, truncation: head, lowercase: false, dynamic_padding: true}
+  head: {num_classes: 6, dropout: 0.1, bias_init: log_odds}
+  training:
+    optimizer: adamw
+    lr: 3.0e-5
+    weight_decay: 0.01
+    no_decay: [bias, LayerNorm.weight]
+    layerwise_lr_decay: 0.9
+    warmup_ratio: 0.10
+    scheduler: linear
+    batch_size: 32
+    eval_batch_size: 128
+    grad_clip: 1.0
+    epochs: 4
+    mixed_precision: fp16
+    num_workers: 0
+    monitor_metric: val_macro_pr_auc
+    save_best: true
+    resumable: true
+  imbalance:
+    method: damped_pos_weight
+    power: 0.45
+    max_weight: 14.0
+    focal_gamma: 0.0
+    oversample: {enabled: false, labels: [threat, severe_toxic, identity_hate], factor: 1}
+  postprocess: {thresholds: val_bootstrap_median, enforce_hierarchy: ablation}
+  tune:
+    enabled: true
+    sampler: tpe
+    pruner: median
+    n_trials: 12
+    train_fraction: 0.4
+    epochs: 2
+    objective: mean_of_macro_and_rare_pr_auc
+    rare_labels: [threat, severe_toxic, identity_hate]
+    space:
+      lr: {type: loguniform, low: 2.0e-5, high: 6.0e-5}
+      pos_weight_power: {type: float, low: 0.3, high: 0.6}
+      pos_weight_cap: {type: categorical, choices: [8, 14, 20]}
+      focal_gamma: {type: categorical, choices: [0, 1, 2]}
+      oversample_factor: {type: categorical, choices: [1, 2, 4]}
+      warmup_ratio: {type: float, low: 0.06, high: 0.15}
+      weight_decay: {type: categorical, choices: [0.01, 0.1]}
+      layerwise_lr_decay: {type: categorical, choices: [1.0, 0.9]}
+      head_dropout: {type: categorical, choices: [0.1, 0.2]}
+  final: {seeds: [42, 43, 44], ensemble: mean_prob, ensemble_min_gain: 0.01}
+
+DELIVERABLES
+1. scripts/13_train_distilroberta.py: stages with status.json (like script 11), logging to logs/3_distilroberta/, live progress every N steps (loss, lr, samples/s, VRAM, ETA), resumable, best checkpoint by val macro PR-AUC, --params and --seed flags.
+2. scripts/14_tune_distilroberta.py as specified above. Add optuna to requirements.txt.
+3. TransformerAdapter in src/wtc/inference.py, registered like the other adapters, and a model-specific section in model_specific.py (training curves, GPU and CPU inference speed).
+4. BACKEND-READY BUNDLE in models/3_distilroberta/ (serving choice): weights (safetensors), tokenizer, thresholds.json, meta.json (label order, max_len, hierarchy-fix flag, preprocessing/clean_text version, serving choice, library versions, SHA-256 of weights). Then add a parity check: Moderator("3_distilroberta").predict_proba on the saved test texts must reproduce the saved test probabilities within 1e-4; abort and report if not.
+5. Save sigmoid probabilities (val/test) and labels, plus weights, under models/, predictions/, reports/, visualizations/ as for the other models.
+6. Run order: smoke test (small subset, 1 epoch) -> tuning -> final training with best params for seeds 42, 43, 44 -> ensemble and blend checks -> evaluation via 20_evaluate.py -> report via 21_build_model_report.py.
+7. Update PROGRESS.md with a Stage 10 entry, also add the missing 2b entry, and correct the split sizes to 127,861 / 15,869 / 15,841.
+8. The test set is evaluated ONCE, at the end, through 20_evaluate.py. Never use test for tuning, checkpoint selection, thresholds, blend weights or serving choice.
+
+FINAL REPORT
+Headline test metrics with 95% CIs; per-label table vs Models 1/2/2b (paired bootstrap for Model 3 vs best earlier model); effect of imbalance options from the tuning study; hierarchy-fix ablation; single vs ensemble vs blend and the serving choice; training time, peak VRAM, throughput; any deviations from this spec.
+
+note: make sure the resultant evalutaions, tables, metrics, report, saved models, prediciton data resemble that of earlier models to facilitate smooth comparison
+note:- post training saves everything i need to build a backend later
+note:- display training progress once it start by epochs in the powershell terminal
+
+update:
+UPDATE (overrides earlier tuning/seed/ensemble settings)
+
+TUNING
+- Trials 0-3 are complete (best so far: trial 0, objective 0.5935; others 0.5746-0.5821). Trial 4 is currently running: let it FINISH, do not kill it.
+- After trial 4 completes, STOP the study. 5 trials total; do NOT start trial 5 or beyond. Set n_trials to 5 in configs/models.yaml.
+- Do NOT rerun any completed trial. Load the study from its SQLite file in runs/.
+- Print the full trial table (number, state, objective, all params) and save it to reports/3_distilroberta/tables/tuning_trials.csv.
+- Select the trial with the best objective. If the top two trials are within 0.005 of each other, use the config defaults instead and state that in the report.
+- In the report, note: whether the winning params equal the defaults; which imbalance layers (focal gamma, oversample k, pos_weight power/cap) the winner used; and whether any winning param sits at the edge of its search range.
+
+FINAL TRAINING
+- Train ONE model, seed 42, with the selected params: 4 epochs, best epoch by val macro PR-AUC, resumable, full train split.
+- Skip seeds 43/44 and skip the seed-ensemble variant. Set final.seeds to [42] and ensemble to none in the config. The serving choice is seed 42.
+
+KEEP (unchanged from earlier instructions)
+- Hierarchy-fix ablation (separate probability files, evaluated as its own variant by the unchanged evaluator; serving default chosen on val).
+- TF-IDF blend check (blend weight chosen on val only; recommend only if val macro PR-AUC improves by >= 0.005).
+- Backend-ready bundle in models/3_distilroberta/ (safetensors weights, tokenizer, thresholds.json, meta.json) with the parity check (Moderator reproduces saved test probabilities within 1e-4).
+- CONSISTENCY RULES: do not modify the shared evaluation.py, plotting.py or the shared paths of 20_evaluate.py/21_build_model_report.py; only register the new adapter and add the model-specific section. Verify Models 1/2/2b metrics.json are byte-identical before and after.
+- The test set is evaluated ONCE, at the end, through 20_evaluate.py. Never use test for tuning, checkpoint selection, thresholds, blend weights or serving choice.
+- PROGRESS.md Stage 10 entry (also add the missing 2b entry; correct split sizes to 127,861 / 15,869 / 15,841).
+
+FINAL REPORT
+Headline test metrics with 95% CIs; per-label table vs Models 1/2/2b (paired bootstrap in scripts/22_paired_bootstrap.py); tuning trial table and the findings above; hierarchy-fix ablation; blend result and the serving choice; training time, peak VRAM, throughput; any deviations from the spec.

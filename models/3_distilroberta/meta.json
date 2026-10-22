@@ -260,7 +260,51 @@
     "2_tokenize": 7.1072073000032105,
     "3_setup_model": 3.115968000005523,
     "4_training": 1485.9113385999954,
-    "5_predict": 13.502426999999443
+    "5_predict": 13.502426999999443,
+    "6_save_bundle": 0.88
   },
-  "total_train_time_sec": 1511.6
+  "total_train_time_sec": 1511.6,
+  "train_time_seconds": 1511.6,
+  "model_size_bytes": 330867112,
+  "framework": "PyTorch 2.6.0+cu124 / Transformers 4.45.2",
+  "device_info": {
+    "device": "GPU",
+    "gpu_name": "NVIDIA GeForce RTX 3060 Laptop GPU",
+    "cuda_version": "12.4",
+    "cpu_threads": 8
+  },
+  "stage_timings_seconds": {
+    "1_load_verify": 1.079075900001044,
+    "2_tokenize": 7.1072073000032105,
+    "3_setup_model": 3.115968000005523,
+    "4_training": 1485.9113385999954,
+    "5_predict": 13.502426999999443,
+    "6_save_bundle": 0.88
+  },
+  "class_weights": {
+    "toxic": {
+      "0": 1.0,
+      "1": 3.6534
+    },
+    "severe_toxic": {
+      "0": 1.0,
+      "1": 14.0
+    },
+    "obscene": {
+      "0": 1.0,
+      "1": 5.289
+    },
+    "threat": {
+      "0": 1.0,
+      "1": 14.0
+    },
+    "insult": {
+      "0": 1.0,
+      "1": 5.5152
+    },
+    "identity_hate": {
+      "0": 1.0,
+      "1": 14.0
+    }
+  }
 }

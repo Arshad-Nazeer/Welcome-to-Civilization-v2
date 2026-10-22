@@ -6,6 +6,7 @@
 - Reduce class imbalance and potentially improve performance on rare labels.
 - Target approximately **10% positive prevalence per label** in the augmented training set.
 - Treat 10% as a **soft target**, not a mandatory quota. Never force the dataset to reach it.
+- Don't treat 10% prevalence as a universal ideal. Use it as a diagnostic target, as you already propose. If threat or identity_hate remains below 10% because reliable examples are scarce, that's preferable to adding questionable positives merely to hit a quota. Also, prevalence should be measured across the final training set, not just the imported comments.
 
 ## 2. Labels to Map
 
