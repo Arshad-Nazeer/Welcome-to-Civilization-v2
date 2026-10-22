@@ -189,6 +189,121 @@ class BiGruAttnAdapter(BaseModelAdapter):
         return probs_ordered
 
 
+class TransformerAdapter(BaseModelAdapter):
+    """Adapter for Model 3: DistilRoBERTa fine-tuned transformer."""
+
+    def __init__(self) -> None:
+        self.model = None
+        self.tokenizer = None
+        self.max_len = 128
+        self.labels: list[str] = LABELS
+        self.device = None
+        self.hierarchy_fix: bool = False
+
+    def load(self, model_dir: Path, meta: dict[str, Any]) -> None:
+        import torch
+        from transformers import AutoTokenizer
+        from .distilroberta_module import DistilRobertaForMultilabel
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.labels = meta.get("labels", LABELS)
+        self.hierarchy_fix = meta.get("hierarchy_fix", meta.get("enforce_hierarchy", False))
+
+        tok_cfg = meta.get("config", {}).get("tokenizer", {})
+        self.max_len = tok_cfg.get("max_len", 128)
+
+        # 1. Load Tokenizer: from model_dir if tokenizer files exist, else from pretrained name
+        if (model_dir / "tokenizer_config.json").exists() or (model_dir / "vocab.json").exists():
+            self.tokenizer = AutoTokenizer.from_pretrained(str(model_dir))
+        else:
+            pretrained_name = meta.get("config", {}).get("pretrained", "distilroberta-base")
+            self.tokenizer = AutoTokenizer.from_pretrained(pretrained_name)
+
+        # 2. Build model architecture
+        head_cfg = meta.get("config", {}).get("head", {})
+        dropout = head_cfg.get("dropout", 0.1)
+        pretrained_name = meta.get("config", {}).get("pretrained", "distilroberta-base")
+
+        self.model = DistilRobertaForMultilabel(
+            pretrained_name=pretrained_name,
+            num_classes=len(self.labels),
+            dropout=dropout,
+        )
+
+        # 3. Load weights: try safetensors first, fallback to pt
+        safetensors_file = model_dir / "model.safetensors"
+        pt_file = model_dir / "best_model.pt"
+        if not pt_file.exists():
+            pt_file = model_dir / "model.pt"
+
+        if safetensors_file.exists():
+            from safetensors.torch import load_file
+            state_dict = load_file(str(safetensors_file), device="cpu")
+            self.model.load_state_dict(state_dict)
+        elif pt_file.exists():
+            state_dict = torch.load(pt_file, map_location="cpu", weights_only=True)
+            self.model.load_state_dict(state_dict)
+        else:
+            raise FileNotFoundError(f"Neither model.safetensors nor model.pt found in {model_dir}")
+
+        self.model.to(self.device)
+        self.model.eval()
+
+    def predict_proba(self, texts_clean: list[str]) -> np.ndarray:
+        import torch
+
+        n_samples = len(texts_clean)
+        if n_samples == 0:
+            return np.empty((0, len(self.labels)), dtype=np.float32)
+
+        encodings = self.tokenizer(
+            texts_clean,
+            truncation=True,
+            max_length=self.max_len,
+            padding=False,
+            return_attention_mask=False,
+        )
+        input_ids_list = encodings["input_ids"]
+        lengths_arr = np.array([len(ids) for ids in input_ids_list], dtype=np.int64)
+
+        sorted_indices = np.argsort(lengths_arr)
+        batch_size = 128 if self.device.type == "cuda" else 32
+        probs_ordered = np.zeros((n_samples, len(self.labels)), dtype=np.float32)
+
+        use_amp = (self.device.type == "cuda")
+
+        with torch.no_grad():
+            for i in range(0, n_samples, batch_size):
+                b_idx = sorted_indices[i : i + batch_size]
+                b_texts = [texts_clean[idx] for idx in b_idx]
+
+                batch_enc = self.tokenizer(
+                    b_texts,
+                    truncation=True,
+                    max_length=self.max_len,
+                    padding=True,
+                    return_tensors="pt",
+                )
+                input_ids = batch_enc["input_ids"].to(self.device)
+                attention_mask = batch_enc["attention_mask"].to(self.device)
+
+                if use_amp:
+                    with torch.amp.autocast("cuda"):
+                        logits = self.model(input_ids, attention_mask)
+                else:
+                    logits = self.model(input_ids, attention_mask)
+
+                b_probs = torch.sigmoid(logits.float()).cpu().numpy().astype(np.float32)
+                probs_ordered[b_idx] = b_probs
+
+        if self.hierarchy_fix and "toxic" in self.labels and "severe_toxic" in self.labels:
+            tox_i = self.labels.index("toxic")
+            sev_i = self.labels.index("severe_toxic")
+            probs_ordered[:, tox_i] = np.maximum(probs_ordered[:, tox_i], probs_ordered[:, sev_i])
+
+        return probs_ordered
+
+
 # Registry of model adapters
 ADAPTER_REGISTRY: dict[str, type[BaseModelAdapter]] = {
     "1_tfidf_lr": TfidfLrAdapter,
@@ -197,6 +312,10 @@ ADAPTER_REGISTRY: dict[str, type[BaseModelAdapter]] = {
     "bigru_attn": BiGruAttnAdapter,
     "2b_bigru_attn_v2": BiGruAttnAdapter,
     "bigru_attn_v2": BiGruAttnAdapter,
+    "3_distilroberta": TransformerAdapter,
+    "distilroberta": TransformerAdapter,
+    "distilroberta_base": TransformerAdapter,
+    "transformer": TransformerAdapter,
 }
 
 

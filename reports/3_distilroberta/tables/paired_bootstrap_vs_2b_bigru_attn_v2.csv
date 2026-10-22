@@ -1,0 +1,16 @@
+category,metric,mean_delta,ci_95_low,ci_95_high,p_value,significance
+Overall,Macro F1,0.0213,-0.0016,0.0433,0.032,*
+Overall,Macro PR-AUC,-0.0006,-0.0231,0.022,0.523,ns
+Overall,Mean ROC-AUC,0.0015,0.0002,0.0029,0.015,*
+Label: toxic,F1 Score,0.004,-0.007,0.0158,0.26,ns
+Label: toxic,PR-AUC,0.0083,0.0015,0.0154,0.012,*
+Label: severe_toxic,F1 Score,0.0378,-0.0073,0.0829,0.061,ns
+Label: severe_toxic,PR-AUC,-0.0106,-0.0582,0.0337,0.656,ns
+Label: obscene,F1 Score,0.0046,-0.0112,0.021,0.281,ns
+Label: obscene,PR-AUC,0.0066,-0.0032,0.0169,0.113,ns
+Label: threat,F1 Score,0.02,-0.0932,0.1263,0.372,ns
+Label: threat,PR-AUC,-0.0708,-0.1651,0.0187,0.945,ns
+Label: insult,F1 Score,0.0233,0.003,0.0434,0.014,*
+Label: insult,PR-AUC,0.0198,0.0044,0.0354,0.008,**
+Label: identity_hate,F1 Score,0.0382,-0.0202,0.0953,0.097,ns
+Label: identity_hate,PR-AUC,0.043,-0.0307,0.1145,0.12,ns

@@ -49,6 +49,10 @@ models/**/*.pt
 models/**/*.pth
 models/**/*.onnx
 models/**/*.npy
+models/**/*.safetensors
+*.safetensors
+checkpoints/
+models/**/checkpoints/
 
 # Smoke test outputs
 *_smoke/

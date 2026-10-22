@@ -33,5 +33,8 @@ ipykernel==6.29.5
 # Testing
 pytest==8.3.3
 
+# Hyperparameter Tuning
+optuna==5.0.0
+
 # Kaggle CLI (optional, for data download fallback)
 kaggle==1.6.17

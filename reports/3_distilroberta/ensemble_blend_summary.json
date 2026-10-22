@@ -1,0 +1,54 @@
+{
+  "seeds": [
+    42
+  ],
+  "seed_metrics": {
+    "42": {
+      "val_macro_pr_auc": 0.7228,
+      "per_label_pr_auc": {
+        "toxic": 0.921,
+        "severe_toxic": 0.4971,
+        "obscene": 0.9184,
+        "threat": 0.4801,
+        "insult": 0.8507,
+        "identity_hate": 0.6693
+      }
+    }
+  },
+  "best_single_seed": 42,
+  "best_single_val_macro_pr_auc": 0.7228,
+  "ensemble_val_macro_pr_auc": 0.7228,
+  "ensemble_gain_vs_best_seed": 0.0,
+  "serving_choice": "seed_42",
+  "blend_check": {
+    "tfidf_preds_dir": "predictions/1_tfidf_lr",
+    "grid_alphas": [
+      0.5,
+      0.55,
+      0.6,
+      0.65,
+      0.7,
+      0.75,
+      0.8,
+      0.85,
+      0.9,
+      0.95
+    ],
+    "grid_scores": [
+      0.7378,
+      0.7401,
+      0.7396,
+      0.7387,
+      0.7388,
+      0.7382,
+      0.7377,
+      0.7378,
+      0.7376,
+      0.7339
+    ],
+    "best_alpha": 0.55,
+    "best_blend_val_score": 0.7401,
+    "blend_gain": 0.0173,
+    "recommended": true
+  }
+}

@@ -1,0 +1,54 @@
+[
+  {
+    "epoch": 1,
+    "train_loss": 0.1113,
+    "val_loss": 0.0615,
+    "val_macro_pr_auc": 0.6802,
+    "val_mean_roc_auc": 0.9881,
+    "epoch_time_seconds": 321.3,
+    "samples_per_sec": 398.0,
+    "peak_memory_mb": 1906.2,
+    "gpu_util_pct": 96,
+    "learning_rate": 1.5526824011317953e-05,
+    "is_best": true
+  },
+  {
+    "epoch": 2,
+    "train_loss": 0.0568,
+    "val_loss": 0.0515,
+    "val_macro_pr_auc": 0.7228,
+    "val_mean_roc_auc": 0.9912,
+    "epoch_time_seconds": 387.28,
+    "samples_per_sec": 330.2,
+    "peak_memory_mb": 1906.2,
+    "gpu_util_pct": 96,
+    "learning_rate": 1.0351216007545302e-05,
+    "is_best": true
+  },
+  {
+    "epoch": 3,
+    "train_loss": 0.0429,
+    "val_loss": 0.0524,
+    "val_macro_pr_auc": 0.7216,
+    "val_mean_roc_auc": 0.9922,
+    "epoch_time_seconds": 407.39,
+    "samples_per_sec": 313.9,
+    "peak_memory_mb": 1906.2,
+    "gpu_util_pct": 97,
+    "learning_rate": 5.175608003772651e-06,
+    "is_best": false
+  },
+  {
+    "epoch": 4,
+    "train_loss": 0.0325,
+    "val_loss": 0.0632,
+    "val_macro_pr_auc": 0.7197,
+    "val_mean_roc_auc": 0.9914,
+    "epoch_time_seconds": 363.7,
+    "samples_per_sec": 351.6,
+    "peak_memory_mb": 1906.2,
+    "gpu_util_pct": 100,
+    "learning_rate": 0.0,
+    "is_best": false
+  }
+]

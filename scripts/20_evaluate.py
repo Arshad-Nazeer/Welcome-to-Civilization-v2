@@ -54,7 +54,7 @@ from wtc.config import (
 from wtc.data import load_split
 from wtc.evaluation import export_evaluation_tables, run_evaluation
 from wtc.inference import Moderator
-from wtc.model_specific import run_model_specific_bigru
+from wtc.model_specific import run_model_specific_bigru, run_model_specific_distilroberta
 from wtc.plotting import generate_all_visualizations, get_model_color
 from wtc.utils import get_logger, set_seed
 
@@ -184,6 +184,9 @@ MODEL_SPECIFIC_DISPATCH: dict[str, Any] = {
     "2_bigru_attn": run_model_specific_bigru,
     "bigru_attn_v2": run_model_specific_bigru,
     "2b_bigru_attn_v2": run_model_specific_bigru,
+    "distilroberta": run_model_specific_distilroberta,
+    "3_distilroberta": run_model_specific_distilroberta,
+    "transformer": run_model_specific_distilroberta,
 }
 
 

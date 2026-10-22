@@ -244,3 +244,86 @@ def run_model_specific_bigru(
             results["attention_figure"] = str(p_attn_png.relative_to(PROJECT_ROOT)).replace("\\", "/")
 
     return results
+
+
+def run_model_specific_distilroberta(
+    model_id: str,
+    smoke: bool,
+    reports_dir: Path,
+    viz_dir: Path,
+    labels: list[str],
+    df_test: pd.DataFrame,
+    P_test: np.ndarray,
+    Y_test: np.ndarray,
+) -> dict[str, Any]:
+    """
+    Run Model 3 (DistilRoBERTa) specific evaluation:
+    1. Training history export and training curves plot (loss & macro PR-AUC).
+    2. Model parameter allocation and sequence length analysis on test split.
+    """
+    model_dir = get_model_dir(model_id, smoke=smoke)
+    tables_dir = reports_dir / "tables"
+    tables_dir.mkdir(parents=True, exist_ok=True)
+    viz_dir.mkdir(parents=True, exist_ok=True)
+    color = get_model_color(model_id)
+
+    results: dict[str, Any] = {}
+
+    # 1. Training Curves and History
+    history_file = model_dir / "history.json"
+    if history_file.exists():
+        with open(history_file, "r", encoding="utf-8") as fh:
+            history = json.load(fh)
+
+        df_hist = pd.DataFrame(history)
+        p_hist_csv = tables_dir / "training_history.csv"
+        df_hist.to_csv(p_hist_csv, index=False)
+        results["training_history_table"] = str(p_hist_csv.relative_to(PROJECT_ROOT)).replace("\\", "/")
+
+        epochs = [h["epoch"] for h in history]
+        train_loss = [h.get("train_loss", 0.0) for h in history]
+        val_loss = [h.get("val_loss", 0.0) for h in history]
+        val_macro_pr = [h.get("val_macro_pr_auc", 0.0) for h in history]
+
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5), dpi=200)
+
+        # Loss curves
+        ax1.plot(epochs, train_loss, marker="o", lw=2, color="#1f77b4", label="Train Loss")
+        ax1.plot(epochs, val_loss, marker="s", lw=2, color="#d62728", label="Val Loss")
+        ax1.set_xlabel("Epoch", fontsize=11, fontweight="bold")
+        ax1.set_ylabel("Weighted BCE Loss", fontsize=11, fontweight="bold")
+        ax1.set_title("Training & Validation Loss", fontsize=12, fontweight="bold")
+        ax1.set_xticks(epochs)
+        ax1.legend(loc="upper right")
+        ax1.grid(True, linestyle="--", alpha=0.5)
+
+        # Validation Macro PR-AUC
+        ax2.plot(epochs, val_macro_pr, marker="D", lw=2, color=color, label="Val Macro PR-AUC")
+        best_epoch_idx = int(np.argmax(val_macro_pr)) if val_macro_pr else 0
+        best_ep = epochs[best_epoch_idx] if epochs else 1
+        best_val_pr = val_macro_pr[best_epoch_idx] if val_macro_pr else 0.0
+        ax2.plot(best_ep, best_val_pr, marker="*", markersize=14, color="#d62728", label=f"Best (Ep {best_ep}: {best_val_pr:.4f})")
+        ax2.set_xlabel("Epoch", fontsize=11, fontweight="bold")
+        ax2.set_ylabel("Validation Macro PR-AUC", fontsize=11, fontweight="bold")
+        ax2.set_title("Validation Macro PR-AUC vs Epoch", fontsize=12, fontweight="bold")
+        ax2.set_xticks(epochs)
+        ax2.legend(loc="lower right")
+        ax2.grid(True, linestyle="--", alpha=0.5)
+
+        fig.suptitle(f"DistilRoBERTa Fine-Tuning History ({model_id})", fontsize=13, fontweight="bold", y=1.02)
+        plt.tight_layout()
+        p_curves_png = viz_dir / "training_curves.png"
+        fig.savefig(p_curves_png, dpi=200)
+        plt.close(fig)
+        results["training_curves_figure"] = str(p_curves_png.relative_to(PROJECT_ROOT)).replace("\\", "/")
+
+    # 2. Sequence length analysis on test split
+    meta_file = model_dir / "meta.json"
+    if meta_file.exists():
+        with open(meta_file, "r", encoding="utf-8") as fh:
+            meta = json.load(fh)
+        results["parameters"] = meta.get("parameters", {})
+        results["tuning_summary"] = meta.get("tuning_summary", {})
+
+    return results
+

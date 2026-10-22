@@ -137,3 +137,73 @@ bigru_attn_v2:
     mixed_precision: true
     scheduler: cosine
     warmup_epochs: 1
+
+distilroberta:
+  model_id: 3_distilroberta
+  description: "DistilRoBERTa-base fine-tuned, weighted BCE, optional focal/oversampling"
+  input_col: text_clean
+  seed: 42
+  pretrained: distilroberta-base
+  tokenizer:
+    max_len: 128
+    truncation: head
+    lowercase: false
+    dynamic_padding: true
+  head:
+    num_classes: 6
+    dropout: 0.1
+    bias_init: log_odds
+  training:
+    optimizer: adamw
+    lr: 3.0e-5
+    weight_decay: 0.01
+    no_decay: [bias, LayerNorm.weight]
+    layerwise_lr_decay: 0.9
+    warmup_ratio: 0.10
+    scheduler: linear
+    batch_size: 32
+    eval_batch_size: 128
+    grad_clip: 1.0
+    epochs: 4
+    mixed_precision: fp16
+    num_workers: 0
+    monitor_metric: val_macro_pr_auc
+    save_best: true
+    resumable: true
+  imbalance:
+    method: damped_pos_weight
+    power: 0.45
+    max_weight: 14.0
+    focal_gamma: 0.0
+    oversample:
+      enabled: false
+      labels: [threat, severe_toxic, identity_hate]
+      factor: 1
+  postprocess:
+    thresholds: val_bootstrap_median
+    enforce_hierarchy: ablation   # save with and without; serving default chosen on val
+  tune:
+    enabled: true
+    sampler: tpe
+    pruner: median
+    n_trials: 5
+    train_fraction: 0.4
+    epochs: 2
+    objective: mean_of_macro_and_rare_pr_auc
+    rare_labels: [threat, severe_toxic, identity_hate]
+    space:
+      lr: {type: loguniform, low: 2.0e-5, high: 6.0e-5}
+      pos_weight_power: {type: float, low: 0.3, high: 0.6}
+      pos_weight_cap: {type: categorical, choices: [8, 14, 20]}
+      focal_gamma: {type: categorical, choices: [0, 1, 2]}
+      oversample_factor: {type: categorical, choices: [1, 2, 4]}
+      warmup_ratio: {type: float, low: 0.06, high: 0.15}
+      weight_decay: {type: categorical, choices: [0.01, 0.1]}
+      layerwise_lr_decay: {type: categorical, choices: [1.0, 0.9]}
+      head_dropout: {type: categorical, choices: [0.1, 0.2]}
+  final:
+    seeds: [42]
+    ensemble: none
+    blend_with_tfidf:
+      enabled: true
+      min_gain: 0.005             # blend weight chosen on val only

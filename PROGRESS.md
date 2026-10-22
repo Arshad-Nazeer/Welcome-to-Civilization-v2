@@ -1,7 +1,7 @@
 # Welcome to Civilization — Project Progress
 
 **Project**: Multi-label toxicity classification on Jigsaw Toxic Comment dataset  
-**Last Updated**: 2026-10-21 00:52 IST  
+**Last Updated**: 2026-10-22 20:38 IST  
 **Global Seed**: 42  
 **Virtual Environment**: `.venv` (Python 3.12.6)
 
@@ -20,6 +20,8 @@
 | **7** | **Verification** | **DONE-VERIFIED** | 2026-10-21 | End-to-end execution verified (`run_all.ps1`, `run_all.sh`), pytest full suite (12/12 passed), `README.md` updated | None |
 | **8** | **Model 1 (TF-IDF + LR)** | **DONE-VERIFIED** | 2026-10-21 | `models/1_tfidf_lr/`, `predictions/1_tfidf_lr/`, `reports/1_tfidf_lr/`, `visualizations/1_tfidf_lr/`, `scripts/10,20,21`, `src/wtc/{evaluation,plotting,inference}.py` | None |
 | **9** | **Model 2 (BiGRU + Attn)** | **DONE-VERIFIED** | 2026-10-21 | `models/2_bigru_attn/`, `predictions/2_bigru_attn/`, `reports/2_bigru_attn/`, `visualizations/2_bigru_attn/`, `scripts/11_train_bigru.py`, `src/wtc/bigru_module.py`, `src/wtc/model_specific.py` | None |
+| **9b** | **Model 2b (BiGRU + Attn v2)** | **DONE-VERIFIED** | 2026-10-21 | `models/2b_bigru_attn_v2/`, `predictions/2b_bigru_attn_v2/`, `reports/2b_bigru_attn_v2/`, `visualizations/2b_bigru_attn_v2/`, `scripts/12_train_bigru_v2.py` | None |
+| **10** | **Model 3 (DistilRoBERTa-base)** | **DONE-VERIFIED** | 2026-10-22 | `models/3_distilroberta/`, `predictions/3_distilroberta/`, `reports/3_distilroberta/`, `visualizations/3_distilroberta/`, `scripts/13,14,15,20,21,22` | None |
 
 ---
 
@@ -41,9 +43,9 @@
   - QA checks: 0 nulls across all 21 columns, 0 empty comments dropped, 198 exact duplicate texts, 41 conflicting duplicate groups.
   - Processed files saved: `data/processed/processed.parquet` (85.5 MB) and `processed.csv` (144.7 MB).
   - Splitting: Multilabel-stratified 80/10/10 split on duplicate groups.
-    - Train: 127,664 rows (80.004%)
-    - Val: 15,956 rows (9.999%)
-    - Test: 15,951 rows (9.996%)
+    - Train: 127,861 rows (80.128%)
+    - Val: 15,869 rows (9.945%)
+    - Test: 15,841 rows (9.927%)
     - Zero duplicate-group leakage across splits.
   - Test suite: `pytest tests/test_data.py` executed: **12 passed in 4.92s**.
 - **Stage 5 executed & verified**:
@@ -81,4 +83,25 @@
   - Evaluated with `scripts/20_evaluate.py`: val bootstrap threshold tuning, 1,000 test bootstrap resamples. Headline metrics (Test): Macro F1 = 0.6586, Micro F1 = 0.7773, Macro PR-AUC = 0.7048, Mean ROC-AUC = 0.9900.
   - Inference speed: 10,789.0 comments/sec (0.093 ms/comment on GPU), 1,003.3 comments/sec on CPU (16 threads).
   - Generated full report: `reports/2_bigru_attn/model_report.md` and regenerated Model 1 report with bug fixes.
+
+### 2026-10-22
+- **Stage 9b executed & verified (Model 2b: BiGRU + Additive Attention v2)**:
+  - Engineered architectural solutions for Model 2 setbacks: preserved casing in `text_clean`, fine-tuned fastText embeddings with 0.1x differential LR (1e-4 vs 1e-3), increased spatial dropout to 0.35, implemented AdamW with Cosine Annealing with warmup, and smoothed class weights (`power: 0.45`, `max_weight: 14.0`) with log-odds bias initialization.
+  - Full training completed in 203.4s across 8 epochs (best checkpoint: Epoch 5).
+  - Evaluated via `scripts/20_evaluate.py`: Headline test metrics: Macro F1 = 0.6727, Micro F1 = 0.7753, Macro PR-AUC = 0.7071, Mean ROC-AUC = 0.9895.
+  - GPU throughput: 10,750 comments/sec (0.093 ms/comment).
+  - Full report generated: `reports/2b_bigru_attn_v2/model_report.md`.
+- **Stage 10 executed & verified (Model 3: DistilRoBERTa-base)**:
+  - Architecture: Pretrained `distilroberta-base` (~82M params) fine-tuned end-to-end with custom classification head on `<s>` token, log-odds bias initialization, dynamic length bucketing, LLRD (layer-wise learning rate decay), and damped positive class weighting.
+  - Hyperparameter tuning (`scripts/14_tune_distilroberta.py`): Optuna TPE study evaluated 5 trials (saved to `reports/3_distilroberta/tables/tuning_trials.csv` and `runs/distilroberta_best_params.json`). Winning Trial 4 achieved objective 0.5996 (Delta +0.0061 vs Trial 0, exceeding the 0.005 threshold): `lr=3.86e-5`, `pos_weight_power=0.577`, `pos_weight_cap=14.0`, `focal_gamma=1.0`, `oversample_factor=1`, `warmup_ratio=0.109`, `weight_decay=0.10`, `layerwise_lr_decay=0.9`, `head_dropout=0.1`.
+  - Full training (`scripts/13_train_distilroberta.py`): 4 epochs with Seed 42, best epoch 2 restored (Val Macro PR-AUC = 0.7228). Training time: 1,511.6s (25.19 min), peak VRAM: 1,906.2 MB.
+  - Backend bundle packaged in `models/3_distilroberta/`: `model.safetensors` (315.54 MB, SHA-256: `af46b297a752ae98...`), tokenizer files, `thresholds.json`, `meta.json`. Moderator test parity check verified exact reproduction (diff = `0.00e+00` < 1e-4).
+  - Hierarchy fix ablation: Val Macro PR-AUC standard 0.7228 vs hierarchy 0.7228 (Delta +0.0000). Standard model retained as serving default; ablation variant saved in `predictions/3a_distilroberta_hier/`.
+  - TF-IDF blend check (`scripts/15_ensemble_and_blend.py`): Grid search on val selected 0.55 DistilRoBERTa + 0.45 TF-IDF (Val Macro PR-AUC = 0.7401, gain +0.0173 >= 0.005 threshold). Recommended as blend candidate in `predictions/3c_distilroberta_blend/`.
+  - Final test evaluation (`scripts/20_evaluate.py`): Evaluated strictly ONCE at end. Headline Test metrics: Macro F1 = 0.6934 [95% CI: 0.6673, 0.7149], Micro F1 = 0.7853 [95% CI: 0.7728, 0.7958], Macro PR-AUC = 0.7049 [95% CI: 0.6775, 0.7407], Mean ROC-AUC = 0.9909 [95% CI: 0.9897, 0.9920].
+  - Paired bootstrap testing (`scripts/22_paired_bootstrap.py`): 1,000 resamples vs Model 2b. Statistically significant improvements in Macro F1 (+0.0213, p=0.0320*), Mean ROC-AUC (+0.0015, p=0.0150*), toxic PR-AUC (+0.0083, p=0.0120*), insult F1 (+0.0233, p=0.0140*), and insult PR-AUC (+0.0198, p=0.0080**).
+  - Inference benchmark: GPU throughput: 1,997.9 comments/sec (0.501 ms/comment); CPU throughput: 52.3 comments/sec (19.11 ms/comment).
+  - Integrity check: Pre- and post-run SHA-256 hashes of Models 1, 2, 2b `metrics.json` verified 100% byte-identical.
+  - Report generated: `reports/3_distilroberta/model_report.md`.
+
 

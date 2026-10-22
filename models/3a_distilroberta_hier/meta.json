@@ -1,0 +1,266 @@
+{
+  "model_id": "3a_distilroberta_hier",
+  "model_name": "DistilRoBERTa-base (Hierarchy-Fix Ablation)",
+  "adapter_type": "transformer",
+  "smoke": false,
+  "created_utc": "2026-10-22T14:50:40.667511+00:00",
+  "seed": 42,
+  "labels": [
+    "toxic",
+    "severe_toxic",
+    "obscene",
+    "threat",
+    "insult",
+    "identity_hate"
+  ],
+  "input_column": "text_clean",
+  "clean_text_version": "v1_nfkc_clean",
+  "config": {
+    "model_id": "3_distilroberta",
+    "description": "DistilRoBERTa-base fine-tuned, weighted BCE, optional focal/oversampling",
+    "input_col": "text_clean",
+    "seed": 42,
+    "pretrained": "distilroberta-base",
+    "tokenizer": {
+      "max_len": 128,
+      "truncation": "head",
+      "lowercase": false,
+      "dynamic_padding": true
+    },
+    "head": {
+      "num_classes": 6,
+      "dropout": 0.1,
+      "bias_init": "log_odds"
+    },
+    "training": {
+      "optimizer": "adamw",
+      "lr": 3e-05,
+      "weight_decay": 0.01,
+      "no_decay": [
+        "bias",
+        "LayerNorm.weight"
+      ],
+      "layerwise_lr_decay": 0.9,
+      "warmup_ratio": 0.1,
+      "scheduler": "linear",
+      "batch_size": 32,
+      "eval_batch_size": 128,
+      "grad_clip": 1.0,
+      "epochs": 4,
+      "mixed_precision": "fp16",
+      "num_workers": 0,
+      "monitor_metric": "val_macro_pr_auc",
+      "save_best": true,
+      "resumable": true
+    },
+    "imbalance": {
+      "method": "damped_pos_weight",
+      "power": 0.45,
+      "max_weight": 14.0,
+      "focal_gamma": 0.0,
+      "oversample": {
+        "enabled": false,
+        "labels": [
+          "threat",
+          "severe_toxic",
+          "identity_hate"
+        ],
+        "factor": 1
+      }
+    },
+    "postprocess": {
+      "thresholds": "val_bootstrap_median",
+      "enforce_hierarchy": "ablation"
+    },
+    "tune": {
+      "enabled": true,
+      "sampler": "tpe",
+      "pruner": "median",
+      "n_trials": 5,
+      "train_fraction": 0.4,
+      "epochs": 2,
+      "objective": "mean_of_macro_and_rare_pr_auc",
+      "rare_labels": [
+        "threat",
+        "severe_toxic",
+        "identity_hate"
+      ],
+      "space": {
+        "lr": {
+          "type": "loguniform",
+          "low": 2e-05,
+          "high": 6e-05
+        },
+        "pos_weight_power": {
+          "type": "float",
+          "low": 0.3,
+          "high": 0.6
+        },
+        "pos_weight_cap": {
+          "type": "categorical",
+          "choices": [
+            8,
+            14,
+            20
+          ]
+        },
+        "focal_gamma": {
+          "type": "categorical",
+          "choices": [
+            0,
+            1,
+            2
+          ]
+        },
+        "oversample_factor": {
+          "type": "categorical",
+          "choices": [
+            1,
+            2,
+            4
+          ]
+        },
+        "warmup_ratio": {
+          "type": "float",
+          "low": 0.06,
+          "high": 0.15
+        },
+        "weight_decay": {
+          "type": "categorical",
+          "choices": [
+            0.01,
+            0.1
+          ]
+        },
+        "layerwise_lr_decay": {
+          "type": "categorical",
+          "choices": [
+            1.0,
+            0.9
+          ]
+        },
+        "head_dropout": {
+          "type": "categorical",
+          "choices": [
+            0.1,
+            0.2
+          ]
+        }
+      }
+    },
+    "final": {
+      "seeds": [
+        42
+      ],
+      "ensemble": "none",
+      "blend_with_tfidf": {
+        "enabled": true,
+        "min_gain": 0.005
+      }
+    }
+  },
+  "parameters": {
+    "trainable": 82713606,
+    "total": 82713606
+  },
+  "best_epoch": 2,
+  "best_val_macro_pr_auc": 0.7228,
+  "weights_sha256": "af46b297a752ae98ce5a9b84fa559a3e61de4098272d2ff126360adeedb730ce",
+  "model_size_mb": 315.54,
+  "hierarchy_fix": false,
+  "hierarchy_ablation": {
+    "val_macro_pr_auc_standard": 0.7228,
+    "val_macro_pr_auc_hierarchy": 0.7228,
+    "delta": 0.0,
+    "serving_choice": "standard"
+  },
+  "artifacts": {
+    "weights": "models/3_distilroberta/model.safetensors",
+    "probs_val": "predictions/3_distilroberta/probs_val.npy",
+    "probs_test": "predictions/3_distilroberta/probs_test.npy",
+    "history": "models/3_distilroberta/history.json"
+  },
+  "training_history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.1113,
+      "val_loss": 0.0615,
+      "val_macro_pr_auc": 0.6802,
+      "val_mean_roc_auc": 0.9881,
+      "epoch_time_seconds": 321.3,
+      "samples_per_sec": 398.0,
+      "peak_memory_mb": 1906.2,
+      "gpu_util_pct": 96,
+      "learning_rate": 1.5526824011317953e-05,
+      "is_best": true
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.0568,
+      "val_loss": 0.0515,
+      "val_macro_pr_auc": 0.7228,
+      "val_mean_roc_auc": 0.9912,
+      "epoch_time_seconds": 387.28,
+      "samples_per_sec": 330.2,
+      "peak_memory_mb": 1906.2,
+      "gpu_util_pct": 96,
+      "learning_rate": 1.0351216007545302e-05,
+      "is_best": true
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.0429,
+      "val_loss": 0.0524,
+      "val_macro_pr_auc": 0.7216,
+      "val_mean_roc_auc": 0.9922,
+      "epoch_time_seconds": 407.39,
+      "samples_per_sec": 313.9,
+      "peak_memory_mb": 1906.2,
+      "gpu_util_pct": 97,
+      "learning_rate": 5.175608003772651e-06,
+      "is_best": false
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.0325,
+      "val_loss": 0.0632,
+      "val_macro_pr_auc": 0.7197,
+      "val_mean_roc_auc": 0.9914,
+      "epoch_time_seconds": 363.7,
+      "samples_per_sec": 351.6,
+      "peak_memory_mb": 1906.2,
+      "gpu_util_pct": 100,
+      "learning_rate": 0.0,
+      "is_best": false
+    }
+  ],
+  "tuning_summary": {
+    "params_file": "runs/distilroberta_best_params.json",
+    "best_params": {
+      "lr": 3.8574542480879296e-05,
+      "pos_weight_power": 0.5765622705069351,
+      "pos_weight_cap": 14.0,
+      "focal_gamma": 1.0,
+      "oversample_factor": 1,
+      "warmup_ratio": 0.10884264748424236,
+      "weight_decay": 0.1,
+      "layerwise_lr_decay": 0.9,
+      "head_dropout": 0.1
+    }
+  },
+  "versions": {
+    "python": "3.12.6",
+    "torch": "2.6.0+cu124",
+    "cuda": "12.4",
+    "transformers": "4.45.2",
+    "safetensors": "0.8.0"
+  },
+  "stage_timings": {
+    "1_load_verify": 1.079075900001044,
+    "2_tokenize": 7.1072073000032105,
+    "3_setup_model": 3.115968000005523,
+    "4_training": 1485.9113385999954,
+    "5_predict": 13.502426999999443
+  },
+  "total_train_time_sec": 1511.6
+}

@@ -1,0 +1,7 @@
+label,brier_score,ece_15_bins
+toxic,0.0281,0.0351
+severe_toxic,0.0135,0.0245
+obscene,0.016,0.0363
+threat,0.0033,0.0124
+insult,0.0242,0.0359
+identity_hate,0.0153,0.0354
