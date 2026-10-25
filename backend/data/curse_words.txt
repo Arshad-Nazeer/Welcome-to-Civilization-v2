@@ -1,0 +1,44 @@
+# Curse Words and Profanity Lexicon for Welcome to Civilization Censor Engine
+# One base term per line. Matching engine handles inflections (-s, -ed, -ing, -er)
+# and leetspeak substitutions (@ -> a, $ -> s, 0 -> o, 1/! -> i, *).
+
+fuck
+shit
+bitch
+asshole
+cunt
+cock
+dick
+pussy
+twat
+bastard
+whore
+slut
+douche
+motherfuck
+bullshit
+dipshit
+dumbass
+jackass
+prick
+wanker
+nigger
+nigga
+faggot
+fag
+retard
+dyke
+kike
+spic
+chink
+wetback
+gook
+slutty
+bitchy
+dickhead
+cockhead
+crap
+damn
+goddamn
+piss
+ass

@@ -1,0 +1,78 @@
+policy_version: 1.0.0
+last_calibrated_utc: '2026-10-24T14:50:46.458382+00:00'
+description: Imbalance-aware multi-model moderation policy with asymmetric remove
+  cuts and corroboration.
+tiers:
+  critical: &id001
+  - threat
+  - identity_hate
+  - severe_toxic
+  moderate:
+  - insult
+  - obscene
+  base:
+  - toxic
+tier_weights:
+  critical: 1.0
+  moderate: 0.7
+  base: 0.5
+watch_zone:
+  min_normalized: 0.3
+  max_normalized: 0.5
+  target_labels: *id001
+action_rules:
+  remove_precision_target: 0.9
+  remove_min_positives: 10
+  remove_corroboration_required: true
+  hide_warning_moderate_n_threshold: 0.75
+  hide_warning_min_fired_labels: 3
+  flag_review_moderate_n_threshold: 0.75
+models:
+  1_tfidf_lr:
+    thresholds:
+      toxic: 0.49
+      severe_toxic: 0.51
+      obscene: 0.46
+      threat: 0.42
+      insult: 0.58
+      identity_hate: 0.49
+    remove_cuts:
+      threat: null
+      identity_hate: 0.975
+      severe_toxic: null
+  2b_bigru_attn_v2:
+    thresholds:
+      toxic: 0.71
+      severe_toxic: 0.76
+      obscene: 0.73
+      threat: 0.9
+      insult: 0.79
+      identity_hate: 0.77
+    remove_cuts:
+      threat: null
+      identity_hate: 0.99
+      severe_toxic: null
+  3_distilroberta:
+    thresholds:
+      toxic: 0.66
+      severe_toxic: 0.71
+      obscene: 0.65
+      threat: 0.68
+      insult: 0.71
+      identity_hate: 0.81
+    remove_cuts:
+      threat: null
+      identity_hate: 0.9
+      severe_toxic: null
+  detoxify:
+    thresholds:
+      toxic: 0.43
+      severe_toxic: 0.34
+      obscene: 0.63
+      threat: 0.66
+      insult: 0.63
+      identity_hate: 0.51
+    remove_cuts:
+      threat: 0.865
+      identity_hate: 0.725
+      severe_toxic: null
