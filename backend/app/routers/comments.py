@@ -11,7 +11,7 @@ import math
 from typing import Any
 from fastapi import APIRouter, HTTPException, Query, status
 
-from ..db import get_comments, get_comment_by_id
+from ..db import get_comments, get_comment_by_id, delete_comment_by_id
 from ..schemas import CommentsListResponse
 
 router = APIRouter(prefix="/api/comments", tags=["Comments History"])
@@ -50,3 +50,19 @@ async def get_single_comment(comment_id: str) -> dict[str, Any]:
             detail=f"Comment with ID '{comment_id}' not found.",
         )
     return comment
+
+
+@router.delete("/{comment_id}")
+async def delete_single_comment(comment_id: str) -> dict[str, Any]:
+    """Permanently delete a comment from database history."""
+    deleted = await delete_comment_by_id(comment_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Comment with ID '{comment_id}' not found.",
+        )
+    return {
+        "success": True,
+        "message": f"Comment '{comment_id}' permanently deleted.",
+        "id": comment_id,
+    }

@@ -119,6 +119,30 @@ async def get_comment_by_id(comment_id: str) -> dict[str, Any] | None:
     return None
 
 
+async def delete_comment_by_id(comment_id: str) -> bool:
+    """
+    Permanently delete a comment from MongoDB and in-memory store by ID.
+    Returns True if a document was deleted, False if not found.
+    """
+    deleted = False
+    if _is_connected and _db is not None:
+        try:
+            res = await _db.comments.delete_one({"id": comment_id})
+            if res.deleted_count > 0:
+                deleted = True
+        except Exception as exc:
+            logger.error("Error deleting comment %s from MongoDB: %s", comment_id, exc)
+
+    # Also remove from in-memory fallback store if present
+    global _in_memory_comments
+    initial_len = len(_in_memory_comments)
+    _in_memory_comments = [c for c in _in_memory_comments if c.get("id") != comment_id]
+    if len(_in_memory_comments) < initial_len:
+        deleted = True
+
+    return deleted
+
+
 async def get_comments(
     limit: int = 50,
     skip: int = 0,

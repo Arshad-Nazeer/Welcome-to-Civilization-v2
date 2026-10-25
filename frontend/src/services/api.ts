@@ -56,6 +56,17 @@ export async function fetchCommentById(id: string): Promise<CommentRecord> {
   return res.json();
 }
 
+export async function deleteComment(id: string): Promise<{ success: boolean; message: string; id: string }> {
+  const res = await fetch(`${API_BASE}/comments/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to delete comment: ${res.statusText}`);
+  }
+  return res.json();
+}
+
 // Research endpoints
 export async function fetchResearchOverview(): Promise<any> {
   const res = await fetch(`${API_BASE}/research/overview`);

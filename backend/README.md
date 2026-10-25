@@ -122,6 +122,7 @@ Update `backend/.env` with `MONGODB_URI=mongodb://localhost:27017`.
 | `POST` | `/api/censor` | Standalone profanity detection and segmented word masking |
 | `GET` | `/api/comments` | Paginated moderation audit history with action filtering |
 | `GET` | `/api/comments/{id}` | Single comment audit record with full prediction breakdown |
+| `DELETE` | `/api/comments/{id}` | Permanently delete a comment from MongoDB and in-memory history |
 | `GET` | `/api/research/overview` | Executive cross-model test benchmark table |
 | `GET` | `/api/research/eda` | Corpus profiling, label co-occurrence, and figure links |
 | `GET` | `/api/research/splits` | 80/10/10 split manifest and MinHash LSH deduplication stats |

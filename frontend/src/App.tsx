@@ -12,6 +12,7 @@ import {
   fetchHealth,
   fetchModels,
   fetchComments,
+  deleteComment,
 } from './services/api';
 
 export const App: React.FC = () => {
@@ -89,6 +90,15 @@ export const App: React.FC = () => {
     setTotalComments((prev) => prev + 1);
   };
 
+  const handleDeleteComment = async (id: string) => {
+    await deleteComment(id);
+    // Optimistically remove from state
+    setComments((prev) => prev.filter((c) => c.id !== id));
+    setTotalComments((prev) => Math.max(0, prev - 1));
+    // Re-fetch current page to ensure correct pagination
+    loadComments(currentPage, activeFilter);
+  };
+
   const handleToggleGlobalCensor = () => {
     setGlobalCensor((prev) => !prev);
   };
@@ -114,6 +124,7 @@ export const App: React.FC = () => {
             onPageChange={handlePageChange}
             onFilterChange={handleFilterChange}
             onNewPrediction={handleNewPrediction}
+            onDeleteComment={handleDeleteComment}
             globalCensor={globalCensor}
             onToggleGlobalCensor={handleToggleGlobalCensor}
             modelsInfo={modelsInfo}

@@ -32,6 +32,7 @@ interface ModerateTabProps {
   onPageChange: (page: number) => void;
   onFilterChange: (action: string) => void;
   onNewPrediction: (pred: PredictResponse) => void;
+  onDeleteComment?: (id: string) => Promise<void>;
   globalCensor: boolean;
   onToggleGlobalCensor: () => void;
   modelsInfo: ModelInfo[];
@@ -62,6 +63,7 @@ export const ModerateTab: React.FC<ModerateTabProps> = ({
   onPageChange,
   onFilterChange,
   onNewPrediction,
+  onDeleteComment,
   globalCensor,
   onToggleGlobalCensor,
   modelsInfo,
@@ -420,6 +422,7 @@ export const ModerateTab: React.FC<ModerateTabProps> = ({
           activeFilter={activeFilter}
           onPageChange={onPageChange}
           onFilterChange={onFilterChange}
+          onDeleteComment={onDeleteComment}
           globalCensor={globalCensor}
           isLoading={isLoadingHistory}
         />
